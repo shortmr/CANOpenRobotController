@@ -17,7 +17,7 @@
 
 // dynamic reconfigure
 #include <dynamic_reconfigure/server.h>
-#include <CORC/dynamic_paramsConfig.h>
+#include <CORC_M1/dynamic_paramsConfig.h>
 
 /**
  * \brief A multi purpose state with different controllers implemented

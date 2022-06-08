@@ -11,7 +11,7 @@ MultiM1MachineROS::~MultiM1MachineROS() {
 void MultiM1MachineROS::initialize() {
     spdlog::debug("MultiM1MachineROS::init()");
 
-    jointCommandSubscriber_ = nodeHandle_->subscribe("joint_commands", 1, &MultiM1MachineROS::jointCommandCallback, this);
+    jointCommandSubscriber_ = nodeHandle_->subscribe("target_state", 1, &MultiM1MachineROS::jointCommandCallback, this);
     interactionTorqueCommandSubscriber_ = nodeHandle_->subscribe("interaction_effort_commands", 1, &MultiM1MachineROS::interactionTorqueCommandCallback, this);
     jointStatePublisher_ = nodeHandle_->advertise<sensor_msgs::JointState>("joint_states", 10);
     interactionWrenchPublisher_ = nodeHandle_->advertise<geometry_msgs::WrenchStamped>("interaction_wrench", 10);

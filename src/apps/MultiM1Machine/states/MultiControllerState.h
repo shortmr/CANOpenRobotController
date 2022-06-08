@@ -19,6 +19,9 @@
 #include <dynamic_reconfigure/server.h>
 #include <CORC_M1/dynamic_paramsConfig.h>
 
+#define deg2rad(deg) ((deg)*M_PI / 180.0)
+#define rad2deg(rad) ((rad)*180.0 / M_PI)
+
 /**
  * \brief A multi purpose state with different controllers implemented
  *
@@ -84,6 +87,8 @@ private:
     void dynReconfCallback(CORC::dynamic_paramsConfig &config, uint32_t level);
 
     std::chrono::steady_clock::time_point time0;
+
+    double stiffness_, damping_, neutralAngle_;
 
 protected:
     struct timespec initTime;   /*<! Time of state init */

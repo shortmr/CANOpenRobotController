@@ -67,8 +67,8 @@ void MultiControllerState::during(void) {
 
             // monitor velocity and interaction torque
             dq= robot_->getJointVel();
-            tau = robot_->getJointTor_s();
-            if ((dq(0) <= 2) & (tau(0) >= 2)){
+            tau = robot_->getJointTor_s(); //TODO: monitor motor torque instead of sensor torque
+            if ((dq(0) <= 2) & (tau(0) >= 5)){
                 cali_velocity = 0;
                 robot_->applyCalibration();
                 robot_->initPositionControl();
@@ -81,15 +81,16 @@ void MultiControllerState::during(void) {
         else if(cali_stage == 2)
         {
             // set position control: 16 is vertical for #2; 45 is neutral position for random trajectory
-            q(0) = 45; //16
+            q(0) = 16; //16
             if(robot_->setJointPos(q) != SUCCESS){
                 std::cout << "Error: " << std::endl;
             }
             JointVec tau = robot_->getJointTor_s();
-            if (tau(0)>0.2 || tau(0)<-0.2)
-            {
-                robot_->m1ForceSensor->calibrate();
-            }
+            //if (tau(0)>0.2 || tau(0)<-0.2)
+            //{
+            //    robot_->m1ForceSensor->calibrate();
+            //}
+            robot_->m1ForceSensor->calibrate();
             robot_->printJointStatus();
             std::cout << "Calibration done!" << std::endl;
             cali_stage = 3;
@@ -97,6 +98,7 @@ void MultiControllerState::during(void) {
     }
     else if(controller_mode_ == 1){  // zero torque mode
         robot_->setJointTor(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+        //std::cout << "tau_s: " << robot_->getJointTor_s() << std::endl;
     }
     else if(controller_mode_ == 2){ // follow position commands
         robot_->setJointPos(multiM1MachineRos_->jointPositionCommand_);
@@ -146,7 +148,7 @@ void MultiControllerState::during(void) {
             tick_count = 0;
         }
     }
-    else if(controller_mode_ == 5){ // transperancy - torque mode
+    else if(controller_mode_ == 5){ // transparency - torque mode
         tau = robot_->getJointTor();
         //tau_s = (robot_->getJointTor_s()+tau_s)/2.0;
         dq = robot_->getJointVel();
@@ -181,12 +183,14 @@ void MultiControllerState::during(void) {
             tick_count = 0;
         }
     }
+    else if(controller_mode_ == 6){  // zero velocity mode
+        robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+    }
     else if (controller_mode_ == 11){ // SEND HIGH
-//        std::cout<<"SET HIGH"<<std::endl;
 
         double time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time0).count()/1000.0;
 
-        if(robot_->getRobotName() == "m1_y"){
+        if(robot_->getRobotName() == m1_trigger){
             //std::cout<<"ROBOT Y"<<std::endl;
             if(time > 2.0){
                 if (digitalInValue_ == 1) {
@@ -202,35 +206,8 @@ void MultiControllerState::during(void) {
             }
         }
     }
-    else if (controller_mode_ == 12){ // SEND LOW
-//        std::cout<<"SET LOW"<<std::endl;
 
-        double time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time0).count()/1000.0;
-
-        if(robot_->getRobotName() == "m1_y"){
-            //std::cout<<"ROBOT Y"<<std::endl;
-            if(time > 1.0){
-                if (digitalInValue_ == 1) {
-                    digitalOutValue_ = 0;
-                    robot_->setDigitalOut(digitalOutValue_);
-                }
-            }
-        }
-    }
-    else if (controller_mode_ == 13){ // SEND HIGH-LOW once
-
-        double time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time0).count()/1000.0;
-        if(robot_->getRobotName() == "m1_y"){
-            //std::cout<<"ROBOT Y"<<std::endl;
-            if (time > 1.0) {
-                //std::cout<<"Trigger Sent"<<std::endl;
-                digitalOutValue_ = (digitalOutValue_ == 1) ? 0 : 1;
-                robot_->setDigitalOut(digitalOutValue_);
-                time0 = std::chrono::steady_clock::now();
-            }
-        }
-    }
-    if(robot_->getRobotName() == "m1_y"){
+    if(robot_->getRobotName() == m1_trigger){
         digitalInValue_ = robot_->getDigitalIn();
     }
 }
@@ -267,11 +244,10 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         if(controller_mode_ == 3) robot_->initTorqueControl();
         if(controller_mode_ == 4) robot_->initTorqueControl();
         if(controller_mode_ == 5) robot_->initTorqueControl();
+        if(controller_mode_ == 6) robot_->initVelocityControl();
 
         if(controller_mode_ == 11) time0 = std::chrono::steady_clock::now();
         if(controller_mode_ == 11) robot_->setDigitalOut(0);
-        if(controller_mode_ == 12) time0 = std::chrono::steady_clock::now();
-        if(controller_mode_ == 12) robot_->setDigitalOut(1);
     }
 
     return;

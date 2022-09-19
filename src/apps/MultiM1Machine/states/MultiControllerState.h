@@ -19,6 +19,9 @@
 #include <dynamic_reconfigure/server.h>
 #include <CORC/dynamic_paramsConfig.h>
 
+// string
+#include <string>
+
 /**
  * \brief A multi purpose state with different controllers implemented
  *
@@ -77,6 +80,8 @@ public:
     double tau_filtered;
     double q_raw;
     double q_filtered;
+
+    std::string m1_trigger = "m1_y";
 
 private:
     // dynamic reconfigure server and callback

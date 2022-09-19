@@ -1,0 +1,9 @@
+M1_SRA_A:
+  c0: [0.26] # viscous fric constant of joint [N.s]
+  c1: [0.28] # coulomb friction const of joint [N.m]
+  sf: [0.10] # scale factor for force calibration
+
+M1_SRA_B:
+  c0: [0.26] # viscous fric constant of joint [N.s]
+  c1: [0.28] # coulomb friction const of joint [N.m]
+  sf: [0.10] # scale factor for force calibration

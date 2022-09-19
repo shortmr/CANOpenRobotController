@@ -75,7 +75,7 @@ bool RobotM1::initialiseNetwork() {
 
 bool RobotM1::initialiseInputs() {
     inputs.push_back(keyboard = new Keyboard());
-    inputs.push_back(m1ForceSensor = new FourierForceSensor(17, 0.1, 1));
+    inputs.push_back(m1ForceSensor = new FourierForceSensor(17, 0.1, 1)); //TODO: make scale factor param for each M1
     return true;
 }
 

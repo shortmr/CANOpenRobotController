@@ -1,9 +1,17 @@
-M1_SRA_A:
-  c0: [0.26] # viscous fric constant of joint [N.s]
-  c1: [0.28] # coulomb friction const of joint [N.m]
-  sf: [0.10] # scale factor for force calibration
+m1_x:
+  c0: [1.2302] # coulomb friction constant of joint [Nm]
+  c1: [1.2723] # viscous friction constant of joint [Nm/s]
+  c2: [1.2532] # friction square root term
+  i_sin: [1.0592] # inertia for sine term
+  i_cos: [0.3258] # inertia for cosine term
+  t_bias: [0.1604] # theta bias term in model
+  force_sensor_scale_factor: [0.10] # scale factor for force calibration
 
-M1_SRA_B:
-  c0: [0.26] # viscous fric constant of joint [N.s]
-  c1: [0.28] # coulomb friction const of joint [N.m]
-  sf: [0.10] # scale factor for force calibration
+m1_y:
+  c0: [1.2302] # coulomb friction constant of joint [Nm]
+  c1: [1.2723] # viscous friction constant of joint [Nm/s]
+  c2: [1.2532] # friction square root term
+  i_sin: [1.0592] # inertia for sine term
+  i_cos: [0.3258] # inertia for cosine term
+  t_bias: [0.1604] # theta bias term in model
+  force_sensor_scale_factor: [0.10] # scale factor for force calibration

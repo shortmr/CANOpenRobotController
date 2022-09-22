@@ -46,7 +46,7 @@ void MultiM1MachineROS::publishJointStates() {
 }
 
 void MultiM1MachineROS::publishInteractionForces() {
-    Eigen::VectorXd interactionTorque = robot_->getJointTor_s();
+    Eigen::VectorXd interactionTorque = robot_->getJointTor_s(); // with weight compensation
     ros::Time time = ros::Time::now();
 
     interactionWrenchMsg_.header.stamp = time;

@@ -38,11 +38,30 @@ public:
     MultiControllerState(StateMachine *m, RobotM1 *exo, MultiM1MachineROS *multiM1MachineRos, const char *name = NULL) :
                         State(m, name), robot_(exo), multiM1MachineRos_(multiM1MachineRos){};
 
+    // Calibration terms
     int cali_stage;
     int cali_velocity;
 
-    // FOR TRANSPERANCY EXPERIMENTS
+    // Fixed neutral terms
+    int fixed_stage;
+    double fixed_q; //neutral position in degrees
 
+    // System identification
+    int cycle; // cycle counter for system identification
+    int max_cycle; // number of cycles for system identification
+    int id_mode; // mode for system identification (sine = 1; ramp = 2)
+    int control_mode; // mode for controller during system identification (position = 1; torque = 2)
+    int counter; // loop counter
+    double freq; //frequency of sine term
+    double mag; //magnitude of sine term
+    double step; // step of ramp function (torque)
+    double max_tau; // magnitude of ramp function (torque)
+    double ulim; // lower limit of ramp function (position)
+    double llim; // lower limit of ramp function (position)
+    bool dir; // flag for current direction of ramp function
+    bool start; // flag for initial cycle of system identification
+
+    // Transparency parameters
     double kp_;
     double kd_;
     double ki_;
@@ -62,14 +81,11 @@ public:
     double spring_tor;
     double tick_count;
 
-    Eigen::VectorXd q;     //positive dorsi flexion
+    Eigen::VectorXd q; //positive dorsi-flexion
     Eigen::VectorXd dq;
     Eigen::VectorXd tau;
     Eigen::VectorXd tau_s;
     Eigen::VectorXd tau_cmd;
-
-    int digitalInValue_;
-    int digitalOutValue_;
 
     double alpha_q;
     double alpha_tau;
@@ -81,6 +97,9 @@ public:
     double q_raw;
     double q_filtered;
 
+    // External trigger
+    int digitalInValue_;
+    int digitalOutValue_;
     std::string m1_trigger = "m1_y";
 
 private:

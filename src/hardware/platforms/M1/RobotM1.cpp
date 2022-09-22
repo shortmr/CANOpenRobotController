@@ -24,6 +24,17 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     q_pre(0) = 0;
     tau_s_pre(0) = 0;
 
+    // Initializing the parameters to zero
+    m1Params.c0 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.c1 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.c2 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.i_sin = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.i_cos = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.t_bias = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.forceSensorScaleFactor = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+
+    initializeRobotParams(robotName_);
+
     // Set up the motor profile
     posControlMotorProfile.profileVelocity = 600.*512*10000/1875;
     posControlMotorProfile.profileAcceleration = 500.*65535*10000/4000000;
@@ -75,7 +86,47 @@ bool RobotM1::initialiseNetwork() {
 
 bool RobotM1::initialiseInputs() {
     inputs.push_back(keyboard = new Keyboard());
-    inputs.push_back(m1ForceSensor = new FourierForceSensor(17, 0.1, 1)); //TODO: make scale factor param for each M1
+    inputs.push_back(m1ForceSensor = new FourierForceSensor(17,  m1Params.forceSensorScaleFactor[0], 1));
+    return true;
+}
+
+bool RobotM1::initializeRobotParams(std::string robotName) {
+
+    // need to use address of base directory because when run with ROS, working directory is ~/.ros
+    std::string baseDirectory = XSTR(BASE_DIRECTORY);
+    std::string relativeFilePath = "/config/m1_params.yaml";
+
+    YAML::Node params = YAML::LoadFile(baseDirectory + relativeFilePath);
+
+    // if the robotName does not match with the name in x2_params.yaml
+    if(!params[robotName]){
+        spdlog::error("Parameters of {} couldn't be found in {} !", robotName, baseDirectory + relativeFilePath);
+        spdlog::error("All parameters are zero !");
+        return false;
+    }
+
+    if(params[robotName]["c0"].size() != M1_NUM_JOINTS || params[robotName]["c1"].size() != M1_NUM_JOINTS ||
+       params[robotName]["c2"].size() != M1_NUM_JOINTS || params[robotName]["i_sin"].size() != M1_NUM_JOINTS ||
+       params[robotName]["i_cos"].size() != M1_NUM_JOINTS || params[robotName]["t_bias"].size() != M1_NUM_JOINTS ||
+       params[robotName]["force_sensor_scale_factor"].size() != M1_NUM_JOINTS) {
+
+        spdlog::error("Parameter sizes are not consistent");
+        spdlog::error("All parameters are zero !");
+
+        return false;
+    }
+
+    // getting the parameters from the yaml file
+    for(int i = 0; i<M1_NUM_JOINTS; i++){
+        m1Params.c0[i] = params[robotName]["c0"][i].as<double>();
+        m1Params.c1[i] = params[robotName]["c1"][i].as<double>();
+        m1Params.c2[i] = params[robotName]["c2"][i].as<double>();
+        m1Params.i_sin[i] = params[robotName]["i_sin"][i].as<double>();
+        m1Params.i_cos[i] = params[robotName]["i_cos"][i].as<double>();
+        m1Params.t_bias[i] = params[robotName]["t_bias"][i].as<double>();
+        m1Params.forceSensorScaleFactor[i] = params[robotName]["force_sensor_scale_factor"][i].as<double>();
+    }
+
     return true;
 }
 
@@ -119,10 +170,10 @@ void RobotM1::updateRobot() {
         dq(i) = ((JointM1 *)joints[i])->getVelocity();
         tau(i) = ((JointM1 *)joints[i])->getTorque();
         tau_s(i) = m1ForceSensor[i].getForce();
-        // compensate inertia, move it later
-        double inertia_s = 1.0592; // m*s*g =
-        double inertia_c = 0.3258;
-        double theta_bias = 0.1604;
+        // compensate inertia for torque sensor measurement
+        double inertia_s = m1Params.i_sin[0]; //1.0592; // m*s*g
+        double inertia_c = m1Params.i_cos[0]; //0.3258;
+        double theta_bias = m1Params.t_bias[0]; //0.1604;
         tau_s(i) =  tau_s(i) - inertia_s*sin(q(i)+theta_bias) - inertia_c*cos(q(i)+theta_bias);
     }
     if (safetyCheck() != SUCCESS) {
@@ -133,6 +184,7 @@ void RobotM1::updateRobot() {
 
 bool RobotM1::setDigitalOut(int digital_out) {
     ((JointM1 *)joints[0])->setDigitalOut(digital_out);
+    return true;
 }
 
 int RobotM1::getDigitalIn() {
@@ -175,7 +227,7 @@ bool RobotM1::initMonitoring() {
     bool returnValue = true;
     for (auto p : joints) {
         if (((JointM1 *)p)->setMode(CM_POSITION_CONTROL, posControlMotorProfile) != CM_POSITION_CONTROL) {
-            // Something bad happened if were are here
+            // Something bad happened if we are here
             spdlog::debug("Something bad happened.");
             returnValue = false;
         }
@@ -197,7 +249,7 @@ bool RobotM1::initPositionControl() {
 
     for (auto p : joints) {
         if (((JointM1 *)p)->setMode(CM_POSITION_CONTROL, posControlMotorProfile) != CM_POSITION_CONTROL) {
-            // Something bad happened if were are here
+            // Something bad happened if we are here
             spdlog::debug("Something bad happened.");
             returnValue = false;
         }
@@ -219,7 +271,7 @@ bool RobotM1::initVelocityControl() {
     bool returnValue = true;
     for (auto p : joints) {
         if (((JointM1 *)p)->setMode(CM_VELOCITY_CONTROL, posControlMotorProfile) != CM_VELOCITY_CONTROL) {
-            // Something bad happened if were are here
+            // Something bad happened if we are here
             spdlog::debug("Something bad happened.");
             returnValue = false;
         }
@@ -240,7 +292,7 @@ bool RobotM1::initTorqueControl() {
     bool returnValue = true;
     for (auto p : joints) {
         if (((JointM1 *)p)->setMode(CM_TORQUE_CONTROL) != CM_TORQUE_CONTROL) {
-            // Something bad happened if were are here
+            // Something bad happened if we are here
             spdlog::debug("Something bad happened.");
             returnValue = false;
         }
@@ -390,6 +442,7 @@ setMovementReturnCode_t RobotM1::setJointVel(JointVec vel_d) {
 
 setMovementReturnCode_t RobotM1::setJointTor(JointVec tor_d) {
 //    tor_d = compensateJointTor(tor_d);
+    // filter torque commands with previous command
     tau_motor(0) = (tor_d(0)+tau_motor(0)*2.0)/3.0;
     return applyTorque(tau_motor);
 }
@@ -413,12 +466,12 @@ JointVec RobotM1::compensateJointTor(JointVec tor){
 
 setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, JointVec tor_s, double ffRatio) {
 
-    double f_s = 1.2302;
-    double f_d = 1.2723;   //1.2
-    double inertia_s = 1.0592; // m*s*g =
-    double inertia_c = 0.3258;
-    double theta_bias = 0.1604;
-    double c2 = 1.2532;
+    double f_s = m1Params.c0[0]; //1.2302;
+    double f_d = m1Params.c1[0]; //1.2723;   //1.2
+    double inertia_s = m1Params.i_sin[0]; //1.0592; // m*s*g
+    double inertia_c = m1Params.i_cos[0]; //0.3258;
+    double theta_bias = m1Params.t_bias[0]; //0.1604;
+    double c2 = m1Params.c2[0]; //1.2532;
     double tor_ff = 0;
     double vel = 0;
     vel = dq(0);

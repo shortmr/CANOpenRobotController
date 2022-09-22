@@ -24,6 +24,14 @@
 #include "FourierForceSensor.h"
 #include "KincoDrive.h"
 
+// yaml-parser
+#include <fstream>
+#include "yaml-cpp/yaml.h"
+
+// These are used to access the MACRO: BASE_DIRECTORY
+#define XSTR(x) STR(x)
+#define STR(x) #x
+
 #define M1_NUM_JOINTS 1
 #define M1_NUM_INTERACTION 1
 
@@ -36,6 +44,15 @@ typedef Eigen::Matrix<double, nJoints, 1> JointVec;
 typedef Eigen::Matrix<double, nEndEff, 1> EndEffVec;
 typedef Eigen::Matrix<double, nJoints, nEndEff> JacMtx;
 
+struct RobotParameters {
+    Eigen::VectorXd c0; // coulomb friction const of joint [Nm]
+    Eigen::VectorXd c1; // viscous fric constant of joint [Nm/s]
+    Eigen::VectorXd c2; // friction square root term
+    Eigen::VectorXd i_sin; // inertia for sine term
+    Eigen::VectorXd i_cos; // inertia for cosine term
+    Eigen::VectorXd t_bias; // theta bias
+    Eigen::VectorXd forceSensorScaleFactor; // scale factor for force calibration
+};
 
 /**
  * An enum type.
@@ -64,6 +81,8 @@ class RobotM1 : public Robot {
      */
     motorProfile posControlMotorProfile{2000000, 80000, 80000};
 
+    RobotParameters m1Params;
+
     JointVec LinkLengths;   // Link lengths used for kinematic models (in m)
     JointVec LinkMasses;    // Link masses used for gravity compensation (in kg)
     JointVec CoGLengths;    // Length along link(s) to the Center og Gravity
@@ -85,6 +104,8 @@ class RobotM1 : public Robot {
     double maxEndEffForce; /*!< Maximal end-effector allowable force. Used in checkSafety when robot is calibrated. */
 
     std::string robotName_;
+
+    bool initializeRobotParams(std::string robotName);
 
     short int sign(double val);
 
@@ -201,8 +222,7 @@ public:
     /**
        * Writes the desired digital out value to the drive
        *
-       * \return true if successful
-       * \return false if not
+       * \return true if called
        */
     bool setDigitalOut(int digital_out);
 

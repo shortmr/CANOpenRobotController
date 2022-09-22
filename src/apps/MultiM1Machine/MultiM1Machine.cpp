@@ -75,7 +75,7 @@ void MultiM1Machine::init() {
 
     logHelper.add(robot_->getPosition(), "JointPositions");
     logHelper.add(robot_->getVelocity(), "JointVelocities");
-    logHelper.add(robot_->getTorque(), "JointTorques");
+    logHelper.add(robot_->getTorque(), "JointTorques"); //use for position control system identification
     logHelper.add(robot_->getJointTor_s(), "SensorTorques");
     logHelper.add(multiControllerState_->tau_raw, "SensorTorques_raw");
     logHelper.add(multiControllerState_->tau_filtered, "SensorTorques_filtered");
@@ -85,8 +85,8 @@ void MultiM1Machine::init() {
 
     logHelper.add(multiControllerState_->spk_, "SpringStiffness");
     logHelper.add(multiControllerState_->spring_tor, "SpringTorque");
-    logHelper.add(multiControllerState_->tau_cmd, "CommandTorque");      // motor_torque = command_torque + compensation_torque
-    logHelper.add(robot_->tau_motor, "MotorTorque");
+    logHelper.add(multiControllerState_->tau_cmd, "CommandTorque"); // motor_torque = command_torque + compensation_torque
+    logHelper.add(robot_->tau_motor, "MotorTorque"); // use this for torque control system identification
 
     logHelper.add(multiM1MachineRos_->jointTorqueCommand_, "MM1_DesiredJointTorques");
     logHelper.add(multiM1MachineRos_->jointPositionCommand_, "MM1_DesiredJointPositions");

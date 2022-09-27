@@ -45,13 +45,23 @@ typedef Eigen::Matrix<double, nEndEff, 1> EndEffVec;
 typedef Eigen::Matrix<double, nJoints, nEndEff> JacMtx;
 
 struct RobotParameters {
+    bool configFlag; // flag for using dynamic reconfigure
     Eigen::VectorXd c0; // coulomb friction const of joint [Nm]
     Eigen::VectorXd c1; // viscous fric constant of joint [Nm/s]
     Eigen::VectorXd c2; // friction square root term
     Eigen::VectorXd i_sin; // inertia for sine term
     Eigen::VectorXd i_cos; // inertia for cosine term
-    Eigen::VectorXd t_bias; // theta bias
-    Eigen::VectorXd forceSensorScaleFactor; // scale factor for force calibration
+    Eigen::VectorXd t_bias; // theta bias from vertical axis (rad)
+    Eigen::VectorXd force_sensor_scale_factor; // scale factor for force calibration
+    Eigen::VectorXd ff_ratio;
+    Eigen::VectorXd kp;
+    Eigen::VectorXd ki;
+    Eigen::VectorXd kd;
+    Eigen::VectorXd vel_thresh;
+    Eigen::VectorXd int_torque_cutoff_freq;
+    Eigen::VectorXd motor_torque_cutoff_freq;
+    Eigen::VectorXd tick_max;
+    Eigen::VectorXd spk;
 };
 
 /**
@@ -93,7 +103,7 @@ class RobotM1 : public Robot {
     /*!< Conversion factors between degrees and radians */
     double d2r, r2d;
 
-    // Storage variables for real-time updated values from CANopn
+    // Storage variables for real-time updated values from CANopen
     JointVec q, dq, tau, tau_s, tau_sc, tau_cmd;
     JointVec q_pre, tau_s_pre;
 
@@ -104,6 +114,18 @@ class RobotM1 : public Robot {
     double maxEndEffForce; /*!< Maximal end-effector allowable force. Used in checkSafety when robot is calibrated. */
 
     std::string robotName_;
+
+    double velThresh_;
+
+    double filteredMotorTorqueCommand_, previousFilteredTorqueCommand_;
+
+    double motorTorqueCutOff_;
+
+    double controlFreq_;
+
+    double i_sin_, i_cos_, t_bias_;
+
+    double f_s_, f_d_, c2_;
 
     bool initializeRobotParams(std::string robotName);
 
@@ -233,6 +255,12 @@ public:
     virtual int getDigitalIn();
 
     /**
+       * Returns the value of vertical bias from parameter list
+       * \return Angle (degrees) between lower joint limit and vertical pose for M1
+       */
+    double getVerticalBias();
+
+    /**
      * \brief Check if current end effector force and velocities are within limits (if calibrated, otherwise
      *  check that joints velocity and torque are within limits).
      *
@@ -248,9 +276,14 @@ public:
      */
     std::string & getRobotName();
 
+    RobotParameters sendRobotParams();
+
+    void setControlFreq(double controlFreq);
+    void setVelThresh(double velThresh);
+    void setMotorTorqueCutOff(double cutOff);
+
     void printStatus();
     void printJointStatus();
-
 
     JacMtx J();
     EndEffVec directKinematic(JointVec q);
@@ -273,6 +306,5 @@ public:
     setMovementReturnCode_t setJointVel(JointVec vel);
     setMovementReturnCode_t setJointTor(JointVec tor);
     setMovementReturnCode_t setJointTor_comp(JointVec tor, JointVec tor_s, double ffRatio);
-    JointVec compensateJointTor(JointVec tor);
 };
 #endif /*RobotM1_H*/

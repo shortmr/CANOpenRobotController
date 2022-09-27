@@ -46,25 +46,27 @@ public:
     int fixed_stage;
     double fixed_q; //neutral position in degrees
 
-    // System identification
+    // System identification with torque control
     int cycle; // cycle counter for system identification
     int max_cycle; // number of cycles for system identification
     int id_mode; // mode for system identification (sine = 1; ramp = 2)
-    int control_mode; // mode for controller during system identification (position = 1; torque = 2)
     int counter; // loop counter
     double freq; //frequency of sine term
     double mag; //magnitude of sine term
+    double s_mag; //current value of sine term
+    double s_mag_prev; //previous value of sine term
+
     double step; // step of ramp function (torque)
     double max_tau; // magnitude of ramp function (torque)
-    double ulim; // lower limit of ramp function (position)
-    double llim; // lower limit of ramp function (position)
     bool dir; // flag for current direction of ramp function
     bool start; // flag for initial cycle of system identification
+    double v_bias; // vertical bias of robot
 
     // Transparency parameters
     double kp_;
     double kd_;
     double ki_;
+    double vel_thresh_;
     double tick_max_;
     double spk_;
     double ffRatio_;
@@ -102,6 +104,7 @@ public:
     int digitalOutValue_;
     std::string m1_trigger = "m1_y";
 
+    RobotParameters m1Params;
 private:
     // dynamic reconfigure server and callback
     dynamic_reconfigure::Server<CORC::dynamic_paramsConfig> server_;

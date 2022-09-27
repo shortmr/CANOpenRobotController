@@ -1,17 +1,56 @@
+config_flag: true # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
+
 m1_x:
-  c0: [1.2302] # coulomb friction constant of joint [Nm]
-  c1: [1.2723] # viscous friction constant of joint [Nm/s]
-  c2: [1.2532] # friction square root term
-  i_sin: [1.0592] # inertia for sine term
-  i_cos: [0.3258] # inertia for cosine term
-  t_bias: [0.1604] # theta bias term in model
-  force_sensor_scale_factor: [0.10] # scale factor for force calibration
+  c0: [2.181] # coulomb friction constant of joint [Nm]
+  c1: [2.850] # viscous friction constant of joint [Nm/s]
+  c2: [0] # friction square root term
+  i_sin: [0.99] # inertia for sine term
+  i_cos: [0.22] # inertia for cosine term
+  t_bias: [-0.349] # theta bias term in model [rad]
+  force_sensor_scale_factor: [0.0738] # scale factor for force calibration
+  ff_ratio: [0.75] # scale factor for feedforward compensation
+  kp: [0.96] # proportional term of PID controller
+  ki: [0.17] # integral term of PID controller
+  kd: [0.01] # derivative term of PID controller
+  vel_thresh: [7.0] # velocity threshold for implementing dynamic friction [deg/s]
+  int_torque_cutoff_freq: [30.0] # cutoff frequency for interaction torque filter [Hz]
+  motor_torque_cutoff_freq: [50.0] # cutoff frequency for motor torque filter [Hz]
+  tick_max: [60.0] # counter for integral term reset [s]
+  spk: [0] # spring stiffness (not implemented) [Nm/rad]
 
 m1_y:
-  c0: [1.2302] # coulomb friction constant of joint [Nm]
-  c1: [1.2723] # viscous friction constant of joint [Nm/s]
-  c2: [1.2532] # friction square root term
-  i_sin: [1.0592] # inertia for sine term
-  i_cos: [0.3258] # inertia for cosine term
-  t_bias: [0.1604] # theta bias term in model
-  force_sensor_scale_factor: [0.10] # scale factor for force calibration
+  c0: [2.134] # coulomb friction constant of joint [Nm]
+  c1: [1.297] # viscous friction constant of joint [Nm/s]
+  c2: [0] # friction square root term
+  i_sin: [0.99] # inertia for sine term
+  i_cos: [0.22] # inertia for cosine term
+  t_bias: [-0.349] # theta bias term in model
+  force_sensor_scale_factor: [0.0746] # scale factor for force calibration
+  ff_ratio: [0.75] # scale factor for feedforward compensation
+  kp: [0.96] # proportional term of PID controller
+  ki: [0.17] # integral term of PID controller
+  kd: [0.01] # derivative term of PID controller
+  vel_thresh: [7.0] # velocity threshold for implementing dynamic friction [deg/s]
+  int_torque_cutoff_freq: [30.0] # cutoff frequency for interaction torque filter [Hz]
+  motor_torque_cutoff_freq: [50.0] # cutoff frequency for motor torque filter [Hz]
+  tick_max: [60.0] # counter for integral term reset [s]
+  spk: [0] # spring stiffness (not implemented) [Nm/rad]
+
+# m1_old:
+#  c0: [1.2302] # coulomb friction constant of joint [Nm]
+#  c1: [1.2723] # viscous friction constant of joint [Nm/s]
+#  c2: [1.2532] # friction square root term
+#  i_sin: [1.0592] # inertia for sine term
+#  i_cos: [0.3258] # inertia for cosine term
+#  t_bias: [0.1604] # theta bias term in model (rad)
+#  force_sensor_scale_factor: [0.10] # scale factor for force calibration
+#  v_bias: [16.0] # vertical angle (deg) from lower joint limit TODO: check 16.0 is actual vertical angle for old M1
+#  ff_ratio: [0.7]
+#  kp: [0.7]
+#  ki: [1.2]
+#  kd: [0.05]
+#  vel_thresh: [6.0] ?
+#  int_torque_cutOff_freq: [30] ?
+#  motor_torque_cutOff_freq: [50] ?
+#  tick_max: [60]
+#  spk: [0]

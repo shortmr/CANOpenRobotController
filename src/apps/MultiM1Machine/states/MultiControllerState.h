@@ -64,12 +64,12 @@ public:
 
     // Transparency parameters
     double kp_;
-    double kd_;
     double ki_;
-    double vel_thresh_;
+    double kd_;
     double tick_max_;
     double spk_;
     double ffRatio_;
+    double cut_off_;
     int controller_mode_;
 
     double control_freq;
@@ -90,14 +90,16 @@ public:
     Eigen::VectorXd tau_cmd;
 
     double alpha_q;
-    double alpha_tau;
+    double alpha_dq;
+    double alpha_tau_s;
     double q_pre;
     double tau_pre;
-    double cut_off;
     double tau_raw;
     double tau_filtered;
     double q_raw;
     double q_filtered;
+    double dq_raw;
+    double dq_filtered;
 
     // External trigger
     int digitalInValue_;

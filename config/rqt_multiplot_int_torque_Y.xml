@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rqt_multiplot>
     <table>
-        <background_color>#ffffff</background_color>
+        <background_color>#d3d7cf</background_color>
         <foreground_color>#000000</foreground_color>
         <link_cursor>false</link_cursor>
         <link_scale>false</link_scale>
@@ -11,13 +11,13 @@
                     <axes>
                         <axes>
                             <x_axis>
-                                <custom_title>time</custom_title>
-                                <title_type>1</title_type>
+                                <custom_title>Untitled Axis</custom_title>
+                                <title_type>0</title_type>
                                 <title_visible>true</title_visible>
                             </x_axis>
                             <y_axis>
-                                <custom_title>position [rad]</custom_title>
-                                <title_type>1</title_type>
+                                <custom_title>Untitled Axis</custom_title>
+                                <title_type>0</title_type>
                                 <title_visible>true</title_visible>
                             </y_axis>
                         </axes>
@@ -35,36 +35,36 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/joint_commands</topic>
-                                    <type>sensor_msgs/JointState</type>
+                                    <topic>/m1_y/interaction_wrench</topic>
+                                    <type>geometry_msgs/WrenchStamped</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>position/0</field>
+                                    <field>wrench/torque/z</field>
                                     <field_type>0</field_type>
                                     <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
+                                        <absolute_maximum>1.3</absolute_maximum>
+                                        <absolute_minimum>0.3</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/m1_x/joint_commands</topic>
-                                    <type>sensor_msgs/JointState</type>
+                                    <topic>/m1_y/interaction_wrench</topic>
+                                    <type>geometry_msgs/WrenchStamped</type>
                                 </y_axis>
                             </axes>
                             <color>
-                                <custom_color>#000000</custom_color>
-                                <type>0</type>
+                                <custom_color>#204a87</custom_color>
+                                <type>1</type>
                             </color>
                             <data>
                                 <circular_buffer_capacity>1000</circular_buffer_capacity>
-                                <time_frame_length>10</time_frame_length>
+                                <time_frame_length>0.1</time_frame_length>
                                 <type>0</type>
                             </data>
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
                                 <pen_style>1</pen_style>
-                                <pen_width>2</pen_width>
+                                <pen_width>7</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
                                 <sticks_baseline>0</sticks_baseline>
@@ -72,7 +72,7 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>desired position</title>
+                            <title>Actual position</title>
                         </curve_0>
                         <curve_1>
                             <axes>
@@ -86,36 +86,36 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/joint_states</topic>
-                                    <type>sensor_msgs/JointState</type>
+                                    <topic>/m1_y/interaction_effort_commands</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>position/0</field>
+                                    <field>data/0</field>
                                     <field_type>0</field_type>
                                     <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
+                                        <absolute_maximum>1.3</absolute_maximum>
+                                        <absolute_minimum>0.3</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/m1_x/joint_states</topic>
-                                    <type>sensor_msgs/JointState</type>
+                                    <topic>/m1_y/interaction_effort_commands</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
                                 </y_axis>
                             </axes>
                             <color>
-                                <custom_color>#204a87</custom_color>
+                                <custom_color>#cc0000</custom_color>
                                 <type>1</type>
                             </color>
                             <data>
                                 <circular_buffer_capacity>1000</circular_buffer_capacity>
-                                <time_frame_length>10</time_frame_length>
+                                <time_frame_length>0.1</time_frame_length>
                                 <type>0</type>
                             </data>
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
                                 <pen_style>1</pen_style>
-                                <pen_width>3</pen_width>
+                                <pen_width>7</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
                                 <sticks_baseline>0</sticks_baseline>
@@ -123,14 +123,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>actual position</title>
+                            <title>Desired torque</title>
                         </curve_1>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
-                    <plot_rate>60</plot_rate>
-                    <title>Robot X</title>
+                    <plot_rate>30</plot_rate>
+                    <title>M1_Y</title>
                 </column_0>
                 <column_1>
                     <axes>
@@ -160,36 +160,36 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_y/joint_commands</topic>
-                                    <type>sensor_msgs/JointState</type>
+                                    <topic>/m1_x/interaction_wrench</topic>
+                                    <type>geometry_msgs/WrenchStamped</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>position/0</field>
+                                    <field>wrench/torque/z</field>
                                     <field_type>0</field_type>
                                     <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
+                                        <absolute_maximum>1.3</absolute_maximum>
+                                        <absolute_minimum>0.3</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/m1_y/joint_commands</topic>
-                                    <type>sensor_msgs/JointState</type>
+                                    <topic>/m1_x/interaction_wrench</topic>
+                                    <type>geometry_msgs/WrenchStamped</type>
                                 </y_axis>
                             </axes>
                             <color>
-                                <custom_color>#000000</custom_color>
-                                <type>0</type>
+                                <custom_color>#204a87</custom_color>
+                                <type>1</type>
                             </color>
                             <data>
                                 <circular_buffer_capacity>1000</circular_buffer_capacity>
-                                <time_frame_length>10</time_frame_length>
+                                <time_frame_length>0.1</time_frame_length>
                                 <type>0</type>
                             </data>
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
                                 <pen_style>1</pen_style>
-                                <pen_width>2</pen_width>
+                                <pen_width>7</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
                                 <sticks_baseline>0</sticks_baseline>
@@ -197,7 +197,7 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>desired postion</title>
+                            <title>Actual position</title>
                         </curve_0>
                         <curve_1>
                             <axes>
@@ -211,36 +211,36 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_y/joint_states</topic>
-                                    <type>sensor_msgs/JointState</type>
+                                    <topic>/m1_x/interaction_effort_commands</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>position/0</field>
+                                    <field>data/0</field>
                                     <field_type>0</field_type>
                                     <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
+                                        <absolute_maximum>1.3</absolute_maximum>
+                                        <absolute_minimum>0.3</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/m1_y/joint_states</topic>
-                                    <type>sensor_msgs/JointState</type>
+                                    <topic>/m1_x/interaction_effort_commands</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
                                 </y_axis>
                             </axes>
                             <color>
-                                <custom_color>#3465a4</custom_color>
+                                <custom_color>#cc0000</custom_color>
                                 <type>1</type>
                             </color>
                             <data>
                                 <circular_buffer_capacity>1000</circular_buffer_capacity>
-                                <time_frame_length>10</time_frame_length>
+                                <time_frame_length>0.1</time_frame_length>
                                 <type>0</type>
                             </data>
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
                                 <pen_style>1</pen_style>
-                                <pen_width>3</pen_width>
+                                <pen_width>7</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
                                 <sticks_baseline>0</sticks_baseline>
@@ -248,14 +248,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>actual position</title>
+                            <title>Desired torque</title>
                         </curve_1>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Robot Y</title>
+                    <title>M1_X</title>
                 </column_1>
             </row_0>
         </plots>

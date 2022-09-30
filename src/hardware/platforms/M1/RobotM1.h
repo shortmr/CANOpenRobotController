@@ -51,17 +51,18 @@ struct RobotParameters {
     Eigen::VectorXd c2; // friction square root term
     Eigen::VectorXd i_sin; // inertia for sine term
     Eigen::VectorXd i_cos; // inertia for cosine term
-    Eigen::VectorXd t_bias; // theta bias from vertical axis (rad)
+    Eigen::VectorXd t_bias; // theta bias from vertical axis [rad]
     Eigen::VectorXd force_sensor_scale_factor; // scale factor for force calibration
-    Eigen::VectorXd ff_ratio;
-    Eigen::VectorXd kp;
-    Eigen::VectorXd ki;
-    Eigen::VectorXd kd;
-    Eigen::VectorXd vel_thresh;
-    Eigen::VectorXd int_torque_cutoff_freq;
-    Eigen::VectorXd motor_torque_cutoff_freq;
-    Eigen::VectorXd tick_max;
-    Eigen::VectorXd spk;
+    Eigen::VectorXd ff_ratio; // scale factor for feedforward compensation
+    Eigen::VectorXd kp; // proportional term of PID controller
+    Eigen::VectorXd ki; // integral term of PID controller
+    Eigen::VectorXd kd; // derivative term of PID controller
+    Eigen::VectorXd vel_thresh; // velocity threshold for implementing dynamic friction [deg/s]
+    Eigen::VectorXd tau_thresh; // torque threshold for implementing dynamic friction [deg/s]
+    Eigen::VectorXd lowpass_cutoff_freq; // cutoff frequency for interaction torque, position and velocity filter [Hz]
+    Eigen::VectorXd motor_torque_cutoff_freq; // cutoff frequency for motor torque command filter [Hz]
+    Eigen::VectorXd tick_max; // counter for integral term reset [s]
+    Eigen::VectorXd spk; // spring stiffness (not implemented) [Nm/rad]
 };
 
 /**
@@ -105,7 +106,8 @@ class RobotM1 : public Robot {
 
     // Storage variables for real-time updated values from CANopen
     JointVec q, dq, tau, tau_s, tau_sc, tau_cmd;
-    JointVec q_pre, tau_s_pre;
+    JointVec q_filt, dq_filt, tau_s_filt;
+    JointVec q_filt_pre, dq_filt_pre, tau_s_filt_pre;
 
     JointVec qCalibration;  // Calibration configuration: posture in which the robot is when using the calibration procedure
 
@@ -115,7 +117,7 @@ class RobotM1 : public Robot {
 
     std::string robotName_;
 
-    double velThresh_;
+    double velThresh_, torqueThresh_;
 
     double filteredMotorTorqueCommand_, previousFilteredTorqueCommand_;
 
@@ -280,6 +282,7 @@ public:
 
     void setControlFreq(double controlFreq);
     void setVelThresh(double velThresh);
+    void setTorqueThresh(double torqueThresh);
     void setMotorTorqueCutOff(double cutOff);
 
     void printStatus();
@@ -296,8 +299,9 @@ public:
     JointVec& getJointTor_s();
     JointVec& getJointTor_cmd();
 
-    void filter_q(double alpha_q);
-    void filter_tau(double alpha_tau);
+    double filter_q(double alpha_q);
+    double filter_dq(double alpha_dq);
+    double filter_tau_s(double alpha_tau_s);
 //    EndEffVec getEndEffPos();
 //    EndEffVec getEndEffVel();
 //    EndEffVec getEndEffFor();
@@ -305,6 +309,6 @@ public:
     setMovementReturnCode_t setJointPos(JointVec pos);
     setMovementReturnCode_t setJointVel(JointVec vel);
     setMovementReturnCode_t setJointTor(JointVec tor);
-    setMovementReturnCode_t setJointTor_comp(JointVec tor, JointVec tor_s, double ffRatio);
+    setMovementReturnCode_t setJointTor_comp(JointVec tor, double ffRatio);
 };
 #endif /*RobotM1_H*/

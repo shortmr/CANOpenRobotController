@@ -30,6 +30,7 @@ MultiM1Machine::MultiM1Machine(int argc, char *argv[]){
 }
 
 MultiM1Machine::~MultiM1Machine() {
+
     currentState->exit();
     robot_->disable();
     delete multiM1MachineRos_;

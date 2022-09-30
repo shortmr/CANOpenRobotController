@@ -10,7 +10,7 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     //Define the robot structure: each joint with limits and drive - TMH
     // JOINT 0 - the only joint in the case of M1
     max_speed(0) = 360; // {radians}
-    tau_max(0) = 1.9 * 23;  // {Nm}
+    tau_max(0) = 1.9 * 30;  // {Nm} 1.9 * 23
     LinkLengths(0) = 0.1;   // Link lengths used for kinematic models (in m)
     LinkMasses(0) = 0.5;    // Link masses used for gravity compensation (in kg)
     CoGLengths(0) = 0.08;    // Length along link(s) to the Center og Gravity
@@ -21,8 +21,12 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     // Calibration configuration: posture in which the robot is when using the calibration procedure
     qCalibration(0) = 0 * d2r;
     tau_motor(0) = 0;
-    q_pre(0) = 0;
-    tau_s_pre(0) = 0;
+    q_filt(0) = 0;
+    dq_filt(0) = 0;
+    tau_s_filt(0) = 0;
+    q_filt_pre(0) = 0;
+    dq_filt_pre(0) = 0;
+    tau_s_filt_pre(0) = 0;
 
     // Initializing the parameters to zero
     m1Params.configFlag = true;
@@ -38,7 +42,8 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     m1Params.ki = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.kd = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.vel_thresh = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
-    m1Params.int_torque_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.tau_thresh = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.lowpass_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.motor_torque_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.tick_max = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.spk = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -121,8 +126,8 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
        params[robotName]["force_sensor_scale_factor"].size() != M1_NUM_JOINTS ||
        params[robotName]["ff_ratio"].size() != M1_NUM_JOINTS || params[robotName]["kp"].size() != M1_NUM_JOINTS ||
        params[robotName]["ki"].size() != M1_NUM_JOINTS || params[robotName]["kd"].size() != M1_NUM_JOINTS ||
-       params[robotName]["vel_thresh"].size() != M1_NUM_JOINTS ||
-       params[robotName]["int_torque_cutoff_freq"].size() != M1_NUM_JOINTS ||
+       params[robotName]["vel_thresh"].size() != M1_NUM_JOINTS || params[robotName]["tau_thresh"].size() != M1_NUM_JOINTS ||
+       params[robotName]["lowpass_cutoff_freq"].size() != M1_NUM_JOINTS ||
        params[robotName]["motor_torque_cutoff_freq"].size() != M1_NUM_JOINTS ||
        params[robotName]["tick_max"].size() != M1_NUM_JOINTS || params[robotName]["spk"].size() != M1_NUM_JOINTS) {
 
@@ -147,7 +152,8 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         m1Params.ki[i] = params[robotName]["ki"][i].as<double>();
         m1Params.kd[i] = params[robotName]["kd"][i].as<double>();
         m1Params.vel_thresh[i] = params[robotName]["vel_thresh"][i].as<double>();
-        m1Params.int_torque_cutoff_freq[i] = params[robotName]["int_torque_cutoff_freq"][i].as<double>();
+        m1Params.tau_thresh[i] = params[robotName]["tau_thresh"][i].as<double>();
+        m1Params.lowpass_cutoff_freq[i] = params[robotName]["lowpass_cutoff_freq"][i].as<double>();
         m1Params.motor_torque_cutoff_freq[i] = params[robotName]["motor_torque_cutoff_freq"][i].as<double>();
         m1Params.tick_max[i] = params[robotName]["tick_max"][i].as<double>();
         m1Params.spk[i] = params[robotName]["spk"][i].as<double>();
@@ -161,7 +167,8 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     f_d_ = m1Params.c1[0];
     c2_ = m1Params.c2[0];
     if (!m1Params.configFlag) {
-        velThresh_ = m1Params.vel_thresh[0];
+        velThresh_ = m1Params.vel_thresh[0] * d2r;
+        torqueThresh_ = m1Params.tau_thresh[0];
         motorTorqueCutOff_ = m1Params.motor_torque_cutoff_freq[0];
     }
     return true;
@@ -211,6 +218,8 @@ void RobotM1::updateRobot() {
         dq(i) = ((JointM1 *)joints[i])->getVelocity();
         tau(i) = ((JointM1 *)joints[i])->getTorque();
         tau_s(i) = m1ForceSensor[i].getForce();
+        std::cout << std::setprecision(4) << std::fixed;
+        //std::cout << tau_s(i) << std::endl;
         // compensate inertia for torque sensor measurement
         tau_s(i) =  tau_s(i) + i_sin_*sin(q(i)+t_bias_) + i_cos_*cos(q(i)+t_bias_);
     }
@@ -249,7 +258,7 @@ void RobotM1::printStatus() {
 }
 
 void RobotM1::printJointStatus() {
-    std::cout << std::setprecision(1) << std::fixed;
+    std::cout << std::setprecision(2) << std::fixed;
     std::cout << "q=[ " << getJointPos().transpose() << " ]\t";
     std::cout << "dq=[ " << getJointVel().transpose() << " ]\t";
     std::cout << "tau=[ " << getJointTor().transpose() << " ]\t";
@@ -452,14 +461,22 @@ JointVec RobotM1::getJointTor() {
     return tau;
 }
 
-void RobotM1::filter_q(double alpha_q){
-    q(0) = alpha_q*q(0)+(1-alpha_q)*q_pre(0);
-    q_pre(0) = q(0);
+double RobotM1::filter_q(double alpha_q){
+    q_filt(0) = alpha_q*q(0)+(1-alpha_q)*q_filt_pre(0);
+    q_filt_pre(0) = q_filt(0);
+    return q_filt(0);
 }
 
-void RobotM1::filter_tau(double alpha_tau){
-    tau_s(0) = alpha_tau*tau_s(0)+(1-alpha_tau)*tau_s_pre(0);
-    tau_s_pre(0) = tau_s(0);
+double RobotM1::filter_dq(double alpha_dq){
+    dq_filt(0) = alpha_dq*dq(0)+(1-alpha_dq)*dq_filt_pre(0);
+    dq_filt_pre(0) = dq_filt(0);
+    return dq_filt(0);
+}
+
+double RobotM1::filter_tau_s(double alpha_tau_s){
+    tau_s_filt(0) = alpha_tau_s*tau_s(0)+(1-alpha_tau_s)*tau_s_filt_pre(0);
+    tau_s_filt_pre(0) = tau_s_filt(0);
+    return tau_s_filt(0);
 }
 
 JointVec& RobotM1::getJointTor_s() {
@@ -481,18 +498,37 @@ setMovementReturnCode_t RobotM1::setJointTor(JointVec tor_d) {
     return applyTorque(tor_d);
 }
 
-setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, JointVec tor_s, double ffRatio) {
+setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double ffRatio) {
+    double tor_ff;
+    double vel = dq_filt(0); //dq(0);
+    double pos = q(0); //q(0)
 
-    double tor_ff = 0;
-    double vel = dq(0);
+    // previous version
+    //double tor_s = tau_s_filt(0);
+    //if(abs(vel)<velThresh_)
+    //{
+    //    if(abs(tor_s)>torqueThresh_)
+    //    {
+    //        tor_ff = f_s_*sign(tor_s) + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
+    //    }
+    //    else
+    //    {
+    //        tor_ff = i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
+    //    }
+    //}
+    //else
+    //{
+    //    vel = vel-sign(vel)*0.1;
+    //    tor_ff = f_s_*sign(vel) + f_d_*vel + i_sin_*sin(q(0)+t_bias_) + i_cos_*cos(q(0)+t_bias_) + c2_*sqrt(abs(vel))*sign(vel);
+    //}
 
     // check velocity to apply dynamic friction term
     if(abs(vel)<velThresh_)
     {
         double slowCoef = f_s_/velThresh_; // linear region for static friction
-        tor_ff = slowCoef*vel + i_sin_*sin(q(0)+t_bias_) + i_cos_*cos(q(0)+t_bias_);
+        tor_ff = slowCoef*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
     } else {
-        tor_ff = f_s_*sign(vel) + f_d_*vel + i_sin_*sin(q(0)+t_bias_) + i_cos_*cos(q(0)+t_bias_) + c2_*sqrt(abs(vel))*sign(vel);
+        tor_ff = f_s_*sign(vel) + f_d_*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_) + c2_*sqrt(abs(vel))*sign(vel);
     }
     tor(0) = tor(0) + tor_ff*ffRatio;
 
@@ -501,7 +537,10 @@ setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, JointVec tor_s, 
     filteredMotorTorqueCommand_ = alpha*tor(0)+(1-alpha)*previousFilteredTorqueCommand_;
     previousFilteredTorqueCommand_ = filteredMotorTorqueCommand_;
 
-    return setJointTor(tor);
+    JointVec finalMotorTorqueCommand(M1_NUM_JOINTS);
+    finalMotorTorqueCommand(0) = filteredMotorTorqueCommand_;
+
+    return setJointTor(finalMotorTorqueCommand);
 }
 
 std::string & RobotM1::getRobotName() {
@@ -514,7 +553,13 @@ void RobotM1::setControlFreq(double controlFreq) {
 
 void RobotM1::setVelThresh(double velThresh) {
     if (m1Params.configFlag) {
-        velThresh_ = velThresh;
+        velThresh_ = velThresh * d2r;
+    }
+}
+
+void RobotM1::setTorqueThresh(double torqueThresh) {
+    if (m1Params.configFlag) {
+        torqueThresh_ = torqueThresh;
     }
 }
 

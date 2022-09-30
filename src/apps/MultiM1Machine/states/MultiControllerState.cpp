@@ -18,15 +18,15 @@ void MultiControllerState::entry(void) {
     f = boost::bind(&MultiControllerState::dynReconfCallback, this, _1, _2);
     server_.setCallback(f);
 
-    // Initialize static parameters (if necessary)
+    // Initialize static parameters (if configFlag is not set, bypass dynamic reconfigure for parameters)
     m1Params = robot_->sendRobotParams();
     v_bias = -1 * m1Params.t_bias[0] * 180. / M_PI;
     if (!m1Params.configFlag) {
-        // Update PID and feedforward gains from static parameter server
+        // Update PID and feedforward gains from yaml parameter file
         kp_ = m1Params.kp[0];
-        kd_ = m1Params.kd[0];
         ki_ = m1Params.ki[0];
-        cut_off = m1Params.int_torque_cutoff_freq[0];
+        kd_ = m1Params.kd[0];
+        cut_off_ = m1Params.lowpass_cutoff_freq[0];
         ffRatio_ = m1Params.ff_ratio[0];
         spk_ = m1Params.spk[0];
         tick_max_ = m1Params.tick_max[0];
@@ -51,7 +51,7 @@ void MultiControllerState::entry(void) {
     integral_error = 0;
     tick_count = 0;
     controller_mode_ = -1;
-//    cut_off = 6.0;
+//    cut_off_ = 6.0;
 
     cycle = 0;
     id_mode = 1; // sine = 1; ramp = 2
@@ -66,7 +66,7 @@ void MultiControllerState::entry(void) {
     dir = true;
 
     digitalInValue_ = 0;
-    digitalOutValue_ = 0; //0
+    digitalOutValue_ = 0;
     robot_->setDigitalOut(digitalOutValue_);
     robot_->setControlFreq(control_freq);
 }
@@ -81,7 +81,6 @@ void MultiControllerState::during(void) {
     dt = now - lastTime;
     lastTime = now;
 
-    //
     tick_count = tick_count + 1;
     if (controller_mode_ == 0) {  // Homing
         if (cali_stage == 1) {
@@ -95,7 +94,7 @@ void MultiControllerState::during(void) {
             // monitor velocity and interaction torque
             dq= robot_->getJointVel();
             //tau = robot_->getJointTor_s(); //TODO: monitor motor torque instead of sensor torque
-            tau = robot_->getJointTor();
+            tau = robot_->getJointTor(); // (tau(0) <= -13)
             if ((dq(0) <= 2) & (tau(0) <= -13)) {
                 cali_velocity = 0;
                 robot_->applyCalibration();
@@ -110,10 +109,6 @@ void MultiControllerState::during(void) {
             if(robot_->setJointPos(q) != SUCCESS){
                 std::cout << "Error: " << std::endl;
             }
-            //if (tau(0)>0.2 || tau(0)<-0.2)
-            //{
-            //    robot_->m1ForceSensor->calibrate();
-            //}
             robot_->m1ForceSensor->calibrate();
             robot_->printJointStatus();
             std::cout << "Calibration done!" << std::endl;
@@ -131,75 +126,77 @@ void MultiControllerState::during(void) {
     }
     else if (controller_mode_ == 4) { // virtual spring - torque mode
         tau = robot_->getJointTor();
-        //tau_s = (robot_->getJointTor_s()+tau_s)/2.0;
-        dq = robot_->getJointVel();
 
         // filter position
         q = robot_->getJointPos();
         q_raw = q(0);
-        alpha_q = (2*M_PI*dt*cut_off)/(2*M_PI*dt*cut_off+1);
-        robot_->filter_q(alpha_q);
-        q = robot_->getJointPos();
-        q_filtered = q(0);
+        alpha_q = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        q_filtered = robot_->filter_q(alpha_q);
 
-        // filter torque signal
+        // filter velocity
+        dq = robot_->getJointVel();
+        dq_raw = dq(0);
+        alpha_dq = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        dq_filtered = robot_->filter_dq(alpha_dq);
+
+        // filter interaction torque
         tau_s = robot_->getJointTor_s();
         tau_raw = tau_s(0);
-        alpha_tau = (2*M_PI*dt*cut_off)/(2*M_PI*dt*cut_off+1);
-        robot_->filter_tau(alpha_tau);
-        tau_s = robot_->getJointTor_s();
-        tau_filtered = tau_s(0);
-//        std::cout << "Pre :" << tau_raw << "; Post :" << tau_filtered << std::endl;
+        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
 
         // get interaction torque from virtual spring
         spring_tor = -multiM1MachineRos_->interactionTorqueCommand_(0);
-//        spring_tor = spk_*M_PIf64*(45-q(0))/180.0;  //stiffness; q(0) in degree
-        robot_->tau_spring[0] = spring_tor;   // for ROS publish only
+        robot_->tau_spring[0] = spring_tor; // for ROS publish only
 
-        // torque tracking with PD controller
-        error = tau_s(0) + spring_tor;  // interaction torque error, desired interaction torque is spring_tor, 1.5 is ratio to achieve the desired torque
-        delta_error = (error-torque_error_last_time_step)*control_freq;  // derivative of interaction torque error;
-        integral_error = integral_error + error/control_freq;
-        tau_cmd(0) = error*kp_ + delta_error*kd_ + integral_error*ki_;  // tau_cmd = P*error + D*delta_error; 1 and 0.001
+        // apply PID for feedback control
+        error = tau_filtered + spring_tor;  // interaction torque error (desired interaction torque is spring_tor)
+        delta_error = (error-torque_error_last_time_step)*control_freq;  // derivative of interaction torque error
+        integral_error = integral_error + error/control_freq; // integral of interaction torque error
+        tau_cmd(0) = error*kp_ + delta_error*kd_ + integral_error*ki_;
         torque_error_last_time_step = error;
-        robot_->setJointTor_comp(tau_cmd, tau_s, ffRatio_);
+        robot_->setJointTor_comp(tau_cmd, ffRatio_);
 
-        // reset integral_error every 1 mins, to be decided
-        if(tick_count >= control_freq*60){
+        // reset integral_error every n seconds (tick_max_)
+        if(tick_count >= control_freq*tick_max_){
             integral_error = 0;
             tick_count = 0;
         }
     }
     else if (controller_mode_ == 5) { // transparency - torque mode
         tau = robot_->getJointTor();
-        //tau_s = (robot_->getJointTor_s()+tau_s)/2.0;
-        dq = robot_->getJointVel();
 
-        // filter q
+        // filter position
         q = robot_->getJointPos();
         q_raw = q(0);
-        alpha_q = (2*M_PI*dt*cut_off)/(2*M_PI*dt*cut_off+1);
-        robot_->filter_q(alpha_q);
-        q = robot_->getJointPos();
-        q_filtered = q(0);
+        alpha_q = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        q_filtered = robot_->filter_q(alpha_q);
 
-//         filter torque signal
+        // filter velocity
+        dq = robot_->getJointVel();
+        dq_raw = dq(0);
+        alpha_dq = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        dq_filtered = robot_->filter_dq(alpha_dq);
+
+        // filter interaction torque
         tau_s = robot_->getJointTor_s();
         tau_raw = tau_s(0);
-        alpha_tau = (2*M_PI*dt*cut_off)/(2*M_PI*dt*cut_off+1);
-        robot_->filter_tau(alpha_tau);
-        tau_s = robot_->getJointTor_s();
-        tau_filtered = tau_s(0);
+        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
 
-        // torque tracking with PID controller
-        error = tau_s(0);  // interaction torque error, desired interaction torque is 0
-        delta_error = (error-torque_error_last_time_step)*control_freq;  // derivative of interaction torque error;
-        integral_error = integral_error + error/control_freq;
-        tau_cmd(0) = error*kp_ + delta_error*kd_ + integral_error*ki_;  // tau_cmd = P*error + D*delta_error + ; 1 and 0.001
+        // get interaction torque from virtual spring
+        spring_tor = -multiM1MachineRos_->interactionTorqueCommand_(0);
+        robot_->tau_spring[0] = spring_tor; // for ROS publish only
+
+        // apply PID for feedback control
+        error = tau_filtered;  // interaction torque error (desired interaction torque is 0 for transparency)
+        delta_error = (error-torque_error_last_time_step)*control_freq;  // derivative of interaction torque error
+        integral_error = integral_error + error/control_freq; // integral of interaction torque error
+        tau_cmd(0) = error*kp_ + delta_error*kd_ + integral_error*ki_;
         torque_error_last_time_step = error;
-        robot_->setJointTor_comp(tau_cmd, tau_s, ffRatio_);
+        robot_->setJointTor_comp(tau_cmd, ffRatio_);
 
-        // reset integral_error every 1 mins, to be decided
+        // reset integral_error every n seconds (tick_max_)
         if(tick_count >= control_freq*tick_max_){
             integral_error = 0;
             tick_count = 0;
@@ -249,7 +246,7 @@ void MultiControllerState::during(void) {
             robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
         }
     }
-    else if(controller_mode_ == 7) {  // system identification with torque mode
+    else if(controller_mode_ == 7) {  // system identification - torque mode
         counter = counter + 1;
         if(counter%100==1) {
             robot_->printJointStatus();
@@ -344,13 +341,13 @@ void MultiControllerState::during(void) {
 
         if(robot_->getRobotName() == m1_trigger){
             if(time > 2.0){
-                if (digitalInValue_ == 1) {
+                if (digitalOutValue_ == 1) {
                     digitalOutValue_ = 0;
                     robot_->setDigitalOut(digitalOutValue_);
                 }
             }
             else if(time > 1.0){
-                if (digitalInValue_ == 0) {
+                if (digitalOutValue_ == 0) {
                     digitalOutValue_ = 1;
                     robot_->setDigitalOut(digitalOutValue_);
                 }
@@ -364,6 +361,9 @@ void MultiControllerState::during(void) {
 }
 
 void MultiControllerState::exit(void) {
+    robot_->initTorqueControl();
+    robot_->setJointTor(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+
 }
 
 void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config, uint32_t level) {
@@ -372,10 +372,11 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         kp_ = config.kp;
         kd_ = config.kd;
         ki_ = config.ki;
-        robot_->setVelThresh(config.vel_thresh * M_PI/180.);
+        robot_->setVelThresh(config.vel_thresh);
+        robot_->setTorqueThresh(config.tau_thresh);
         robot_->setMotorTorqueCutOff(config.motor_torque_cutoff_freq);
 
-        cut_off = config.int_torque_cutoff_freq;
+        cut_off_ = config.lowpass_cutoff_freq;
         ffRatio_ = config.ff_ratio;
         spk_ = config.spk;
 
@@ -410,7 +411,7 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         if (controller_mode_ == 6) {
             robot_->initVelocityControl();
             fixed_stage = 1;
-            fixed_q = 90 + v_bias; // force calibration = 90+v_bias, trajectory bias = 45
+            fixed_q = 45; // force calibration = 90+v_bias, trajectory bias = 45
             cali_velocity = -30;
         }
         if (controller_mode_ == 7) {

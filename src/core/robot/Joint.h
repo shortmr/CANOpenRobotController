@@ -105,7 +105,7 @@ class Joint {
      * @brief Indicates whether a calibration has been performed on this joint yet.
      *
      */
-    bool calibrated = false;
+    bool calibrated = true;
 
     /**
       * \brief Converts from the joint position value to the equivalent value for the drive

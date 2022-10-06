@@ -28,7 +28,7 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     dq_filt_pre(0) = 0;
     tau_s_filt_pre(0) = 0;
 
-    // Initializing the parameters to zero
+    // Initializing the yaml parameters to zero
     m1Params.configFlag = true;
     m1Params.c0 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.c1 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -37,6 +37,7 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     m1Params.i_cos = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.t_bias = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.force_sensor_scale_factor = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.force_sensor_offset = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.ff_ratio = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.kp = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.ki = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -101,7 +102,10 @@ bool RobotM1::initialiseNetwork() {
 
 bool RobotM1::initialiseInputs() {
     inputs.push_back(keyboard = new Keyboard());
-    inputs.push_back(m1ForceSensor = new FourierForceSensor(17,  m1Params.force_sensor_scale_factor[0], 1));
+    inputs.push_back(m1ForceSensor = new FourierForceSensor(17,
+                                                            m1Params.force_sensor_scale_factor[0],
+                                                            1,
+                                                            m1Params.force_sensor_offset[0]));
     return true;
 }
 
@@ -124,6 +128,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
        params[robotName]["c2"].size() != M1_NUM_JOINTS || params[robotName]["i_sin"].size() != M1_NUM_JOINTS ||
        params[robotName]["i_cos"].size() != M1_NUM_JOINTS || params[robotName]["t_bias"].size() != M1_NUM_JOINTS ||
        params[robotName]["force_sensor_scale_factor"].size() != M1_NUM_JOINTS ||
+       params[robotName]["force_sensor_offset"].size() != M1_NUM_JOINTS ||
        params[robotName]["ff_ratio"].size() != M1_NUM_JOINTS || params[robotName]["kp"].size() != M1_NUM_JOINTS ||
        params[robotName]["ki"].size() != M1_NUM_JOINTS || params[robotName]["kd"].size() != M1_NUM_JOINTS ||
        params[robotName]["vel_thresh"].size() != M1_NUM_JOINTS || params[robotName]["tau_thresh"].size() != M1_NUM_JOINTS ||
@@ -147,6 +152,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         m1Params.i_cos[i] = params[robotName]["i_cos"][i].as<double>();
         m1Params.t_bias[i] = params[robotName]["t_bias"][i].as<double>();
         m1Params.force_sensor_scale_factor[i] = params[robotName]["force_sensor_scale_factor"][i].as<double>();
+        m1Params.force_sensor_offset[i] = params[robotName]["force_sensor_offset"][i].as<double>();
         m1Params.ff_ratio[i] = params[robotName]["ff_ratio"][i].as<double>();
         m1Params.kp[i] = params[robotName]["kp"][i].as<double>();
         m1Params.ki[i] = params[robotName]["ki"][i].as<double>();
@@ -194,11 +200,20 @@ void RobotM1::applyCalibration() {
 }
 
 bool RobotM1::calibrateForceSensors() {
-    if(m1ForceSensor->calibrate()){
-        spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing of force sensors are successfully completed.");
+
+    //if(m1ForceSensor->calibrate()){
+    //    spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing of force sensors are successfully completed.");
+    //    return true;
+    //} else{
+    //    spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing failed.");
+    //    return false;
+    //}
+
+    if(m1ForceSensor->sendInternalCalibrateSDOMessage()){
+        spdlog::info("[RobotM1::calibrateForceSensors]: Force sensor zeroing completed. Sensor value is {}", m1ForceSensor->getSensorValue());
         return true;
     } else{
-        spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing failed.");
+        spdlog::info("[RobotM1::calibrateForceSensors]: Zeroing failed.");
         return false;
     }
 }
@@ -218,10 +233,9 @@ void RobotM1::updateRobot() {
         dq(i) = ((JointM1 *)joints[i])->getVelocity();
         tau(i) = ((JointM1 *)joints[i])->getTorque();
         tau_s(i) = m1ForceSensor[i].getForce();
-        std::cout << std::setprecision(4) << std::fixed;
-        //std::cout << tau_s(i) << std::endl;
+        std::cout << std::setprecision(4) << tau_s(i) << std::endl;
         // compensate inertia for torque sensor measurement
-        tau_s(i) =  tau_s(i) + i_sin_*sin(q(i)+t_bias_) + i_cos_*cos(q(i)+t_bias_);
+        //tau_s(i) =  tau_s(i) + i_sin_*sin(q(i)+t_bias_) + i_cos_*cos(q(i)+t_bias_);
     }
     if (safetyCheck() != SUCCESS) {
         status = R_OUTSIDE_LIMITS;
@@ -494,7 +508,7 @@ setMovementReturnCode_t RobotM1::setJointVel(JointVec vel_d) {
 
 setMovementReturnCode_t RobotM1::setJointTor(JointVec tor_d) {
     // filter torque commands with previous command
-    // tau_motor(0) = (tor_d(0)+tau_motor(0)*2.0)/3.0;
+    tau_motor(0) = (tor_d(0)+tau_motor(0)*2.0)/3.0;
     return applyTorque(tor_d);
 }
 

@@ -34,7 +34,7 @@ Joint::Joint(int jointID, double jointMin, double jointMax, double q0, Drive *jo
     velocity = 0;
     torque = 0;
     this->drive = jointDrive;
-    calibrated = false;
+    calibrated = false; // TODO: check SDO state to see if setPositionOffset has been called?
 }
 
 Joint::~Joint() {

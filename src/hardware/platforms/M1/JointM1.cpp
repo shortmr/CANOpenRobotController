@@ -75,7 +75,8 @@ int JointM1::jointTorqueToDriveUnit(double jointValue) {
 }
 
 bool JointM1::updateValue() {
-    position = driveUnitToJointPosition(drive->getPos()) - q0;
+//    position = driveUnitToJointPosition(drive->getPos()) - q0;
+    position = driveUnitToJointPosition(drive->getPos());
     velocity = driveUnitToJointVelocity(drive->getVel());
     torque = driveUnitToJointTorque(drive->getTorque());
     return true;
@@ -178,4 +179,11 @@ bool JointM1::setDigitalOut(int digital_out) {
 
 int JointM1::getDigitalIn() {
     return drive->getDigitalIn();
+}
+
+void JointM1::setPositionOffset(double offset) {
+    ((KincoDrive *)drive)->setPositionOffset(jointPositionToDriveUnit(offset));
+//    q0 = driveUnitToJointPosition(drive->getPos());
+    q0 = 0.0;
+    calibrated = true;
 }

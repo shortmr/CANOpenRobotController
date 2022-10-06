@@ -20,6 +20,8 @@ void MultiM1MachineROS::initialize() {
     jointVelocityCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointTorqueCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     interactionTorqueCommand_ = Eigen::VectorXd(M1_NUM_INTERACTION);
+
+    calibrateForceSensorsService_ = nodeHandle_->advertiseService("calibrate_force_sensors", &MultiM1MachineROS::calibrateForceSensorsCallback, this);
 }
 
 void MultiM1MachineROS::update() {
@@ -76,4 +78,10 @@ void MultiM1MachineROS::interactionTorqueCommandCallback(const std_msgs::Float64
     for(int i=0; i<M1_NUM_JOINTS; i++){
         interactionTorqueCommand_[i] = msg.data[i];
     }
+}
+
+bool MultiM1MachineROS::calibrateForceSensorsCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
+
+    res.success = robot_->calibrateForceSensors();
+    return true;
 }

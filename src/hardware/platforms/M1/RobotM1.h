@@ -53,6 +53,7 @@ struct RobotParameters {
     Eigen::VectorXd i_cos; // inertia for cosine term
     Eigen::VectorXd t_bias; // theta bias from vertical axis [rad]
     Eigen::VectorXd force_sensor_scale_factor; // scale factor for force calibration
+    Eigen::VectorXd force_sensor_offset; // offset for torque sensor
     Eigen::VectorXd ff_ratio; // scale factor for feedforward compensation
     Eigen::VectorXd kp; // proportional term of PID controller
     Eigen::VectorXd ki; // integral term of PID controller

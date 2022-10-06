@@ -25,7 +25,7 @@ class FourierForceSensor : public InputDevice {
      * Construct a new FourierForceSensor object
      *
      */
-    FourierForceSensor(int sensor_can_node_ID, double scale_factor = 1.0, double calib_time = 2.0);
+    FourierForceSensor(int sensor_can_node_ID, double scale_factor = 1.0, double calib_time = 2.0, double calib_offset = 1400);
 
     /**
      * Configure Master (controller) side PDO for force sensor reading.
@@ -47,15 +47,21 @@ class FourierForceSensor : public InputDevice {
     bool calibrate(double calib_time = -1);
 
     /**
-    * Return true if calibraated (zeroed).
+    * Return true if calibrated (zeroed).
     */
     bool isCalibrated() { return calibrated; }
 
     /**
-    * Returns the lastest updated sensor reading in N.
+    * Returns the latest updated sensor reading in N.
     *
     */
     double getForce();
+
+    /**
+    * Returns the latest updated raw sensor reading.
+    *
+    */
+    double getSensorValue();
 
     /**
     * send SDO command to shift the measurement to a value around 1500.
@@ -65,7 +71,7 @@ class FourierForceSensor : public InputDevice {
     bool sendInternalCalibrateSDOMessage();
 
   protected:
-    virtual double sensorValueToNewton(int sensorValue);
+    virtual double sensorValueToNewton(double sensorValue);
 
   private:
     int sensorNodeID;

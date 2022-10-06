@@ -33,9 +33,10 @@ void MultiControllerState::entry(void) {
     }
 
     robot_->initTorqueControl();
-    robot_->applyCalibration();
-    robot_->calibrateForceSensors();
     robot_->tau_spring[0] = 0;   // for ROS publish only
+
+    //robot_->applyCalibration();
+    //robot_->calibrateForceSensors();
 
     // Transparency vectors
     q = Eigen::VectorXd::Zero(1);
@@ -50,9 +51,13 @@ void MultiControllerState::entry(void) {
     delta_error = 0;
     integral_error = 0;
     tick_count = 0;
+    cali_tau_thresh = -13;
+    cali_vel_thresh = 2;
+
     controller_mode_ = -1;
 //    cut_off_ = 6.0;
 
+    // System identification
     cycle = 0;
     id_mode = 1; // sine = 1; ramp = 2
     counter = 0;
@@ -82,7 +87,7 @@ void MultiControllerState::during(void) {
     lastTime = now;
 
     tick_count = tick_count + 1;
-    if (controller_mode_ == 0) {  // Homing
+    if (controller_mode_ == 0) {  // homing
         if (cali_stage == 1) {
             // set calibration velocity
             JointVec dq_t;
@@ -93,9 +98,8 @@ void MultiControllerState::during(void) {
 
             // monitor velocity and interaction torque
             dq= robot_->getJointVel();
-            //tau = robot_->getJointTor_s(); //TODO: monitor motor torque instead of sensor torque
-            tau = robot_->getJointTor(); // (tau(0) <= -13)
-            if ((dq(0) <= 2) & (tau(0) <= -13)) {
+            tau = robot_->getJointTor();
+            if ((dq(0) <= cali_vel_thresh) & (tau(0) <= cali_tau_thresh)) {
                 cali_velocity = 0;
                 robot_->applyCalibration();
                 robot_->initPositionControl();
@@ -104,15 +108,22 @@ void MultiControllerState::during(void) {
                 robot_->printJointStatus();
             }
         } else if (cali_stage == 2) {
-            // set position control: 16 is vertical for old M1s, 20 is vertical for new
-            q(0) = v_bias; //16
-            if(robot_->setJointPos(q) != SUCCESS){
+            // set position control to vertical
+            JointVec q_t;
+            q_t(0) = v_bias;
+            if(robot_->setJointPos(q_t) != SUCCESS){
                 std::cout << "Error: " << std::endl;
             }
-            robot_->m1ForceSensor->calibrate();
-            robot_->printJointStatus();
-            std::cout << "Calibration done!" << std::endl;
-            cali_stage = 3;
+
+            // monitor position
+            q = robot_->getJointPos();
+            if (abs(q(0)-v_bias)<0.001){
+                std::cout << "Calibration done!" << std::endl;
+                cali_stage = 3;
+            }
+            else {
+                robot_->printJointStatus();
+            }
         }
     }
     else if (controller_mode_ == 1) {  // zero torque mode
@@ -206,7 +217,7 @@ void MultiControllerState::during(void) {
         if (fixed_stage == 1) {
             // set calibration velocity
             JointVec dq_t;
-            dq_t(0) = cali_velocity; // calibration velocity
+            dq_t(0) = cali_velocity;
             if (robot_->setJointVel(dq_t) != SUCCESS) {
                 std::cout << "Error: " << std::endl;
             }
@@ -214,9 +225,8 @@ void MultiControllerState::during(void) {
             // monitor velocity and joint torque
             dq = robot_->getJointVel();
             tau = robot_->getJointTor();
-            if ((dq(0) <= 2) & (tau(0) <= -13)) {
+            if ((dq(0) <= cali_vel_thresh) & (tau(0) <= cali_tau_thresh)) {
                 cali_velocity = 0;
-                robot_->applyCalibration();
                 robot_->initPositionControl();
                 fixed_stage = 2;
             } else {
@@ -411,7 +421,7 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         if (controller_mode_ == 6) {
             robot_->initVelocityControl();
             fixed_stage = 1;
-            fixed_q = 45; // force calibration = 90+v_bias, trajectory bias = 45
+            fixed_q = 90+v_bias; // force calibration = 90+v_bias, trajectory bias = 45
             cali_velocity = -30;
         }
         if (controller_mode_ == 7) {
@@ -426,6 +436,8 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         }
         if (controller_mode_ == 11) time0 = std::chrono::steady_clock::now();
         if (controller_mode_ == 11) robot_->setDigitalOut(0);
+
+        if (controller_mode_ == 12) robot_->setDigitalOut(0);
     }
 
     return;

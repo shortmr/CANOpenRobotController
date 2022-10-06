@@ -17,6 +17,7 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <std_msgs/String.h>
+#include <std_srvs/Trigger.h>
 
 #include "RobotM1.h"
 #include "ros/ros.h"  // This state machine requires ROS
@@ -55,6 +56,9 @@ private:
     geometry_msgs::WrenchStamped interactionWrenchMsg_;
     RobotM1 *robot_;
 
+    ros::ServiceServer calibrateForceSensorsService_;
+    bool calibrateForceSensorsCallback(std_srvs::Trigger::Request& req,
+                                       std_srvs::Trigger::Response& res);
 };
 
 #endif  //SRC_MultiM1MachineROS_H

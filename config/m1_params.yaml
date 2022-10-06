@@ -5,10 +5,11 @@ m1_x:
   c0: [2.181] # coulomb friction constant of joint [Nm]
   c1: [2.850] # viscous friction constant of joint [Nm/s]
   c2: [0] # friction square root term
-  i_sin: [0.99] # inertia for sine term
-  i_cos: [0.22] # inertia for cosine term
+  i_sin: [0.84] # inertia for sine term
+  i_cos: [0.23] # inertia for cosine term
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
   force_sensor_scale_factor: [0.0738] # scale factor for force calibration
+  force_sensor_offset: [1500] # calibration offset for force sensor
   ff_ratio: [0.75] # scale factor for feedforward compensation
   kp: [0.96] # proportional term of PID controller
   ki: [0.17] # integral term of PID controller
@@ -25,10 +26,11 @@ m1_y:
   c0: [1.6808] # coulomb friction constant of joint [Nm]
   c1: [2.2137] # viscous friction constant of joint [Nm/s]
   c2: [0] # 1.2532 friction square root term
-  i_sin: [0.85] # inertia for sine term
-  i_cos: [0.3] # inertia for cosine term
+  i_sin: [0.89] # inertia for sine term
+  i_cos: [0.25] # inertia for cosine term
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-  force_sensor_scale_factor: [0.10] # scale factor for force calibration
+  force_sensor_scale_factor: [0.0744] # scale factor for force calibration
+  force_sensor_offset: [1500] # calibration offset for force sensor
   ff_ratio: [0.7] # scale factor for feedforward compensation
   kp: [1.08] # proportional term of PID controller
   ki: [0.17] # integral term of PID controller
@@ -49,6 +51,7 @@ m1_y:
 #  i_cos: [0.22] # inertia for cosine term
 #  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
 #  force_sensor_scale_factor: [0.0746] # scale factor for force calibration
+#  force_sensor_offset: [1500] # calibration offset for force sensor
 #  ff_ratio: [0.75] # scale factor for feedforward compensation
 #  kp: [0.96] # proportional term of PID controller
 #  ki: [0.17] # integral term of PID controller

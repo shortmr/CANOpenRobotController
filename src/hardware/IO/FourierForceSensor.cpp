@@ -1,11 +1,11 @@
 #include "FourierForceSensor.h"
 
-FourierForceSensor::FourierForceSensor(int sensor_can_node_ID, double scale_factor, double calib_time): InputDevice(),
-                                                                                                        sensorNodeID(sensor_can_node_ID),
-                                                                                                        scaleFactor(scale_factor),
-                                                                                                        calibrated(false),
-                                                                                                        calibrationTime(calib_time),
-                                                                                                        calibrationOffset(1500){
+FourierForceSensor::FourierForceSensor(int sensor_can_node_ID, double scale_factor, double calib_time, double calib_offset): InputDevice(),
+                                                                                                                             sensorNodeID(sensor_can_node_ID),
+                                                                                                                             scaleFactor(scale_factor),
+                                                                                                                             calibrated(false),
+                                                                                                                             calibrationTime(calib_time),
+                                                                                                                             calibrationOffset(calib_offset){
 }
 
 bool FourierForceSensor::configureMasterPDOs() {
@@ -55,8 +55,14 @@ double FourierForceSensor::getForce() {
     return forceReading;
 }
 
-double FourierForceSensor::sensorValueToNewton(int sensorValue) {
+double FourierForceSensor::getSensorValue() {
 
+    return (double)rawData[0];
+}
+
+double FourierForceSensor::sensorValueToNewton(double sensorValue) {
+    //std::cout<<"sensorValue: "<<sensorValue<<std::endl;
+    //std::cout<<"calibrationOffset: "<<calibrationOffset<<std::endl;
     return (sensorValue - calibrationOffset) * scaleFactor;
 }
 
@@ -79,5 +85,6 @@ bool FourierForceSensor::sendInternalCalibrateSDOMessage() {
     }
 
     sleep(1.5); // this is required because after calibration command, sensor values do not get update around 1.2 seconds
+    return true;
 }
 

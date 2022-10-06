@@ -86,6 +86,16 @@ class JointM1 : public Joint {
            * \return Digital in state from the motor drive
            */
     virtual int getDigitalIn();
+
+    /**
+          * \brief Set the current position as offset
+          *
+          * /param offset, joint position value to be at the homing position [rad]
+          *
+         * \return true if successful
+         * \return false if not
+         */
+    void setPositionOffset(double offset);
 };
 
 #endif

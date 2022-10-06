@@ -90,7 +90,5 @@ bool CopleyDrive::setPositionOffset(int offset) {
     sendSDOMessages(generatePositionOffsetSDO(offset));
 
     return true;
-
-
 }
 

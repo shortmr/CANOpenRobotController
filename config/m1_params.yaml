@@ -1,17 +1,17 @@
 config_flag: false # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
 
 m1_x:
-  id: ['m1_x new']
+  id: ['V2R01']
   c0: [2.181] # coulomb friction constant of joint [Nm]
   c1: [2.850] # viscous friction constant of joint [Nm/s]
   c2: [0] # friction square root term
-  i_sin: [0.84] # inertia for sine term
-  i_cos: [0.23] # inertia for cosine term
+  i_sin: [0.47] # inertia for sine term (0.84 with previous joint limit)
+  i_cos: [0.22] # inertia for cosine term (0.23 with previous joint limit)
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-  force_sensor_scale_factor: [0.0738] # scale factor for force calibration
+  force_sensor_scale_factor: [0.074] # scale factor for force calibration
   force_sensor_offset: [1500] # calibration offset for force sensor
-  ff_ratio: [0.75] # scale factor for feedforward compensation
-  kp: [0.96] # proportional term of PID controller
+  ff_ratio: [0.72] # scale factor for feedforward compensation
+  kp: [1.08] # proportional term of PID controller
   ki: [0.17] # integral term of PID controller
   kd: [0] # derivative term of PID controller
   vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
@@ -22,16 +22,16 @@ m1_x:
   spk: [0] # spring stiffness (not implemented) [Nm/rad]
 
 m1_y:
-  id: ['m1_y old']
+  id: ['V1R02']
   c0: [1.6808] # coulomb friction constant of joint [Nm]
   c1: [2.2137] # viscous friction constant of joint [Nm/s]
   c2: [0] # 1.2532 friction square root term
   i_sin: [0.89] # inertia for sine term
   i_cos: [0.25] # inertia for cosine term
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-  force_sensor_scale_factor: [0.0744] # scale factor for force calibration
+  force_sensor_scale_factor: [0.074] # scale factor for force calibration
   force_sensor_offset: [1500] # calibration offset for force sensor
-  ff_ratio: [0.7] # scale factor for feedforward compensation
+  ff_ratio: [0.65] # scale factor for feedforward compensation
   kp: [1.08] # proportional term of PID controller
   ki: [0.17] # integral term of PID controller
   kd: [0] # derivative term of PID controller
@@ -42,15 +42,36 @@ m1_y:
   tick_max: [60.0] # counter for integral term reset [s]
   spk: [0] # spring stiffness (not implemented) [Nm/rad]
 
-# m1_y:
-#  id: ['m1_y new']
+#m1_x:
+#  id: ['V1R01']
 #  c0: [2.134] # coulomb friction constant of joint [Nm]
 #  c1: [1.297] # viscous friction constant of joint [Nm/s]
 #  c2: [0] # friction square root term
 #  i_sin: [0.99] # inertia for sine term
 #  i_cos: [0.22] # inertia for cosine term
 #  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-#  force_sensor_scale_factor: [0.0746] # scale factor for force calibration
+#  force_sensor_scale_factor: [0.074] # scale factor for force calibration
+#  force_sensor_offset: [1500] # calibration offset for force sensor
+#  ff_ratio: [0.75] # scale factor for feedforward compensation
+#  kp: [0.96] # proportional term of PID controller
+#  ki: [0.17] # integral term of PID controller
+#  kd: [0.01] # derivative term of PID controller
+#  vel_thresh: [7.0] # velocity threshold for implementing dynamic friction [deg/s]
+#  tau_thresh: [0.2] # torque threshold for implementing static friction term [Nm]
+#  lowpass_cutoff_freq: [30.0] # cutoff frequency for interaction torque filter [Hz]
+#  motor_torque_cutoff_freq: [50.0] # cutoff frequency for motor torque command filter [Hz]
+#  tick_max: [60.0] # counter for integral term reset [s]
+#  spk: [0] # spring stiffness (not implemented) [Nm/rad]
+
+#m1_y:
+#  id: ['V2R02']
+#  c0: [2.134] # coulomb friction constant of joint [Nm]
+#  c1: [1.297] # viscous friction constant of joint [Nm/s]
+#  c2: [0] # friction square root term
+#  i_sin: [0.99] # inertia for sine term
+#  i_cos: [0.22] # inertia for cosine term
+#  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
+#  force_sensor_scale_factor: [0.074] # scale factor for force calibration
 #  force_sensor_offset: [1500] # calibration offset for force sensor
 #  ff_ratio: [0.75] # scale factor for feedforward compensation
 #  kp: [0.96] # proportional term of PID controller

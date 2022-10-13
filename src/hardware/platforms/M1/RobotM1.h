@@ -213,6 +213,10 @@ public:
     *  q=qcalibration in current configuration.
     */
     void applyCalibration();
+    /**
+    * \brief Send internal calibration command to torque sensor
+    *
+    */
     bool calibrateForceSensors();
 
     bool isCalibrated() {return calibrated;}
@@ -285,6 +289,8 @@ public:
     void setVelThresh(double velThresh);
     void setTorqueThresh(double torqueThresh);
     void setMotorTorqueCutOff(double cutOff);
+    void setStaticFriction(double c0);
+    void setDynamicFriction(double c1);
 
     void printStatus();
     void printJointStatus();

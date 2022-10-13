@@ -130,7 +130,7 @@
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>M1_X</title>
+                    <title>Interaction torques</title>
                 </column_0>
                 <column_1>
                     <axes>
@@ -255,7 +255,7 @@
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>M1_Y</title>
+                    <title>m1_y</title>
                 </column_1>
             </row_0>
             <row_1>
@@ -324,7 +324,7 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Untitled Curve</title>
+                            <title>y</title>
                         </curve_0>
                     </curves>
                     <legend>
@@ -398,14 +398,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Velocity</title>
+                            <title>y</title>
                         </curve_0>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>M1_Y</title>
+                    <title>Velocity</title>
                 </column_1>
             </row_1>
         </plots>

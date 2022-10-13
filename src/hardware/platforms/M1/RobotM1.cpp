@@ -10,7 +10,7 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     //Define the robot structure: each joint with limits and drive - TMH
     // JOINT 0 - the only joint in the case of M1
     max_speed(0) = 360; // {radians}
-    tau_max(0) = 1.9 * 30;  // {Nm} 1.9 * 23
+    tau_max(0) = 1.9 * 23;  // {Nm}
     LinkLengths(0) = 0.1;   // Link lengths used for kinematic models (in m)
     LinkMasses(0) = 0.5;    // Link masses used for gravity compensation (in kg)
     CoGLengths(0) = 0.08;    // Length along link(s) to the Center og Gravity
@@ -169,13 +169,15 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     i_sin_ = m1Params.i_sin[0];
     i_cos_ = m1Params.i_cos[0];
     t_bias_ = m1Params.t_bias[0];
-    f_s_ = m1Params.c0[0];
-    f_d_ = m1Params.c1[0];
+    //f_s_ = m1Params.c0[0];
+    //f_d_ = m1Params.c1[0];
     c2_ = m1Params.c2[0];
     if (!m1Params.configFlag) {
         velThresh_ = m1Params.vel_thresh[0] * d2r;
         torqueThresh_ = m1Params.tau_thresh[0];
         motorTorqueCutOff_ = m1Params.motor_torque_cutoff_freq[0];
+        f_s_ = m1Params.c0[0];
+        f_d_ = m1Params.c1[0];
     }
     return true;
 }
@@ -212,14 +214,13 @@ bool RobotM1::calibrateForceSensors() {
     if(m1ForceSensor->sendInternalCalibrateSDOMessage()){
         spdlog::info("[RobotM1::calibrateForceSensors]: Force sensor zeroing completed. Sensor value is {}", m1ForceSensor->getSensorValue());
         return true;
-    } else{
+    } else {
         spdlog::info("[RobotM1::calibrateForceSensors]: Zeroing failed.");
         return false;
     }
 }
 
 void RobotM1::updateRobot() {
-//    std::cout << "RobotM1::updateRobot()" << std::endl;
     Robot::updateRobot();   // Trigger RT data update at the joint level
     // Gather joint data at the Robot level
     //TODO: we should probably do this with all PDO data, if we are setting it up
@@ -233,9 +234,11 @@ void RobotM1::updateRobot() {
         dq(i) = ((JointM1 *)joints[i])->getVelocity();
         tau(i) = ((JointM1 *)joints[i])->getTorque();
         tau_s(i) = m1ForceSensor[i].getForce();
-        std::cout << std::setprecision(4) << tau_s(i) << std::endl;
+
+        //std::cout << std::setprecision(4) << tau_s(i) << std::endl;
+
         // compensate inertia for torque sensor measurement
-        //tau_s(i) =  tau_s(i) + i_sin_*sin(q(i)+t_bias_) + i_cos_*cos(q(i)+t_bias_);
+        tau_s(i) =  tau_s(i) + i_sin_*sin(q(i)+t_bias_) + i_cos_*cos(q(i)+t_bias_);
     }
     if (safetyCheck() != SUCCESS) {
         status = R_OUTSIDE_LIMITS;
@@ -272,7 +275,7 @@ void RobotM1::printStatus() {
 }
 
 void RobotM1::printJointStatus() {
-    std::cout << std::setprecision(2) << std::fixed;
+    std::cout << std::setprecision(2);
     std::cout << "q=[ " << getJointPos().transpose() << " ]\t";
     std::cout << "dq=[ " << getJointVel().transpose() << " ]\t";
     std::cout << "tau=[ " << getJointTor().transpose() << " ]\t";
@@ -580,6 +583,18 @@ void RobotM1::setTorqueThresh(double torqueThresh) {
 void RobotM1::setMotorTorqueCutOff(double cutOff) {
     if (m1Params.configFlag) {
         motorTorqueCutOff_ = cutOff;
+    }
+}
+
+void RobotM1::setStaticFriction(double c0) {
+    if (m1Params.configFlag) {
+        f_s_ = c0;
+    }
+}
+
+void RobotM1::setDynamicFriction(double c1) {
+    if (m1Params.configFlag) {
+        f_d_ = c1;
     }
 }
 

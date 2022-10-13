@@ -81,7 +81,7 @@ void MultiM1MachineROS::interactionTorqueCommandCallback(const std_msgs::Float64
 }
 
 bool MultiM1MachineROS::calibrateForceSensorsCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
-
+    // only use when shaft is not bearing load (pedal)
     res.success = robot_->calibrateForceSensors();
     return true;
 }

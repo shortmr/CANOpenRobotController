@@ -10,7 +10,7 @@ m1_x:
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
   force_sensor_scale_factor: [0.074] # scale factor for force calibration
   force_sensor_offset: [1500] # calibration offset for force sensor
-  ff_ratio: [0.72] # scale factor for feedforward compensation
+  ff_ratio: [0.74] # scale factor for feedforward compensation
   kp: [1.08] # proportional term of PID controller
   ki: [0.17] # integral term of PID controller
   kd: [0] # derivative term of PID controller
@@ -31,7 +31,7 @@ m1_y:
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
   force_sensor_scale_factor: [0.074] # scale factor for force calibration
   force_sensor_offset: [1500] # calibration offset for force sensor
-  ff_ratio: [0.65] # scale factor for feedforward compensation
+  ff_ratio: [0.6] # scale factor for feedforward compensation
   kp: [1.08] # proportional term of PID controller
   ki: [0.17] # integral term of PID controller
   kd: [0] # derivative term of PID controller

@@ -30,6 +30,7 @@ public:
     void update(void);
     void publishJointStates(void);
     void publishInteractionForces(void);
+    void publishInteractionMVCArduino(void);
     void initialize();
     void setNodeHandle(ros::NodeHandle& nodeHandle);
 
@@ -37,6 +38,7 @@ public:
 
     Eigen::VectorXd jointPositionCommand_, jointVelocityCommand_, jointTorqueCommand_;
     Eigen::VectorXd interactionTorqueCommand_;
+    Eigen::VectorXd qFixed_;
 
 private:
     // Subscriber and callback func for joint command subscription
@@ -54,11 +56,23 @@ private:
     // Publisher and message for interaction wrench publication
     ros::Publisher interactionWrenchPublisher_;
     geometry_msgs::WrenchStamped interactionWrenchMsg_;
+
+    // Publisher and message for arduino scaled force publication
+    ros::Publisher mvcArduinoPublisher_;
+    geometry_msgs::WrenchStamped mvcArduinoMsg_;
+
     RobotM1 *robot_;
 
     ros::ServiceServer calibrateForceSensorsService_;
     bool calibrateForceSensorsCallback(std_srvs::Trigger::Request& req,
                                        std_srvs::Trigger::Response& res);
+    ros::ServiceServer setFixedAngleService_;
+    bool setFixedAngleCallback(std_srvs::Trigger::Request& req,
+                               std_srvs::Trigger::Response& res);
+
+    ros::ServiceServer setTorqueOffsetService_;
+    bool setTorqueOffsetCallback(std_srvs::Trigger::Request& req,
+                               std_srvs::Trigger::Response& res);
 };
 
 #endif  //SRC_MultiM1MachineROS_H

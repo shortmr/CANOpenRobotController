@@ -222,7 +222,35 @@ void MultiControllerState::during(void) {
             robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
         }
     }
-    else if(controller_mode_ == 7) {  // system identification - torque mode
+    else if (controller_mode_ == 7) {  // fixed angle - zero velocity mode (slider angle selection)
+        if (fixed_stage == 2) {
+            // set fixed neutral position
+            JointVec q_t;
+            q_t(0) = slider_q;
+            if(robot_->setJointPos(q_t) != SUCCESS){
+                std::cout << "Error: " << std::endl;
+            }
+
+            // monitor position
+            q = robot_->getJointPos();
+            if (abs(q(0)-slider_q)<0.001){
+                robot_->initVelocityControl();
+                std::cout << "Holding user position with zero velocity" << std::endl;
+                fixed_stage = 3;
+            }
+            else {
+                robot_->printJointStatus();
+            }
+        } else if (fixed_stage == 3) {
+            // apply zero velocity mode
+            robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+        }
+
+        //filter interaction torque for arduino publishing
+        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
+    }
+    else if(controller_mode_ == 8) {  // system identification - torque mode
         counter = counter + 1;
         if(counter%100==1) {
             robot_->printJointStatus();
@@ -311,29 +339,24 @@ void MultiControllerState::during(void) {
             std::cout << "Error: " << std::endl;
         }
     }
-    else if (controller_mode_ == 11) { // Send high for external trigger with EMG
+    else if (controller_mode_ == 11) { // Send high for external trigger with NI DAQ
 
         double time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time0).count()/1000.0;
-
-        if(robot_->getRobotName() == m1_trigger){
-            if(time > 2.0){
-                if (digitalOutValue_ == 1) {
-                    digitalOutValue_ = 0;
-                    robot_->setDigitalOut(digitalOutValue_);
-                }
+        if(time > 2.0){
+            if (digitalOutValue_ == 1) {
+                digitalOutValue_ = 0;
+                robot_->setDigitalOut(digitalOutValue_);
             }
-            else if(time > 1.0){
-                if (digitalOutValue_ == 0) {
-                    digitalOutValue_ = 1;
-                    robot_->setDigitalOut(digitalOutValue_);
-                }
+        }
+        else if(time > 1.0){
+            if (digitalOutValue_ == 0) {
+                digitalOutValue_ = 1;
+                robot_->setDigitalOut(digitalOutValue_);
             }
         }
     }
     // Read setDigitalOut signal
-    //if(robot_->getRobotName() == m1_trigger){
-    //   digitalInValue_ = robot_->getDigitalIn();
-    //}
+    // digitalInValue_ = robot_->getDigitalIn();
 }
 
 void MultiControllerState::exit(void) {
@@ -367,6 +390,15 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         std::cout << "Dynamic reconfigure parameter setting is disabled (set configFlag to true to enable)" << std::endl;
     }
 
+    slider_angle_ = config.slider_angle;
+
+    // arduino stimulation parameters
+    robot_->setMaxDF(config.max_torque_df);
+    robot_->setMaxPF(config.max_torque_pf);
+    robot_->setStimDF(config.stim_amp_df);
+    robot_->setStimPF(config.stim_amp_pf);
+    robot_->setStimCalibrate(config.stim_calibrate);
+
     // Change control mode on RQT GUI change
     if(controller_mode_!=config.controller_mode)
     {
@@ -389,10 +421,15 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         if (controller_mode_ == 6) {
             robot_->initVelocityControl();
             fixed_stage = 1;
-            fixed_q = 45; // force calibration = 90+v_bias, trajectory bias = 45
+            fixed_q = 45; // trajectory bias = 45
             cali_velocity = -30;
         }
         if (controller_mode_ == 7) {
+            robot_->initPositionControl();
+            fixed_stage = 2;
+            slider_q = slider_angle_; // get updated slider value (force calibration = 90+v_bias)
+        }
+        if (controller_mode_ == 8) {
             robot_->initTorqueControl();
             freq = 0.1;
             mag = 3;   // magnitude for sine wave (without compensation = 3, with compensation = 0.6)

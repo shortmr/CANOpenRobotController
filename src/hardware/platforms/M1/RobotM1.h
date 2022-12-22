@@ -149,6 +149,10 @@ public:
     RobotState status;
     int mode;
 
+    double tau_offset_, tau_df_, tau_pf_;
+    double stim_df_, stim_pf_;
+    bool stim_calib_;
+
     JointVec tau_spring;
 
     bool initMonitoring();
@@ -291,6 +295,12 @@ public:
     void setMotorTorqueCutOff(double cutOff);
     void setStaticFriction(double c0);
     void setDynamicFriction(double c1);
+    void setMaxDF(double tau_filt);
+    void setMaxPF(double tau_filt);
+    void setStimDF(double stim_amp);
+    void setStimPF(double stim_amp);
+    void setStimCalibrate(bool stim_calib);
+    double setTorqueOffset();
 
     void printStatus();
     void printJointStatus();
@@ -304,6 +314,7 @@ public:
     JointVec getJointVel();
     JointVec getJointTor();
     JointVec& getJointTor_s();
+    JointVec& getJointTor_s_filt();
     JointVec& getJointTor_cmd();
 
     double filter_q(double alpha_q);

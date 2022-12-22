@@ -113,6 +113,9 @@ class KincoDrive : public Drive {
 
     bool resetError();
 
+    UNSIGNED16 digitalIn=0;
+    UNSIGNED16 digitalOut=0;
+
     std::vector<std::string> writeSDOMessage(int address, int value);
     std::vector<std::string> readSDOMessage(int address, int len);
 

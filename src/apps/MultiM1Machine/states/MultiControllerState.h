@@ -47,6 +47,8 @@ public:
     // Fixed neutral terms
     int fixed_stage;
     double fixed_q; //neutral position in degrees
+    double slider_q; //user selected position in degrees plus bias
+    double slider_angle_; //user selected position in degrees
 
     // System identification with torque control
     int cycle; // cycle counter for system identification
@@ -106,7 +108,6 @@ public:
     // External trigger
     int digitalInValue_;
     int digitalOutValue_;
-    std::string m1_trigger = "m1_y";
 
     RobotParameters m1Params;
 private:

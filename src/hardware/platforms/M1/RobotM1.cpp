@@ -179,6 +179,12 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         f_s_ = m1Params.c0[0];
         f_d_ = m1Params.c1[0];
     }
+    tau_offset_ = 0;
+    tau_df_ = 1;
+    tau_pf_ = 1;
+    stim_df_ = 0;
+    stim_pf_ = 0;
+    stim_calib_ = false;
     return true;
 }
 
@@ -501,6 +507,10 @@ JointVec& RobotM1::getJointTor_s() {
     return tau_sc;
 }
 
+JointVec& RobotM1::getJointTor_s_filt() {
+    return tau_s_filt;
+}
+
 setMovementReturnCode_t RobotM1::setJointPos(JointVec pos_d) {
     return applyPosition(pos_d*d2r);
 }
@@ -596,6 +606,31 @@ void RobotM1::setDynamicFriction(double c1) {
     if (m1Params.configFlag) {
         f_d_ = c1;
     }
+}
+
+void RobotM1::setMaxDF(double tau_filt) {
+    tau_df_ = tau_filt;
+}
+
+void RobotM1::setMaxPF(double tau_filt) {
+    tau_pf_ = tau_filt;
+}
+
+void RobotM1::setStimDF(double stim_amp) {
+    stim_df_ = stim_amp;
+}
+
+void RobotM1::setStimPF(double stim_amp) {
+    stim_pf_ = stim_amp;
+}
+
+void RobotM1::setStimCalibrate(bool stim_calib) {
+    stim_calib_ = stim_calib;
+}
+
+double RobotM1::setTorqueOffset() {
+    tau_offset_ = tau_s_filt(0);
+    return tau_offset_;
 }
 
 short RobotM1::sign(double val) { return (val > 0) ? 1 : ((val < 0) ? -1 : 0); }

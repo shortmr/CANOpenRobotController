@@ -281,7 +281,7 @@ void RobotM1::printStatus() {
 }
 
 void RobotM1::printJointStatus() {
-    std::cout << std::setprecision(2);
+    std::cout << std::setprecision(3) << std::fixed;
     std::cout << "q=[ " << getJointPos().transpose() << " ]\t";
     std::cout << "dq=[ " << getJointVel().transpose() << " ]\t";
     std::cout << "tau=[ " << getJointTor().transpose() << " ]\t";

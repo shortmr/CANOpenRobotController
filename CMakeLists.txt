@@ -114,6 +114,7 @@ if(USE_ROS)
 				geometry_msgs
 				multi_robot_interaction
 				dynamic_reconfigure
+				rosserial_python
         )
 		if(SIM)
 			find_package(catkin REQUIRED COMPONENTS
@@ -141,6 +142,7 @@ if(USE_ROS)
 					geometry_msgs
 					multi_robot_interaction
 					dynamic_reconfigure
+					rosserial_python
 				#  DEPENDS system_lib
 		)
 

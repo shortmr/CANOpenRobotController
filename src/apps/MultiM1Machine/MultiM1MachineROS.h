@@ -15,6 +15,7 @@
 // msg types
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <geometry_msgs/Point32.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <std_msgs/String.h>
 #include <std_srvs/Trigger.h>
@@ -30,7 +31,7 @@ public:
     void update(void);
     void publishJointStates(void);
     void publishInteractionForces(void);
-    void publishInteractionMVCArduino(void);
+    void publishInteractionScaled(void);
     void initialize();
     void setNodeHandle(ros::NodeHandle& nodeHandle);
 
@@ -58,8 +59,8 @@ private:
     geometry_msgs::WrenchStamped interactionWrenchMsg_;
 
     // Publisher and message for arduino scaled force publication
-    ros::Publisher mvcArduinoPublisher_;
-    geometry_msgs::WrenchStamped mvcArduinoMsg_;
+    ros::Publisher interactionScaledPublisher_;
+    geometry_msgs::Point32 interactionScaledMsg_;
 
     RobotM1 *robot_;
 

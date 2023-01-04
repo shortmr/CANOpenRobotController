@@ -15,7 +15,7 @@ void MultiM1MachineROS::initialize() {
     interactionTorqueCommandSubscriber_ = nodeHandle_->subscribe("interaction_effort_commands", 1, &MultiM1MachineROS::interactionTorqueCommandCallback, this);
     jointStatePublisher_ = nodeHandle_->advertise<sensor_msgs::JointState>("joint_states", 10);
     interactionWrenchPublisher_ = nodeHandle_->advertise<geometry_msgs::WrenchStamped>("interaction_wrench", 10);
-    mvcArduinoPublisher_ = nodeHandle_->advertise<geometry_msgs::WrenchStamped>("interaction_mvc", 10);
+    interactionScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("interaction_mvc", 10);
 
     jointPositionCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointVelocityCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -31,7 +31,7 @@ void MultiM1MachineROS::initialize() {
 void MultiM1MachineROS::update() {
     publishJointStates();
     publishInteractionForces();
-    publishInteractionMVCArduino();
+    publishInteractionScaled();
 }
 
 void MultiM1MachineROS::publishJointStates() {
@@ -65,10 +65,9 @@ void MultiM1MachineROS::publishInteractionForces() {
     interactionWrenchPublisher_.publish(interactionWrenchMsg_);
 }
 
-void MultiM1MachineROS::publishInteractionMVCArduino() {
+void MultiM1MachineROS::publishInteractionScaled() {
     Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_s_filt(); // filtered with weight compensation
     double torqueScaled;
-    ros::Time time = ros::Time::now();
 
     if (robot_->stim_calib_) {
         torqueScaled = 1;
@@ -80,12 +79,10 @@ void MultiM1MachineROS::publishInteractionMVCArduino() {
         }
     }
 
-    mvcArduinoMsg_.header.stamp = time;
-    mvcArduinoMsg_.header.frame_id = "interaction_torque_sensor_arduino";
-    mvcArduinoMsg_.wrench.torque.x = torqueScaled;
-    mvcArduinoMsg_.wrench.torque.y = robot_->stim_df_; // stimulation amplitude channel 1
-    mvcArduinoMsg_.wrench.torque.z = robot_->stim_pf_; // stimulation amplitude channel 2
-    mvcArduinoPublisher_.publish(mvcArduinoMsg_);
+    interactionScaledMsg_.x = torqueScaled;
+    interactionScaledMsg_.y = robot_->stim_df_; // stimulation amplitude channel 1
+    interactionScaledMsg_.z = robot_->stim_pf_; // stimulation amplitude channel 2
+    interactionScaledPublisher_.publish(interactionScaledMsg_);
 }
 
 void MultiM1MachineROS::setNodeHandle(ros::NodeHandle &nodeHandle) {

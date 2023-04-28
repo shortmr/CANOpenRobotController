@@ -240,10 +240,11 @@ void RobotM1::updateRobot() {
         dq(i) = ((JointM1 *)joints[i])->getVelocity();
         tau(i) = ((JointM1 *)joints[i])->getTorque();
         tau_s(i) = m1ForceSensor[i].getForce();
+//        updateEstimatedAcceleration(); // based on velocity measurements
 
         //std::cout << std::setprecision(4) << tau_s(i) << std::endl;
 
-        // compensate inertia for torque sensor measurement
+        // compensate inertia for torque sensor measurement (comment this line when zeroing force sensor)
         tau_s(i) =  tau_s(i) + i_sin_*sin(q(i)+t_bias_) + i_cos_*cos(q(i)+t_bias_);
     }
     if (safetyCheck() != SUCCESS) {
@@ -510,6 +511,26 @@ JointVec& RobotM1::getJointTor_s() {
 JointVec& RobotM1::getJointTor_s_filt() {
     return tau_s_filt;
 }
+
+//void RobotM1::updateEstimatedAcceleration() {
+//
+//    // estimate acceleration as derivative of velocity TODO: use IMU data for less delay
+//    acc(0) = controlFreq_*(dq(0) - dq_pre(0)); //2 most recent velocity values divided by timestep
+//
+//    // filter acceleration signal (hardcoded filter of 50 Hz)
+//    double alpha = (2*M_PI*50/controlFreq_)/(2*M_PI*50/controlFreq_+1);
+//    acc_filt(0) = alpha*acc(0)+(1-alpha)*acc_filt_pre(0);
+//    acc_filt_pre(0) = acc_filt(0);
+//
+//    filteredGeneralizedAccByDerivative_.tail(X2_NUM_JOINTS) = alphaJoint*generalizedAccByDerivative_.tail(X2_NUM_JOINTS) +
+//                                                              (1.0 - alphaJoint)*previousFilteredGeneralizedAccByDerivative_.tail(X2_NUM_JOINTS);
+//
+//    previousFilteredGeneralizedAccByDerivative_ = filteredGeneralizedAccByDerivative_;
+//    dq_pre(0) = dq(0);
+//
+//    estimatedGeneralizedAcceleration_ = filteredGeneralizedAccByDerivative_;
+//}
+
 
 setMovementReturnCode_t RobotM1::setJointPos(JointVec pos_d) {
     return applyPosition(pos_d*d2r);

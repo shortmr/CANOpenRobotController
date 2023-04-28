@@ -246,9 +246,9 @@ void MultiControllerState::during(void) {
             robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
         }
 
-        //filter interaction torque for arduino publishing
-        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
-        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
+//        //filter interaction torque for arduino publishing
+//        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+//        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
     }
     else if(controller_mode_ == 8) {  // system identification - torque mode
         counter = counter + 1;
@@ -390,7 +390,7 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         std::cout << "Dynamic reconfigure parameter setting is disabled (set configFlag to true to enable)" << std::endl;
     }
 
-    slider_angle_ = config.slider_angle;
+    slider_angle_ = config.slider_angle + v_bias; //relative to vertical position
 
     // arduino stimulation parameters
     robot_->setMaxDF(config.max_torque_df);

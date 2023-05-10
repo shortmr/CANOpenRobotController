@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="robot_name_1" default="m1_x"/>
+    <arg name="name_spaces" default="[$(arg robot_name_1)]"/>
+    <arg name="unity" default="false"/>
+
+    <!-- CORC M1_X -->
+    <node name="$(arg robot_name_1)" pkg="CORC" type="MultiM1Machine_APP" output="screen" args="-can can0"/>
+
+    <!-- multi_robot_interaction -->
+    <node name="multi_robot_interaction" pkg="multi_robot_interaction" type="multi_robot_interaction" output="screen">
+    <rosparam param="name_spaces" subst_value="True">$(arg name_spaces)</rosparam>
+    <param name="dof" value="1" />
+    </node>
+
+    <!-- rqt -->
+    <node name="rqt" pkg="CORC" type="rqt.sh">
+    </node>
+
+    <!-- sound_play -->
+    <node name="sound_play" pkg="sound_play" type="soundplay_node.py" output="screen"/>
+</launch>

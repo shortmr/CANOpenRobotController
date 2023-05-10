@@ -1,4 +1,4 @@
-config_flag: false # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
+config_flag: true # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
 
 m1_x:
   id: ['V2R01']

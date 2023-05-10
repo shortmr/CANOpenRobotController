@@ -374,8 +374,6 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         robot_->setVelThresh(config.vel_thresh);
         robot_->setTorqueThresh(config.tau_thresh);
         robot_->setMotorTorqueCutOff(config.motor_torque_cutoff_freq);
-        robot_->setStaticFriction(config.c0);
-        robot_->setDynamicFriction(config.c1);
 
         cut_off_ = config.lowpass_cutoff_freq;
         ffRatio_ = config.ff_ratio;

@@ -17,7 +17,7 @@
                             </x_axis>
                             <y_axis>
                                 <custom_title>Ankle angle</custom_title>
-                                <title_type>1</title_type>
+                                <title_type>0</title_type>
                                 <title_visible>true</title_visible>
                             </y_axis>
                         </axes>
@@ -64,12 +64,12 @@
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
                                 <pen_style>1</pen_style>
-                                <pen_width>5</pen_width>
+                                <pen_width>10</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
                                 <sticks_baseline>0</sticks_baseline>
                                 <sticks_orientation>2</sticks_orientation>
-                                <type>0</type>
+                                <type>3</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
                             <title>Desired position</title>
@@ -104,7 +104,7 @@
                                 </y_axis>
                             </axes>
                             <color>
-                                <custom_color>#204a87</custom_color>
+                                <custom_color>#009efa</custom_color>
                                 <type>1</type>
                             </color>
                             <data>
@@ -115,7 +115,7 @@
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
                                 <pen_style>1</pen_style>
-                                <pen_width>12</pen_width>
+                                <pen_width>8</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
                                 <sticks_baseline>0</sticks_baseline>

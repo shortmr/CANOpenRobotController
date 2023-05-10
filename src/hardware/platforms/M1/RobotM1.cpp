@@ -169,15 +169,13 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     i_sin_ = m1Params.i_sin[0];
     i_cos_ = m1Params.i_cos[0];
     t_bias_ = m1Params.t_bias[0];
-    //f_s_ = m1Params.c0[0];
-    //f_d_ = m1Params.c1[0];
+    f_s_ = m1Params.c0[0];
+    f_d_ = m1Params.c1[0];
     c2_ = m1Params.c2[0];
     if (!m1Params.configFlag) {
         velThresh_ = m1Params.vel_thresh[0] * d2r;
         torqueThresh_ = m1Params.tau_thresh[0];
         motorTorqueCutOff_ = m1Params.motor_torque_cutoff_freq[0];
-        f_s_ = m1Params.c0[0];
-        f_d_ = m1Params.c1[0];
     }
     tau_offset_ = 0;
     tau_df_ = 1;
@@ -614,18 +612,6 @@ void RobotM1::setTorqueThresh(double torqueThresh) {
 void RobotM1::setMotorTorqueCutOff(double cutOff) {
     if (m1Params.configFlag) {
         motorTorqueCutOff_ = cutOff;
-    }
-}
-
-void RobotM1::setStaticFriction(double c0) {
-    if (m1Params.configFlag) {
-        f_s_ = c0;
-    }
-}
-
-void RobotM1::setDynamicFriction(double c1) {
-    if (m1Params.configFlag) {
-        f_d_ = c1;
     }
 }
 

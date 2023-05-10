@@ -293,8 +293,6 @@ public:
     void setVelThresh(double velThresh);
     void setTorqueThresh(double torqueThresh);
     void setMotorTorqueCutOff(double cutOff);
-    void setStaticFriction(double c0);
-    void setDynamicFriction(double c1);
     void setMaxDF(double tau_filt);
     void setMaxPF(double tau_filt);
     void setStimDF(double stim_amp);

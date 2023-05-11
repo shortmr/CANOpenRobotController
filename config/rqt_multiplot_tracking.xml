@@ -72,7 +72,7 @@
                                 <type>3</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Desired position</title>
+                            <title>Desired angle</title>
                         </curve_0>
                         <curve_1>
                             <axes>
@@ -123,14 +123,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Actual position</title>
+                            <title>Actual angle</title>
                         </curve_1>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>M1_X</title>
+                    <title>M1_X angles</title>
                 </column_0>
             </row_0>
             <row_1>
@@ -257,7 +257,7 @@
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title></title>
+                    <title>M1_X torques</title>
                 </column_0>
             </row_1>
         </plots>

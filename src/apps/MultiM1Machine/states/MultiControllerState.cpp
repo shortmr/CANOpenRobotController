@@ -150,7 +150,7 @@ void MultiControllerState::during(void) {
         tau_filtered = robot_->filter_tau_s(alpha_tau_s);
 
         // get interaction torque from virtual spring
-        spring_tor = -multiM1MachineRos_->interactionTorqueCommand_(0);
+        spring_tor = multiM1MachineRos_->interactionTorqueCommand_(0); //-multiM1MachineRos_->interactionTorqueCommand_(0);
         robot_->tau_spring[0] = spring_tor; // for ROS publish only
 
         // apply PID for feedback control

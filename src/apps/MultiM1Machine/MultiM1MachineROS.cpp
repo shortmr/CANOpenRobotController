@@ -58,9 +58,9 @@ void MultiM1MachineROS::publishInteractionForces() {
 
     interactionWrenchMsg_.header.stamp = time;
     interactionWrenchMsg_.header.frame_id = "interaction_torque_sensor";
-    interactionWrenchMsg_.wrench.torque.y = -robot_->tau_spring[0];
-    interactionWrenchMsg_.wrench.torque.z = interactionTorque[0];
-    interactionWrenchMsg_.wrench.torque.x = -interactionTorque[0];
+    interactionWrenchMsg_.wrench.torque.y = robot_->tau_spring[0]; //-robot_->tau_spring[0]
+    interactionWrenchMsg_.wrench.torque.z = -interactionTorque[0]; //interactionTorque[0]
+    interactionWrenchMsg_.wrench.torque.x = interactionTorque[0];  //-interactionTorque[0]
 
     interactionWrenchPublisher_.publish(interactionWrenchMsg_);
 }

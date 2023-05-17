@@ -62,7 +62,7 @@
                 },
                 "dock_widget_title": {
                   "type": "repr",
-                  "repr": "u'Multiplot - [file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tuning.xml]'"
+                  "repr": "u'Multiplot - [package://CORC/config/rqt_multiplot_tuning.xml]'"
                 }
               },
               "groups": {}
@@ -72,73 +72,13 @@
               "groups": {
                 "history": {
                   "keys": {
-                    "config_3": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/multi_robot_interaction/cfg/rqt_multiplot_X_left.xml'"
-                    },
-                    "config_2": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tracking.xml'"
-                    },
-                    "config_1": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tracking_X.xml'"
-                    },
-                    "config_0": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tuning.xml'"
-                    },
-                    "config_5": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/Desktop/rqt_multiplot_X_left_future.xml'"
-                    },
-                    "config_4": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/multi_robot_interaction/cfg/rqt_multiplot_baseline_left.xml'"
-                    },
                     "max_length": {
                       "type": "repr",
                       "repr": "10"
-                    }
-                  },
-                  "groups": {}
-                }
-              }
-            }
-          }
-        },
-        "plugin__MultiplotPlugin__3": {
-          "keys": {},
-          "groups": {
-            "dock_widget__MultiplotWidget": {
-              "keys": {
-                "dockable": {
-                  "type": "repr",
-                  "repr": "u'true'"
-                },
-                "parent": {
-                  "type": "repr",
-                  "repr": "None"
-                },
-                "dock_widget_title": {
-                  "type": "repr",
-                  "repr": "u'Multiplot - [file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_int_torque.xml]*'"
-                }
-              },
-              "groups": {}
-            },
-            "plugin": {
-              "keys": {},
-              "groups": {
-                "history": {
-                  "keys": {
-                    "max_length": {
-                      "type": "repr",
-                      "repr": "u'10'"
                     },
                     "config_0": {
                       "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_int_torque.xml'"
+                      "repr": "u'package://CORC/config/rqt_multiplot_tuning.xml'"
                     }
                   },
                   "groups": {}
@@ -176,70 +116,6 @@
                 }
               },
               "groups": {}
-            }
-          }
-        },
-        "plugin__MultiplotPlugin__1": {
-          "keys": {},
-          "groups": {
-            "dock_widget__MultiplotWidget": {
-              "keys": {
-                "dockable": {
-                  "type": "repr",
-                  "repr": "u'true'"
-                },
-                "parent": {
-                  "type": "repr",
-                  "repr": "None"
-                },
-                "dock_widget_title": {
-                  "type": "repr",
-                  "repr": "u'Multiplot - [file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tracking_Y.xml]'"
-                }
-              },
-              "groups": {}
-            },
-            "plugin": {
-              "keys": {},
-              "groups": {
-                "history": {
-                  "keys": {
-                    "config_3": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tracking_sim.xml'"
-                    },
-                    "config_2": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tuning.xml'"
-                    },
-                    "config_1": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tracking_X.xml'"
-                    },
-                    "config_0": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tracking_Y.xml'"
-                    },
-                    "config_6": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_int_torque_Y.xml'"
-                    },
-                    "config_5": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_int_torque_X.xml'"
-                    },
-                    "config_4": {
-                      "type": "repr",
-                      "repr": "u'file:///home/sralab/catkin_ws/src/CANOpenRobotController/config/rqt_multiplot_tracking.xml'"
-                    },
-                    "max_length": {
-                      "type": "repr",
-                      "repr": "10"
-                    }
-                  },
-                  "groups": {}
-                }
-              }
             }
           }
         },
@@ -421,8 +297,8 @@
       "keys": {
         "geometry": {
           "type": "repr(QByteArray.hex)",
-          "repr(QByteArray.hex)": "QtCore.QByteArray('01d9d0cb00020000000008100000003000000e7a000003cf000008100000004c00000e7a000003cf00000000000000000780')",
-          "pretty-print": "       0 z     L z       "
+          "repr(QByteArray.hex)": "QtCore.QByteArray('01d9d0cb000200000000082a0000004300000e94000003e20000082a0000005f00000e94000003e200000000000000000780')",
+          "pretty-print": "     * C     * _         "
         },
         "state": {
           "type": "repr(QByteArray.hex)",

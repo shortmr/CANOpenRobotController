@@ -14,7 +14,7 @@
     </node>
 
     <!-- rqt -->
-    <node name="rqt" pkg="CORC" type="rqt.sh" args="$(find CORC)/config/m1_real.perspective">
+    <node name="rqt" pkg="CORC" type="rqt.sh" args="$(find CORC)/config/multi_m1_sim.perspective">
     </node>
 
     <!-- sound_play -->

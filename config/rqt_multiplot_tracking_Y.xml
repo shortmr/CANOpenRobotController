@@ -16,7 +16,7 @@
                                 <title_visible>true</title_visible>
                             </x_axis>
                             <y_axis>
-                                <custom_title>Untitled Axis</custom_title>
+                                <custom_title>Ankle angle</custom_title>
                                 <title_type>0</title_type>
                                 <title_visible>true</title_visible>
                             </y_axis>
@@ -72,7 +72,7 @@
                                 <type>3</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Desired position</title>
+                            <title>Desired angle</title>
                         </curve_0>
                         <curve_1>
                             <axes>
@@ -104,7 +104,7 @@
                                 </y_axis>
                             </axes>
                             <color>
-                                <custom_color>#009efa</custom_color>
+                                <custom_color>#5ebc00</custom_color>
                                 <type>1</type>
                             </color>
                             <data>
@@ -123,14 +123,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Actual position</title>
+                            <title>Actual angle</title>
                         </curve_1>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>M1_Y</title>
+                    <title>M1_Y angles</title>
                 </column_0>
             </row_0>
         </plots>

@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="robot_name_1" default="m1_x"/>
-    <arg name="name_spaces" default="[$(arg robot_name_1)]"/>
+    <arg name="robot_name" default="m1_z"/>
+    <arg name="name_spaces" default="[$(arg robot_name)]"/>
 
-    <!-- CORC M1_X -->
-    <node name="$(arg robot_name_1)" pkg="CORC" type="MultiM1Machine_APP" output="screen" args="-can can0"/>
+    <!-- CORC m1_z -->
+    <node name="$(arg robot_name)" pkg="CORC" type="MultiM1Machine_APP" output="screen" args="-can can0"/>
 
     <!-- multi_robot_interaction -->
     <node name="multi_robot_interaction" pkg="multi_robot_interaction" type="multi_robot_interaction" output="screen">

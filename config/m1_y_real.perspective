@@ -62,7 +62,7 @@
                 },
                 "dock_widget_title": {
                   "type": "repr",
-                  "repr": "u'Multiplot - [package://CORC/config/rqt_multiplot_tuning.xml]'"
+                  "repr": "u'Multiplot - [package://CORC/config/rqt_multiplot_tuning_y.xml]'"
                 }
               },
               "groups": {}
@@ -78,7 +78,7 @@
                     },
                     "config_0": {
                       "type": "repr",
-                      "repr": "u'package://CORC/config/rqt_multiplot_tuning.xml'"
+                      "repr": "u'package://CORC/config/rqt_multiplot_tuning_y.xml'"
                     }
                   },
                   "groups": {}
@@ -275,7 +275,7 @@
                 },
                 "selected_nodes": {
                   "type": "repr",
-                  "repr": "[u'/m1_x', u'/multi_robot_interaction']"
+                  "repr": "[u'/m1_y', u'/multi_robot_interaction']"
                 },
                 "_splitter": {
                   "type": "repr(QByteArray.hex)",

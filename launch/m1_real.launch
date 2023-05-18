@@ -1,11 +1,10 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="robot_name" default="m1_x"/>
+    <arg name="name_spaces" default="[$(arg robot_name)]"/>
 
-    <arg name="robot_name_1" default="m1_x"/>
-    <arg name="name_spaces" default="[$(arg robot_name_1)]"/>
-
-    <!-- CORC M1_X -->
-    <node name="$(arg robot_name_1)" pkg="CORC" type="MultiM1Machine_APP" output="screen" args="-can can0"/>
+    <!-- CORC < m1_x m1_y m1_z > -->
+    <node name="$(arg robot_name)" pkg="CORC" type="MultiM1Machine_APP" output="screen" args="-can can1"/>
 
     <!-- multi_robot_interaction -->
     <node name="multi_robot_interaction" pkg="multi_robot_interaction" type="multi_robot_interaction" output="screen">
@@ -14,7 +13,7 @@
     </node>
 
     <!-- rqt -->
-    <node name="rqt" pkg="CORC" type="rqt.sh" args="$(find CORC)/config/m1_real.perspective">
+    <node name="rqt" pkg="CORC" type="rqt.sh" args="$(find CORC)/config/$(arg robot_name)_real.perspective">
     </node>
 
     <!-- sound_play -->

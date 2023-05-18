@@ -16,7 +16,7 @@
                                 <title_visible>true</title_visible>
                             </x_axis>
                             <y_axis>
-                                <custom_title>Untitled Axis</custom_title>
+                                <custom_title>Ankle angle</custom_title>
                                 <title_type>0</title_type>
                                 <title_visible>true</title_visible>
                             </y_axis>
@@ -35,21 +35,72 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_y/interaction_wrench</topic>
-                                    <type>geometry_msgs/WrenchStamped</type>
+                                    <topic>/m1_z/joint_commands</topic>
+                                    <type>sensor_msgs/JointState</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>wrench/torque/z</field>
+                                    <field>position/0</field>
                                     <field_type>0</field_type>
                                     <scale>
-                                        <absolute_maximum>1.3</absolute_maximum>
-                                        <absolute_minimum>0.3</absolute_minimum>
+                                        <absolute_maximum>1.2</absolute_maximum>
+                                        <absolute_minimum>0.2</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
+                                        <type>1</type>
                                     </scale>
-                                    <topic>/m1_y/interaction_wrench</topic>
-                                    <type>geometry_msgs/WrenchStamped</type>
+                                    <topic>/m1_z/joint_commands</topic>
+                                    <type>sensor_msgs/JointState</type>
+                                </y_axis>
+                            </axes>
+                            <color>
+                                <custom_color>#000000</custom_color>
+                                <type>0</type>
+                            </color>
+                            <data>
+                                <circular_buffer_capacity>1000</circular_buffer_capacity>
+                                <time_frame_length>10</time_frame_length>
+                                <type>0</type>
+                            </data>
+                            <style>
+                                <lines_interpolate>false</lines_interpolate>
+                                <pen_style>1</pen_style>
+                                <pen_width>10</pen_width>
+                                <render_antialias>false</render_antialias>
+                                <steps_invert>false</steps_invert>
+                                <sticks_baseline>0</sticks_baseline>
+                                <sticks_orientation>2</sticks_orientation>
+                                <type>3</type>
+                            </style>
+                            <subscriber_queue_size>100</subscriber_queue_size>
+                            <title>Desired angle</title>
+                        </curve_0>
+                        <curve_1>
+                            <axes>
+                                <x_axis>
+                                    <field></field>
+                                    <field_type>1</field_type>
+                                    <scale>
+                                        <absolute_maximum>1000</absolute_maximum>
+                                        <absolute_minimum>0</absolute_minimum>
+                                        <relative_maximum>7</relative_maximum>
+                                        <relative_minimum>-7</relative_minimum>
+                                        <type>2</type>
+                                    </scale>
+                                    <topic>/m1_z/joint_states</topic>
+                                    <type>sensor_msgs/JointState</type>
+                                </x_axis>
+                                <y_axis>
+                                    <field>position/0</field>
+                                    <field_type>0</field_type>
+                                    <scale>
+                                        <absolute_maximum>1.2</absolute_maximum>
+                                        <absolute_minimum>0.2</absolute_minimum>
+                                        <relative_maximum>0</relative_maximum>
+                                        <relative_minimum>-1000</relative_minimum>
+                                        <type>1</type>
+                                    </scale>
+                                    <topic>/m1_z/joint_states</topic>
+                                    <type>sensor_msgs/JointState</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -72,65 +123,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Actual interaction torque</title>
-                        </curve_0>
-                        <curve_1>
-                            <axes>
-                                <x_axis>
-                                    <field></field>
-                                    <field_type>1</field_type>
-                                    <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
-                                        <relative_maximum>7</relative_maximum>
-                                        <relative_minimum>-7</relative_minimum>
-                                        <type>2</type>
-                                    </scale>
-                                    <topic>/m1_y/interaction_effort_commands</topic>
-                                    <type>std_msgs/Float64MultiArray</type>
-                                </x_axis>
-                                <y_axis>
-                                    <field>data/0</field>
-                                    <field_type>0</field_type>
-                                    <scale>
-                                        <absolute_maximum>1.3</absolute_maximum>
-                                        <absolute_minimum>0.3</absolute_minimum>
-                                        <relative_maximum>0</relative_maximum>
-                                        <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
-                                    </scale>
-                                    <topic>/m1_y/interaction_effort_commands</topic>
-                                    <type>std_msgs/Float64MultiArray</type>
-                                </y_axis>
-                            </axes>
-                            <color>
-                                <custom_color>#ff0000</custom_color>
-                                <type>1</type>
-                            </color>
-                            <data>
-                                <circular_buffer_capacity>1000</circular_buffer_capacity>
-                                <time_frame_length>0.1</time_frame_length>
-                                <type>0</type>
-                            </data>
-                            <style>
-                                <lines_interpolate>false</lines_interpolate>
-                                <pen_style>1</pen_style>
-                                <pen_width>10</pen_width>
-                                <render_antialias>false</render_antialias>
-                                <steps_invert>false</steps_invert>
-                                <sticks_baseline>0</sticks_baseline>
-                                <sticks_orientation>2</sticks_orientation>
-                                <type>0</type>
-                            </style>
-                            <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Desired interaction torque</title>
+                            <title>Actual angle</title>
                         </curve_1>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>M1_Y</title>
+                    <title>m1_z angles</title>
                 </column_0>
             </row_0>
         </plots>

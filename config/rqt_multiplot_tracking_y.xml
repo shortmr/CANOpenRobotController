@@ -35,7 +35,7 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/joint_commands</topic>
+                                    <topic>/m1_y/joint_commands</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </x_axis>
                                 <y_axis>
@@ -48,7 +48,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/joint_commands</topic>
+                                    <topic>/m1_y/joint_commands</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </y_axis>
                             </axes>
@@ -86,7 +86,7 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/joint_states</topic>
+                                    <topic>/m1_y/joint_states</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </x_axis>
                                 <y_axis>
@@ -99,12 +99,12 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/joint_states</topic>
+                                    <topic>/m1_y/joint_states</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </y_axis>
                             </axes>
                             <color>
-                                <custom_color>#009efa</custom_color>
+                                <custom_color>#5ebc00</custom_color>
                                 <type>1</type>
                             </color>
                             <data>
@@ -130,7 +130,7 @@
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>M1_X angles</title>
+                    <title>m1_y angles</title>
                 </column_0>
             </row_0>
         </plots>

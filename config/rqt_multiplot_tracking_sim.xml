@@ -35,7 +35,7 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/joint_commands</topic>
+                                    <topic>/m1_z/joint_commands</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </x_axis>
                                 <y_axis>
@@ -48,7 +48,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/joint_commands</topic>
+                                    <topic>/m1_z/joint_commands</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </y_axis>
                             </axes>
@@ -86,7 +86,7 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/simulated_partner_commands</topic>
+                                    <topic>/m1_z/simulated_partner_commands</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
@@ -99,7 +99,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/simulated_partner_commands</topic>
+                                    <topic>/m1_z/simulated_partner_commands</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </y_axis>
                             </axes>
@@ -130,7 +130,7 @@
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Simulated partner angles</title>
+                    <title>simulated partner angles</title>
                 </column_0>
             </row_0>
         </plots>

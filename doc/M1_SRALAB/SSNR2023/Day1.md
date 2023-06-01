@@ -7,7 +7,7 @@ This README file gives instructions for manually tuning a controller for the M1 
 
 ## Check git branch and build project
 
-1. Open a terminal (Ctrl + Alt + T)
+1. Open a terminal (ctrl + alt + T)
 2. Make sure you are on the demo/ssnr2023 branch for both CANOpenRobotController and multi_robot_interaction
 
 ```bash
@@ -70,7 +70,9 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
 10. Once you have decided on a set of gains amongst your group, make a note of the tuned values, then press ctrl + C on the terminal window to end the program
 
 ## Evaluate controller peformance during ankle exercise
-1. As a group, pick 2-3 sets of feedforward/PID gains you would like to evaluate across members as well as the number of trials of ankle tracking (*spring_interaction_tracking*)
+1. As a group, pick 2-3 sets of feedforward/PID gains you would like to evaluate across members as well as the number of trials/target frequencies during ankle tracking (*spring_interaction_tracking*)
+      * Controller performance can be evaluated using interaction torque tracking errors
+      * Data from each M1 robot (interaction torque; desired and actual trajectories etc.) are continuously logged from when roslaunch is called, to when the program is ended (ctrl + C)
 2. Run ROS program with the robot_name parameter set on your group’s device (m1_x, m1_y or m1_z)
 ```bash
 roslaunch CORC m1_real.launch robot_name:=m1_x
@@ -88,12 +90,11 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
    * Set *trajectory_mode* to *multi_sine*
    * Set *experimental_cond* to *disable*
    * Set *interaction_mode* to *spring_interaction_tracking* (starts the experiment)
-   * Adjust the *f_1*, *f_2* and *f_3* sliders to change the frequency of the multi-sine; adjust *amp* to change the amplitude range
-3. 
-4. Navigate to the log folder within ~\.ros\spdlogs and find the folder for your robot (m1_x, m1_y or m1_z)
-   * Data from each M1 robot (desired and actual trajectories, interaction torque etc.) are continuously logged from when roslaunch is called, to when the program is ended (Ctrl + C)
-5. Transfer the .csv files associated with one or more previous runs (check timestamps) to a separate laptop
-6. Using software of your choice (MATLAB, R studio, python), analyze the data from multiple runs to observe how interaction torque measurements change depending on the controller gains you've set
+9. Press ctrl + C on the terminal window to end the program
+10. For each group member, repeat steps 2 through 9 for each set of gains
+11. Navigate to the log folder within ~\.ros\spdlogs and find the folder for your robot (m1_x, m1_y or m1_z)
+12. Transfer the .csv files associated with one or more previous runs (check timestamps) to a separate laptop
+13. Using software of your choice (MATLAB, R studio, python), analyze the data from multiple runs to observe how interaction torque measurements change depending on the controller gains you've set
    * If using MATLAB, see [`m1_post_process.m`](../../../matlab/m1_post_process.m); this script will load a .csv file, segment it into trials (if the *interaction_mode* was set to *spring_interaction_tracking*), and compute the root-mean-square error of the interaction torque measurements and tracking errors; you can modify the 
    * Key variables to look at here would be the time (column name: time), mode (column name: mode), actual joint angle (column name: JointPositions_1) and desired joint angle (column name: MM1_DesiredJointPositions_1)
 

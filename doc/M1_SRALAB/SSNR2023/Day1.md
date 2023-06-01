@@ -1,6 +1,5 @@
-# (Day 1) Transparency and haptic feedback 
+# (Day 1) Transparency and haptic feedback
 
-## Overview
 The M1-AnkleMotus is a commercial ankle rehabilitation robot developed by Fourier Intelligence (Singapore). We made some hardware modifications to bypass the default controller, allowing us to access the motor drive and torque sensor directly. This open source software stack (CORC) is used to control the ankle robot.
 
 This README file gives instructions for manually tuning a controller for the M1 robot, with the goal of achieving transparent control (i.e., near zero interaction torque) and haptic rendering (e.g., assistance-as-needed) during typical ankle movements. We also provide details for visualizing interaction torques between the user and the robot, as well as visual feedback for an ankle exercise.

@@ -7,207 +7,141 @@ This README file gives instructions for manually tuning a controller for the M1 
 
 ## Check git branch and build project
 
-First, initialize the CAN device (No need to repeat this step, unless you disconnect the CAN adapter):
+1. Open a terminal (Ctrl + Alt + T)
+2. Make sure you are on the demo/ssnr2023 branch for both CANOpenRobotController and multi_robot_interaction
 
-For only robot A:
 ```bash
-cd script
-./initCAN0CAN1.sh
+cd ~/catkin_ws/src
+cd CANOpenRobotController
+git checkout demo/ssnr2023
+
+cd ~/catkin_ws/src
+cd multi_robot_interaction
+git checkout demo/ssnr2023
 ```
-For only robot B:
+3. Build the CORC project and source the workspace
 ```bash
-cd script
-./initCAN2CAN4.sh
-```
-
-For robot A and B:
-```bash
-cd script
-./initCAN0124.sh
-```
-
-The adapter should start blinking after this command
-
-![Figure](images/can_blink.gif)
-
-
-### Ground Reaction Force (Treadmill or Pressure Pad)
-The developed controller uses ground reaction forces to have a continuous gate state changing from 0 to 1. This allows having continous
-interaction force estimation and forward model during the complete gait cycle (see the manuscript for details).
-A sensorized treadmill or our custom pressure sensor pad can be used to have grf measurements. Note that currently, only robot B
-have the pressure pad implementation.
-
-For the details of the fsr sensor and calibration process, see [here](FSRPad.md).
-
-#### Split-belt Treadmill
-There are 4 Force sensors under each belt. These sensors measure force in all directions. We only use the vertical and
-anterior/posterior forces for our sagittal plane analyses. Note that AP readings of the right belt are defective; therefore, in practice, only the left AP force is used.
-
-The force sensors output voltage values in the range of [-5, 5]V. These outputs are linearly converted into [0 2.5]V range
- with a circuit before inputting into the Arduino near the window. There is a ROS node running in the Arduino that publishes the
- analog reading that it reads. Arduino code is [here](../../arduino/publishTreadmillAI.ino).
- 
- Follow these steps in order to access treadmill data
- 
- * Connect the Arduino cable to your PC
- * Turn on the power supply BEFORE before connecting red, green and black cables
- * Make sure both ports at 5V and they are at independent states (buttons in the middle are NOT pressed)
-
-![Figure](images/power_supply.jpg)
-* Turn of the power supply
-* Connect the red, black and green cables
-* Turn on the power supply
-* Press the reset treadmill switch that is on the cabinet.
-* Connect the treadmill cable to the ribbon cable
-
-![Figure](images/treadmill_cable.jpg)
-
-* In a new terminal: `roscore` 
-* In a different terminal: `rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=115200`  
-(dont't forget to `source devel/setup.bash before`  running)
-(Note you might need to change ttyACM0 number but if there is no arduino connected, it should be 0. 
-To make sure, you can check the connection port on an Arduino IDE)
-* Check if `treadmill_sensor` is being published by running `rostopic list` 
-
-**(IMPORTANT!: When you are done, FIRST disconnect the treadmil cable BEFORE turning off the power supply.)**
-
-#### Pressure pad
-Connect the 9V batteries on the side. Do not forget to disconnect when you are done!
-
-#### CORC
-For robot A:
-```bash
-roslaunch CORC x2_real_A.launch
-```
-rqt_gui is disabled by default for robot A(not to have multiple guis when bultiple robots are used). If desired to use only A and
-have a gui, gui argument can be set to true:
-```bash
-roslaunch CORC x2_real_A.launch gui:=true
+cd ~/catkin_ws
+catkin build CORC
+source devel/setup.bash
 ```
 
-For robot B:
+## Initialize CAN communication
+
+1. Connect one of the M1 devices (m1_x,  m1_y or m1_z) to the operating computer via CAN USB cable
+2. From a terminal, initialize CAN communication for a single device on can0 (enter password: *123456* when prompted)
 ```bash
-roslaunch CORC x2_real_B.launch
+cd ~/catkin_ws/src/CANOpenRobotController/script
+sudo ./initCAN0.sh
 ```
-
-To create haptic interaction between the robots
+3. Return to the project workspace
 ```bash
-roslaunch multi_robot_interaction x2_dyad.launch
+cd ~/catkin_ws
 ```
+## Tune the transparent controller
 
-### GUI
+1. In [m1_params.yaml](../../../config/m1_params.yaml) file, make sure *config_flag* is set to true in order to enable sliders for adjusting PID gains
+2. Run ROS program for controller tuning from the same terminal window used in set up; specify the robot_name parameter based on your group’s device (m1_x, m1_y or m1_z)
+```bash
+roslaunch CORC m1_real.launch robot_name:=m1_x
 
-#### Service Call
-Service calls are located on the right side of the gui.
+roslaunch CORC m1_real.launch robot_name:=m1_y
 
-##### Homing
+roslaunch CORC m1_real.launch robot_name:=m1_z
+```
+3. On the `/m1_<robot_name>` panel of **Dynamic Reconfigure**, set *controller_mode* to *zero_calibration* and wait until calibration is complete (i.e., foot pedal is parallel to the ground); because the M1 robot has an relative encoder, calibration is needed to determine the home position (0 deg, CW+)
+   * If the pedal is not parallel to the ground after calibrating, there is an error; set *controller_mode* to *zero_torque*, then *zero_calibration* again to retry
+4. Set *controller_mode* to *virtual_spring*
+   * **Note:** with the PID and feedforward gains all set to 0, virtual_spring mode will operate like zero_torque mode (large amount of resistance due to no compensation for friction/gravity)
+5. Strap into the device while seated in a chair
+6. Adjust the sliders on the `/m1_<robot_name>` panel of **Dynamic Reconfigure** to change the amount of feedforward compensation (*ff_ratio*) and PID gains (*kp*, *ki* and *kd*)
+   * A suggestion, but not a requirement, is to start by tuning the *ff_ratio*, which controls the amount of compensation for the weight of the pedal and friction of the shaft/motor; then sequentially tune the *kp*, *ki* and *kd* gains, in this order
+   * **Note:** make small, incremental changes to each slider individually before testing; large gains can cause instability/oscillations
+7. Move your ankle back and forth as you tune each gain of the controller
+   * The goal is to feel like you can move your ankle freely (no resistance from the device) while avoiding oscillations or overcompensation caused by the controller
+8. For more precise tuning and visualization, start the **Multiplot** display by pressing the play icon at the top right
+   * The top subplot will display your instantaneous ankle angle
+   * The bottom subplot will display the measured and desired interaction torques (desired torque is 0 for transparent control)
+9. To display a target trajectory for an example ankle exercise, set the experimental conditions in the `/multi_robot_interaction` panel of **Dynamic Reconfigure**
+   * Set *trajectory_mode* to *multi_sine*
+   * Set *experimental_cond* to *disable*
+   * Set *interaction_mode* to *spring_interaction_tracking* (starts the experiment)
+   * Adjust the *f_1*, *f_2* and *f_3* sliders to change the frequency of the multi-sine; adjust *amp* to change the amplitude range
+10. Once you have decided on a set of gains amongst your group, make a note of the tuned values, then press ctrl + C on the terminal window to end the program
 
-ExoMotus-X2 has relative encoders; therefore, a homing procedure is needed. 
-By using the service caller on the right side of the gui, you can command the homing procedure. 
-Select `/<robot_name>/start_homing` and press `Call`.
-Hip and knee joints will move forward until hitting the joint limit one by one. This should be done when there is no user in the exoskeleton.
+## Evaluate controller peformance during ankle exercise
+1. As a group, pick 2-3 sets of feedforward/PID gains you would like to evaluate across members as well as the number of trials of ankle tracking (*spring_interaction_tracking*)
+2. Run ROS program with the robot_name parameter set on your group’s device (m1_x, m1_y or m1_z)
+```bash
+roslaunch CORC m1_real.launch robot_name:=m1_x
 
-There is no need to do homing again even if you restart the program (unless you do not turn off the robot).
+roslaunch CORC m1_real.launch robot_name:=m1_y
 
-##### Calibrate IMU
-IMU orientation estimation might deteriorate over time and needs to be calibrated. Calibration is especially needed if
-the location of the exoskeleton changes after the last calibration. Calibrating after the start of each program is suggested.
-Call the `/<robot_name>/calibrate_imu` service on the gui to start the calibration. You will see warning messages on the terminal until the
-calibration has been completed. During the calibration, the subject should be asked to stay still.
+roslaunch CORC m1_real.launch robot_name:=m1_z
+```
+3. On the `/m1_<robot_name>` panel of **Dynamic Reconfigure**, set *controller_mode* to *zero_calibration* and wait until calibration is complete
+4. Adjust the sliders on the `/m1_<robot_name>` panel of **Dynamic Reconfigure** to a set of feedforward/PID gains you would like to test
+5. Set *controller_mode* to *virtual_spring*
+6. Strap into the device while seated in a chair
+7. Start the **Multiplot** display by pressing the play icon at the top right 
+8. Perform trials of example ankle exercise after configuring the experimental conditions in the `/multi_robot_interaction` panel of **Dynamic Reconfigure**
+   * Set *trajectory_mode* to *multi_sine*
+   * Set *experimental_cond* to *disable*
+   * Set *interaction_mode* to *spring_interaction_tracking* (starts the experiment)
+   * Adjust the *f_1*, *f_2* and *f_3* sliders to change the frequency of the multi-sine; adjust *amp* to change the amplitude range
+3. 
+4. Navigate to the log folder within ~\.ros\spdlogs and find the folder for your robot (m1_x, m1_y or m1_z)
+   * Data from each M1 robot (desired and actual trajectories, interaction torque etc.) are continuously logged from when roslaunch is called, to when the program is ended (Ctrl + C)
+5. Transfer the .csv files associated with one or more previous runs (check timestamps) to a separate laptop
+6. Using software of your choice (MATLAB, R studio, python), analyze the data from multiple runs to observe how interaction torque measurements change depending on the controller gains you've set
+   * If using MATLAB, see [`m1_post_process.m`](../../../matlab/m1_post_process.m); this script will load a .csv file, segment it into trials (if the *interaction_mode* was set to *spring_interaction_tracking*), and compute the root-mean-square error of the interaction torque measurements and tracking errors; you can modify the 
+   * Key variables to look at here would be the time (column name: time), mode (column name: mode), actual joint angle (column name: JointPositions_1) and desired joint angle (column name: MM1_DesiredJointPositions_1)
 
-##### Calibrate Treadmill
-Treadmill calibration should be done everytime the program is restarted. It should be done when there is no one on the
-treadmill. It should be done only once for a single run. Calibration is done by calling the `<robot_name>_calibrate_treadmill`
-service.
+## Test haptic feedback
+1. Rebuild the project to use the previously configured gains for the transparent controller
+```bash
+cd ~/catkin_ws
+catkin build CORC
+source devel/setup.bash
+```
+2. Run ROS program for haptic feedback from the same terminal window used in setup; specify the robot_name parameter based on your group’s device (m1_x, m1_y or m1_z)
+```bash
+roslaunch CORC m1_real.launch robot_name:=m1_x
 
-##### Calibrate Force Sensor
-Before the user dons the Exo, it is suggested to check the interaction torques (see visualization [HERE](RTVisualizationForDebugging.md)
- for details). If it is too far away from zero (more than 5-10 Nm), most probably homing or calibration has not been done.
- If it is slightly off from zero (~3Nm), calibration of the force sensors might be needed. For this, put the legs completely
-  on vertical configuration (you can uncomment the print statements at the beginning of the `during()` function of the X2DemoState
-  class to see the link angles - should be ~90 deg.) Then call `<robot_name>_calibrate_force_sensors`. It will take around 10 seconds for all sensors to be calibrated.
-  You should see the interaction torques are moved toward zero on the rqt_multiplot.
-  
-  (**Possible improvement: Write a service call (or expand the current one) that moves the joints so that each leg is aligned with gravity.**)
+roslaunch CORC m1_real.launch robot_name:=m1_y
 
-#### Controller mode
-This version have the following modes:
+roslaunch CORC m1_real.launch robot_name:=m1_z
+```
+3. On the `/m1_<robot_name>` panel of **Dynamic Reconfigure**, set *controller_mode* to *zero_calibration* and wait until calibration is complete
+4. Set *controller_mode* to *virtual_spring*
+5. Strap into the device while seated in a chair
+6. Start the **Multiplot** display by pressing the play icon at the top right
+7. To render a haptic virtual spring between your pedal and a fixed angle, set the *interaction_mode* to *spring_interaction*
+   * Adjust the *k_interaction* to change the stiffness parameter of the spring
+9. To display a target trajectory for an example ankle exercise with haptic feedback, set the experimental conditions in the `/multi_robot_interaction` panel of **Dynamic Reconfigure**
+   * Set *trajectory_mode* to *multi_sine*
+   * Set *experimental_cond* to *enable* (spring always on) or *alternate* (switch spring on and off each trial)
+   * Set *interaction_mode* to *spring_interaction_tracking* (starts the experiment)
+10. When you are finished, press ctrl + C on the terminal window to end the program
 
-* 1 - `Zero torque`: Switches to torque mode and commands zero torque to all motors
-* 2- Zero velocity`: Switches to velocity mode and commands zero velocity to all motors
-* 3- `ff_model_compensation`: Commands only the calculated feedforward torque (gravity, Coriolis and friction compensation)
-terms. Very low performance, won't be transparent at all.
-* 8- `interpolated_dynamic_acc_loop`: Virtual mass control with constrained optimization to control interaction torques.
-(zero or non-zero)
-* 10- `system_id`: This mode commands different torque profiles with different amplitudes and frequencies. Recorded data
-can be used to identify friction, gravity and inertial elements.
-
-Note that the controllers mode are run only during the green button on the handle is pressed (except for zero vel mode).
-If green button is not pressed, zero torques are sent to the motors. This is implemented as a safety feature.
-
-(See more details in [X2DemoState](../../src/apps/X2DemoMachine/states/X2DemoState.cpp)).
-
-#### Gait State
-Gait state can be manually chosen from gui, or automatic mode can be selected. If tests are done with no user while X2 is hung,
-it is suggested to select the flying mode. If the tests include the user and treadmill sensors or pressure pads working,
- automatic (0) should be selected.
- 
- #### Main Parameters
- * `virtual_mass_<0-1>`: The virtual inertia of the backpack, left thigh, left shank, right thigh and right shank, respectively.
- The lower the virtual mass, the more transparent and less stable the system is.
- * `double_stance_multiplier`: larger virtual masses are used during the double stance at all links for better stability.
- The virutal masses are multiplied by this amount during the double stance phase
- * `use_treadmill`: enable this if sensorized treadmill is used for gait state detection and force estimation. If not selected
- it is assumed pressure pads are used.
- * `interpolate_force_estimation`: when treadmill is used horizontal forces are also used for interaction torque estimation.
- Another possible way to calculate interaction forces is to just interpolating the force estimation from left and right dyanmics
- estimations. Select this to enable this simplified option. Note that with pressure pad implementation automatically this is used
- because there is no horizontal force estimation.
- * `enable_rendering`: enable this to render spring damper at the joints. If the following parameter (`subscribe_rendering`)
-  is not selected this will give desired interaction torque values due to the spring/damper proporties listed in Section 
-  `F_Rendering`.
-  * `subscribe_rendering`: Enable this for dyadic haptic interaction. The desired interaction torques will be subscribed
-  from the `<robot_name>/desired_interaction_torque` topic.
-  
-  #### Enable
-  If a joint is not selected, always zero torque will be given to the robot.
-  
-  #### Gait State Threshold
-  Threshold values in Newton to trigger contact with the ground for left and right.
-  
-  #### Force Smoothing
-  * `compensate friction`: keep it enabled for friction compensation
-  * `smooth_friction`: if enabled, a smooth friction profile is used.
-  * `friction_vel_thresh` limit velocity in deg/s for the viscous velocity
-  * `force_cutOff`: Interaction forces are low-pass filtered with this cuf off frequency in Hz.
-  
-  #### Coriolis
-  * `use_coriolis`: enable coriolis compensation
-  * `coriolis_cut_off`: cut off frequency [Hz] of the calculated coriolis forces
-  
-  #### Rendering
-  Properties of the rendered spring/damper parameters if `enable_rendering` is selected and `subscribe_rendering` is disabled.
-  
-  #### Acceleration
-Cut-off frequencies of the accelerations are calculated through time derivatives of joint or backpack velocity readings.
-Not used in real-time control (for now), only for visualization and logging purposes.
-
-  #### Drive Limits
-The limits used in the constrained optimization. All units are SI. `delta_torque_limit` is a constraint on the rate of the
-motor torque solution in consecutive time stamps. It was initially used to test but increased significantly to make it useless.
-(**Possible improvement: Just delete the usage of that variable everywhere.**)
-
-## Code development
-  
-To grasp the overview of the CORC, you can refer [here](../3.Software).
-
-For the details of our implementation refer to [this documentation](CodeStructure.md).
-
-## Real time visualization for debugging
-See [this documentation](RTVisualizationForDebugging.md).
-
-## Post process
-See [`analyze_vCombine.m`](../../matlab/PostProcess/analyse_vCombine.m) as an example. 
-
-## Unity feedback
-See [this repository](https://github.com/emekBaris/x2Unity). If you do not have access, email `baris.kucuktabak@u.northwestern.edu`.
+## Customize haptic feedback
+1. Open your C++ editor (CLion or Visual Studio) and navigate to MultiRobotInteraction.cpp within ~\catkin_ws\src\multi_robot_interaction\src
+2. Read through the code in the section defining the *spring_interaction_tracking* mode (Lines 157-166)
+```cpp
+traj = amp_*(0.33*sin(f_1_*2*M_PI*time) + 0.33*sin(f_2_*2*M_PI*time) + 0.33*sin(f_3_*2*M_PI*time));
+// set interaction torque and multi-sine target angle
+for(int robot = 0; robot<numberOfRobots_; robot++){
+   interactionEffortCommandMatrix_(dof, robot) =
+           connected_flag * k_interaction_ * (bias - jointPositionMatrix_(dof, robot));
+   jointPositionCommandMatrix_(dof, robot) = traj + bias;
+}
+```
+3. Adapt this section to implement a different type of haptic feedback discussed in the presentation (e.g., assist-as-needed, error augmentation)
+   * **Note:** in the current version, this section computes the difference between the current ankle angle (jointPositionMatrix_(dof,robot)) and a constant angle (bias), then multiplies this difference by the GUI configued spring constant (k_interaction_) to calculate the desired effort command (interactionEffortCommandMatrix_(dof, robot))
+5. After modifying the file, rebuild the CORC project and source the workspace
+```bash
+cd ~/catkin_ws
+catkin build CORC
+source devel/setup.bash
+```
+5. Follow the steps in the **Test haptic feedback** section to try out the new haptic feedback mode you’ve created

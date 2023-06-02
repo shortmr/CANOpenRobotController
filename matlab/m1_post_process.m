@@ -102,10 +102,10 @@ if cut_flag
     events.interaction(end) = [];
 end
 %% get trial and interaction torque errors
-pos_rmse = NaN(ii,1);
-tor_rmse = NaN(ii,1);
-trial_data = cell(ii,1);
-spring = NaN(ii,1);
+pos_rmse = NaN(length(events.start),1);
+tor_rmse = NaN(length(events.start),1);
+trial_data = cell(length(events.start),1);
+spring = NaN(length(events.start),1);
 for k = 1:length(events.start)
     % exclude first s seconds of each trial
     si = events.start(k).index+round(fs*s);
@@ -119,7 +119,7 @@ for k = 1:length(events.start)
     interaction_seg = events.interaction(k)*ones(size(time_seg));
     
     pos_error_seg = des_pos_seg-act_pos_seg;
-    tor_error_seg = des_tor_seg-act_tor_seg;
+    tor_error_seg = des_tor_seg+act_tor_seg; % flip sign
     
     % calculate RMSE for position and torque
     pos_error = sqrt(mean(pos_error_seg.^2));
@@ -137,7 +137,7 @@ for k = 1:length(events.start)
         xlabel('Time (s)');
         ylabel('Angle (rad)');
         legend('Target angle', 'Ankle Angle');
-        title([fn ' T', num2str(k)]);
+        title([fn ' T', num2str(k)],'Interpreter','none');
     end
     trial_data{k} = table(time_seg, des_pos_seg, act_pos_seg, des_tor_seg, act_tor_seg, interaction_seg);
     pos_rmse(k) = pos_error;
@@ -185,7 +185,7 @@ elseif sum(spring) == length(spring)
 else
     legend({'no interaction','','interaction',''},'FontSize',12,'Location','northeast');
 end
-sgtitle(fn);
+sgtitle(fn,'Interpreter','none');
 else
    error('csv file does not exist!');
 end

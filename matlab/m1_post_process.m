@@ -32,7 +32,7 @@ fs = 1./mean(diff(time)); % sampling frequency
 
 act_pos = data.JointPositions_1;
 des_pos = data.MM1_DesiredJointPositions_1;
-act_tor = data.SensorTorques_1;
+act_tor = -1*data.SensorTorques_1; % flip sign
 des_tor = data.MM1_DesiredInteractionTorques_1;
 %% find start and end time (index) of each trial
 events = struct('start',[],'end',[],'interaction',[]);
@@ -119,7 +119,7 @@ for k = 1:length(events.start)
     interaction_seg = events.interaction(k)*ones(size(time_seg));
     
     pos_error_seg = des_pos_seg-act_pos_seg;
-    tor_error_seg = des_tor_seg+act_tor_seg; % flip sign
+    tor_error_seg = des_tor_seg-act_tor_seg;
     
     % calculate RMSE for position and torque
     pos_error = sqrt(mean(pos_error_seg.^2));
@@ -130,6 +130,7 @@ for k = 1:length(events.start)
         time_seg = time_seg - time_seg(1);
         fig_t = figure('Position',fig_pos+[0 0.3*ss(4) 0 0]);
         set(0, 'currentfigure', fig_t);
+        subplot(2,1,1);
         hold on;
         plot(time_seg, des_pos_seg,'r-',...
              time_seg, act_pos_seg,'b-','linewidth', 1.5);
@@ -137,7 +138,25 @@ for k = 1:length(events.start)
         xlabel('Time (s)');
         ylabel('Angle (rad)');
         legend('Target angle', 'Ankle Angle');
-        title([fn ' T', num2str(k)],'Interpreter','none');
+        
+        subplot(2,1,2);
+        hold on;
+        plot(time_seg, des_tor_seg,'r-',...
+             time_seg, act_tor_seg,'b-','linewidth', 1.5);
+        if max(abs([des_tor_seg; act_tor_seg])) <= 1
+            ylim([-1, 1]);
+        elseif max(abs([des_tor_seg; act_tor_seg])) <= 5
+            ylim([-5, 5]);
+        elseif max(abs([des_tor_seg; act_tor_seg])) <= 10
+            ylim([-10, 10]);
+        else
+            ylim([-15, 15]);
+        end
+        xlabel('Time (s)');
+        ylabel('Torque (Nm)');
+        legend('Desired', 'Actual');
+        
+        sgtitle([fn ' T', num2str(k)],'Interpreter','none');
     end
     trial_data{k} = table(time_seg, des_pos_seg, act_pos_seg, des_tor_seg, act_tor_seg, interaction_seg);
     pos_rmse(k) = pos_error;

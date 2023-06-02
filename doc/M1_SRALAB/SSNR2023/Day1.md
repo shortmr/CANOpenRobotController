@@ -94,8 +94,8 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
 11. Navigate to the log folder within ~\.ros\spdlogs and find the folder for your robot (m1_x, m1_y or m1_z)
 12. Transfer the .csv files associated with one or more previous runs (check timestamps) to a separate laptop
 13. Using software of your choice (MATLAB, R studio, python), analyze the data from multiple runs to observe how interaction torque measurements change depending on the controller gains you've set
-   * If using MATLAB, see [m1_post_process.m](../../../matlab/m1_post_process.m); this function will load a .csv file, segment it into trials (if the *interaction_mode* was set to *spring_interaction_tracking*), and compute the root-mean-square error of the interaction torque measurements and tracking errors; it is suggested that you run this function in a loop to collect and analyze interaction torque errors across all group members
-   * If not using MATLAB, key variables to look at in the .csv file would be the time (column name: time), mode (column name: mode), actual interaction torque (column name: SensorTorques_1) and desired interaction torque (column name: MM1_DesiredInteractionTorques_1)
+    * If using MATLAB, see [m1_post_process.m](../../../matlab/m1_post_process.m); this function will load a .csv file, segment it into trials (if the *interaction_mode* was set to *spring_interaction_tracking*), and compute the root-mean-square error of the interaction torque measurements and tracking errors; it is suggested that you run this function in a loop to collect and analyze interaction torque errors across all group members
+    * If not using MATLAB, key variables to look at in the .csv file would be the time (column name: time), mode (column name: mode), actual interaction torque (column name: SensorTorques_1) and desired interaction torque (column name: MM1_DesiredInteractionTorques_1)
 
 ## Test haptic feedback
 1. Run ROS program for haptic feedback from the terminal where the workspace was sourced; specify the robot_name parameter for your group’s device (m1_x, m1_y or m1_z)

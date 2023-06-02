@@ -94,7 +94,6 @@ roslaunch CORC multi_m1_real.launch
    * Set *experimental_cond* to *enable* (spring always on) or *alternate* (switch spring on and off each trial)
    * Set *interaction_mode* to *spring_collaboration_tracking* (starts the experiment)
    * Adjust the *f_1*, *f_2* and *f_3* sliders to change the frequency of the multi-sine; adjust *amp* to change the amplitude range
-   * To change the performance of the simulated partner, adjust the *simulated_correlation* (phase shift from target) and *simulated_error* (scale magnitude) sliders
 8. When finished, press ctrl + C to end the ROS program
 
 ## (Simulated or Real) Evaluate task performance and motor learning during with and without haptic feedback

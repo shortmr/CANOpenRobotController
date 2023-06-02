@@ -40,6 +40,10 @@ cd ~/catkin_ws
 
 ## (Simulation) Test interaction with a partner
 
+<ins>Goal:</ins> to explore how haptic feedback from a simulated partner affects the "feel" of using the robot while performing ankle exercises
+
+The haptic feedback implemented here is a spring which virtually connects your ankle to a simulated partner. Moving your ankle back and forth, you will experience attractive forces towards this simulated partner. Follow these instructions:
+
 1. In [m1_params.yaml](../../../config/m1_params.yaml) file, make sure *config_flag* is set to false in order to disable sliders for adjusting PID gains and instead use previously configured values
 2. Run ROS program for haptic collaboration from the same terminal window that the workspace was sourced
 ```bash
@@ -76,6 +80,10 @@ cd ~/catkin_ws
 
 ## (Real) Test interaction with a partner
 
+<ins>Goal:</ins> to explore how haptic feedback from a partner affects the "feel" of using the robot while performing ankle exercises
+
+The haptic feedback implemented here is a spring which virtually connects two user's ankles. Moving your ankle back and forth, you will experience attractive forces towards your partner. Follow these instructions:
+
 1. In [m1_params.yaml](../../../config/m1_params.yaml) file, make sure *config_flag* is set to false in order to disable sliders for adjusting PID gains and instead use previously configured values
 2. Run ROS program for haptic collaboration from the same terminal window that the workspace was sourced
 ```bash
@@ -89,14 +97,19 @@ roslaunch CORC multi_m1_real.launch
    * The bottom subplot will display the other user's ankle angle
    * **Note:** you can drag and resize these **Multiplot** displays independently for each user by grabbing the top of each panel
 7. To display a target trajectory for an example ankle exercise while the two users are haptically connected, set the experimental conditions in the `/multi_robot_interaction` panel of **Dynamic Reconfigure**
-   * Adjust the *k_interaction* and *c_interaction* sliders to change the stiffness and damping parameters of the virtual spring
+   * Adjust the *k_interaction* and *c_interaction* sliders to change the stiffness and damping parameters of the virtual spring (if you increase the stiffness, you should also increase the damping to maintain the performance of the system)
    * Set *trajectory_mode* to *multi_sine*
    * Set *experimental_cond* to *enable* (spring always on) or *alternate* (switch spring on and off each trial)
    * Set *interaction_mode* to *spring_collaboration_tracking* (starts the experiment)
    * Adjust the *f_1*, *f_2* and *f_3* sliders to change the frequency of the multi-sine; adjust *amp* to change the amplitude range
 8. When finished, press ctrl + C to end the ROS program
 
-## (Simulated or Real) Evaluate task performance and motor learning during with and without haptic feedback
+## (Simulated or Real) Evaluate task performance and motor learning with and without haptic feedback
+
+<ins>Goal:</ins> to quantify tracking performance while each group member performs ankle exercises with the robot under different haptic feedback conditions
+
+As a group, you will design a simple experiment to evaluate how tracking performance changes while haptically connected to a partner (simulated or real). Your experiment could focus on how performance changes under different virtual stiffness conditions, or how the rate of learning changes when tracking with and without a partner. While group members are performing the exercise to collect data for evaluating the gains, the others can work on a data analysis pipeline (ideally in MATLAB with this function [m1_post_process.m](../../../matlab/m1_post_process.m)) to evaluate the group data. Follow these instructions:
+
 1. As a group, decide on a simple experiment to evaluate performance and learning; experimental parameters include the number of trials/target frequencies as well as the order of transparent and haptic feedback conditions during ankle tracking (*spring_collaboration_tracking* or *spring_collaboration_tracking_simulation*)
       * Tracking performance can be evaluated using target and actual trajectories from M1 position data
       * Data from each M1 robot (interaction torque, desired and actual trajectories etc.) are continuously logged from when roslaunch is called, to when the program is ended (ctrl + C)

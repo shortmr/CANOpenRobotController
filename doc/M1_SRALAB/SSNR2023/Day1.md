@@ -39,6 +39,10 @@ cd ~/catkin_ws
 ```
 ## Tune the transparent controller
 
+<ins>Goal:</ins> to explore how different controller gains affect the "feel" of using the robot while performing ankle exercises
+
+For each group member, a particular set of gains may "feel" more or less natural (i.e., more or less resistance). As a group, try to find 2 sets of gains that offer the best transparent control by following these instructions:
+
 1. In [m1_params.yaml](../../../config/m1_params.yaml) file, make sure *config_flag* is set to true in order to enable sliders for adjusting PID gains
 2. Run ROS program for controller tuning from the same terminal window where the workspace was sourced; specify the robot_name parameter for your group’s device (m1_x, m1_y or m1_z)
 ```bash
@@ -69,9 +73,13 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
 10. Once you have decided on a set of gains amongst your group, make a note of the tuned values, then press ctrl + C on the terminal window to end the program
 
 ## Evaluate controller peformance during ankle exercise
-1. As a group, pick 2-3 sets of feedforward/PID gains you would like to evaluate across members as well as the number of trials/target frequencies during ankle tracking (*spring_interaction_tracking*)
-      * Controller performance can be evaluated using interaction torque tracking errors
-      * Data from each M1 robot (interaction torque; desired and actual trajectories etc.) are continuously logged from when roslaunch is called, to when the program is ended (ctrl + C)
+
+<ins>Goal:</ins> to quantify the performance of different controller gains while each group member performs ankle exercises with the robot
+
+As a group, you will design a simple experiment to evaluate the performance of the controller based on interaction torque tracking errors analyzed offline. While one group member is performing the exercise to collect data for evaluating the gains, the others can work on a data analysis pipeline (ideally in MATLAB with this function [m1_post_process.m](../../../matlab/m1_post_process.m)) to evaluate the group data. Follow these instructions:
+
+1. As a group, decide on 2 sets of feedforward/PID gains you would like to evaluate across members as well as the number of trials/target frequencies you would like to use for your validation experiment
+      * Data from each M1 robot (interaction torque, desired and actual trajectories etc.) are continuously logged from when roslaunch is called to when the program is ended (ctrl + C); log files can be found in ~\.ros\spdlogs
 2. Run ROS program from the terminal where the workspace was sourced; specify the robot_name parameter for your group’s device (m1_x, m1_y or m1_z)
 ```bash
 roslaunch CORC m1_real.launch robot_name:=m1_x
@@ -98,6 +106,11 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
     * If not using MATLAB, key variables to look at in the .csv file would be the time (column name: time), mode (column name: mode), actual interaction torque (column name: SensorTorques_1) and desired interaction torque (column name: MM1_DesiredInteractionTorques_1)
 
 ## Test haptic feedback
+
+<ins>Goal:</ins> to explore how haptic feedback affects the "feel" of using the robot while performing ankle exercises
+
+The haptic feedback implemented here is a simple spring which virtually connects your ankle to a constant angle. Moving your ankle back and forth, you will experience attractive forces towards this constant angle. Follow these instructions:
+
 1. Run ROS program for haptic feedback from the terminal where the workspace was sourced; specify the robot_name parameter for your group’s device (m1_x, m1_y or m1_z)
 ```bash
 roslaunch CORC m1_real.launch robot_name:=m1_x
@@ -120,6 +133,11 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
 10. When you are finished, press ctrl + C on the terminal window to end the program
 
 ## Customize haptic feedback
+
+<ins>Goal:</ins> to explore different types of haptic feedback typically used in motor learning experiments
+
+Instead of the simple spring used in the previous section, try to implement more meaningful form of haptic feedback (e.g., assist-as-needed, error augmentation, random disturbances). Follow these instructions:
+
 1. Open your C++ editor (CLion or Visual Studio) and navigate to MultiRobotInteraction.cpp within ~\catkin_ws\src\multi_robot_interaction\src
 2. Read through the code in the section defining the *spring_interaction_tracking* mode (Lines 157-166)
 ```cpp

@@ -43,7 +43,7 @@ cd ~/catkin_ws
 
 For each group member, a particular set of gains may "feel" more or less natural (i.e., more or less resistance). As a group, try to find 2 sets of gains that offer the best transparent control by following these instructions:
 
-1. In [m1_params.yaml](../../../config/m1_params.yaml) file, make sure *config_flag* is set to true in order to enable sliders for adjusting PID gains
+1. In the m1_params.yaml file (~/catkin_ws/src/CANOpenRobotController/config), make sure *config_flag* is set to true in order to enable sliders for adjusting PID gains
 2. Run ROS program for controller tuning from the same terminal window where the workspace was sourced; specify the robot_name parameter for your group’s device (m1_x, m1_y or m1_z)
 ```bash
 roslaunch CORC m1_real.launch robot_name:=m1_x
@@ -97,11 +97,15 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
    * Set *trajectory_mode* to *multi_sine*
    * Set *experimental_cond* to *disable*
    * Set *interaction_mode* to *spring_interaction_tracking* (starts the experiment)
-9. Press ctrl + C on the terminal window to end the program after desired number of trials are performed
-10. For each group member, repeat steps 2 through 9 for each set of gains
+9. After performing the desired number of trials (check terminal to see how many trials have passed), switch to a different group member to test the same gains
+   * During the resting period (constant, flat target), set *interaction_mode* to *no_interaction*; this will stop the loop of multi-sine targets and give the next group member time to strap into the robot
+   * To start the experiment for the next member, set *interaction_mode* back to *spring_interaction_tracking*
+   * Alternatively, you can save smaller files by ending the program (ctrl + C in terminal) after each group member performs their trials
+10. Press ctrl + C on the terminal window to end the program after desired number of trials are performed for each group member
 11. Navigate to the log folder within ~\.ros\spdlogs and find the folder for your robot (m1_x, m1_y or m1_z)
 12. Transfer the .csv files associated with one or more previous runs (check timestamps) to a separate laptop
-13. Using software of your choice (MATLAB, R studio, python), analyze the data from multiple runs to observe how interaction torque measurements change depending on the controller gains you've set
+13. Repeat steps 2 through 12 for the other set of gains you plan to test
+14. Using software of your choice (MATLAB, R studio, python), analyze the data from multiple runs to observe how interaction torque measurements change depending on the controller gains you've set
     * If using MATLAB, see [m1_post_process.m](../../../matlab/m1_post_process.m); this function will load a .csv file, segment it into trials (if the *interaction_mode* was set to *spring_interaction_tracking*), and compute the root-mean-square error of the interaction torque measurements and tracking errors; it is suggested that you run this function in a loop to collect and analyze interaction torque errors across all group members
     * If not using MATLAB, key variables to look at in the .csv file would be the time (column name: time), mode (column name: mode), actual interaction torque (column name: SensorTorques_1) and desired interaction torque (column name: MM1_DesiredInteractionTorques_1)
 

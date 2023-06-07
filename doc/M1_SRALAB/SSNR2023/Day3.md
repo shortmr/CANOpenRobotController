@@ -44,7 +44,7 @@ cd ~/catkin_ws
 
 The haptic feedback implemented here is a spring which virtually connects your ankle to a simulated partner. Moving your ankle back and forth, you will experience attractive forces towards this simulated partner. Follow these instructions:
 
-1. In [m1_params.yaml](../../../config/m1_params.yaml) file, make sure *config_flag* is set to false in order to disable sliders for adjusting PID gains and instead use previously configured values
+1. In the m1_params.yaml file (~/catkin_ws/src/CANOpenRobotController/config), make sure *config_flag* is set to false in order to disable sliders for adjusting PID gains and instead use previously configured values
 2. Run ROS program for haptic collaboration from the same terminal window that the workspace was sourced
 ```bash
 roslaunch CORC multi_m1_sim.launch
@@ -84,7 +84,7 @@ cd ~/catkin_ws
 
 The haptic feedback implemented here is a spring which virtually connects two user's ankles. Moving your ankle back and forth, you will experience attractive forces towards your partner. Follow these instructions:
 
-1. In [m1_params.yaml](../../../config/m1_params.yaml) file, make sure *config_flag* is set to false in order to disable sliders for adjusting PID gains and instead use previously configured values
+1. In the m1_params.yaml file (~/catkin_ws/src/CANOpenRobotController/config), make sure *config_flag* is set to false in order to disable sliders for adjusting PID gains and instead use previously configured values
 2. Run ROS program for haptic collaboration from the same terminal window that the workspace was sourced
 ```bash
 roslaunch CORC multi_m1_real.launch

@@ -28,7 +28,7 @@ source devel/setup.bash
 ## (Simulation) Initialize CAN communication
 
 1. Connect one of the M1 devices (m1_z) to the operating computer via CAN USB cable
-2. From a terminal, initialize CAN communication for a single device on can0 (enter password: *123456* when prompted)
+2. From a terminal, initialize CAN communication for a single device on can0 (enter password: *ssnr2023* when prompted)
 ```bash
 cd ~/catkin_ws/src/CANOpenRobotController/script
 sudo ./initCAN0.sh
@@ -67,7 +67,7 @@ roslaunch CORC multi_m1_sim.launch
 ## (Real) Initialize CAN communication
 
 1. Connect two of the M1 devices (m1_x and m1_y) to the operating computer via CAN USB cables (multi-channel adapter)
-2. From a terminal, initialize CAN communication for both devices (enter password: *123456* when prompted)
+2. From a terminal, initialize CAN communication for both devices (enter password: *ssnr2023* when prompted)
 ```bash
 cd ~/catkin_ws/src/CANOpenRobotController/script
 sudo ./initCAN0CAN1.sh

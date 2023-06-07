@@ -1,4 +1,4 @@
-function [pos_rmse, tor_rmse, trial_data] = m1_post_process(csv_file,varargin)
+function [pos_rmse, tor_rmse, spr_data, trial_data] = m1_post_process(csv_file,varargin)
 %%% Process .csv file from CORC/multi_robot_interaction
 %
 % inputs:
@@ -7,9 +7,10 @@ function [pos_rmse, tor_rmse, trial_data] = m1_post_process(csv_file,varargin)
 % outputs:
 %%%% (mat)  pos_rmse: RMSE for position tracking performance
 %%%% (mat)  tor_rmse: RMSE for interaction torque tracking performance
+%%%% (mat)  spr_data: Flag for whether the trial was without (0) or with (1) spring interaction
 %%%% (cell) trial_data: continuous position/torque data for each trial
 %
-% example: [pos, tor, dat] = m1_post_process('example.csv',0) 
+% example: [pos, tor, spr, dat] = m1_post_process('example.csv',0) 
 %
 %% Initialize variables
 s = 2; % time (seconds) to subtract from the start of each trial
@@ -105,7 +106,7 @@ end
 pos_rmse = NaN(length(events.start),1);
 tor_rmse = NaN(length(events.start),1);
 trial_data = cell(length(events.start),1);
-spring = NaN(length(events.start),1);
+spr_data = NaN(length(events.start),1);
 for k = 1:length(events.start)
     % exclude first s seconds of each trial
     si = events.start(k).index+round(fs*s);
@@ -161,7 +162,7 @@ for k = 1:length(events.start)
     trial_data{k} = table(time_seg, des_pos_seg, act_pos_seg, des_tor_seg, act_tor_seg, interaction_seg);
     pos_rmse(k) = pos_error;
     tor_rmse(k) = tor_error;
-    spring(k) = events.interaction(k);
+    spr_data(k) = events.interaction(k);
 end
 %% plot mean data
 fig_m = figure('Position',fig_pos+[0 0.1*ss(4) 0 0]);
@@ -173,10 +174,10 @@ c = {c0;c1};
 subplot(1,2,1);
 hold on;
 for sp = 0:1
-    if ~isempty(find(spring == sp,1))
-        scatter(find(spring == sp)',pos_rmse(spring == sp)',75,'o',...
+    if ~isempty(find(spr_data == sp,1))
+        scatter(find(spr_data == sp)',pos_rmse(spr_data == sp)',75,'o',...
                      'MarkerEdgeColor','k','MarkerFaceColor',c{sp+1});
-        yline(mean(pos_rmse(spring == sp)),'--','Color',c{sp+1},'LineWidth',1.5);
+        yline(mean(pos_rmse(spr_data == sp)),'--','Color',c{sp+1},'LineWidth',1.5);
     end
 end
 xticks(1:k);
@@ -187,19 +188,19 @@ set(gca,'FontSize',12,'LineWidth',1)
 subplot(1,2,2);
 hold on;
 for sp = 0:1
-    if ~isempty(find(spring == sp,1))
-        scatter(find(spring == sp)',tor_rmse(spring == sp)',75,'o',...
+    if ~isempty(find(spr_data == sp,1))
+        scatter(find(spr_data == sp)',tor_rmse(spr_data == sp)',75,'o',...
                      'MarkerEdgeColor','k','MarkerFaceColor',c{sp+1});
-        yline(mean(tor_rmse(spring == sp)),'--','Color',c{sp+1},'LineWidth',1.5);
+        yline(mean(tor_rmse(spr_data == sp)),'--','Color',c{sp+1},'LineWidth',1.5);
     end
 end
 xticks(1:k);
 ylabel('Interaction torque error (Nm)');
 xlabel('Trial number');
 set(gca,'FontSize',12,'LineWidth',1)
-if sum(spring) == 0
+if sum(spr_data) == 0
     legend({'no interaction',''},'FontSize',12,'Location','northeast');
-elseif sum(spring) == length(spring)
+elseif sum(spr_data) == length(spr_data)
     legend({'interaction',''},'FontSize',12,'Location','northeast');
 else
     legend({'no interaction','','interaction',''},'FontSize',12,'Location','northeast');

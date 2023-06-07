@@ -28,7 +28,7 @@ source devel/setup.bash
 ## Initialize CAN communication
 
 1. Connect one of the M1 devices (m1_x,  m1_y or m1_z) to the operating computer via CAN USB cable
-2. From a terminal, initialize CAN communication for a single device on can0 (enter password: *123456* when prompted)
+2. From a terminal, initialize CAN communication for a single device on can0 (enter password: *ssnr2023* when prompted)
 ```bash
 cd ~/catkin_ws/src/CANOpenRobotController/script
 sudo ./initCAN0.sh

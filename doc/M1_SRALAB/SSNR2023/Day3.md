@@ -55,6 +55,9 @@ roslaunch CORC multi_m1_sim.launch
 6. Start the **Multiplot** display by pressing the play icon at the top right of each panel
    * The top subplot will display your instantaneous ankle angle
    * The bottom subplot will display the instananeous angle of a simulated partner
+
+![Figure](partner_angle_display.png)
+
 7. To display a target trajectory for an example ankle exercise while haptically connected to a simulated partner, set the experimental conditions in the `/multi_robot_interaction` panel of **Dynamic Reconfigure**
    * Adjust the *k_interaction* slider to change the stiffness parameter of the virtual spring
    * Set *trajectory_mode* to *multi_sine*
@@ -119,3 +122,5 @@ As a group, you will design a simple experiment to evaluate how tracking perform
 5. Using software of your choice (MATLAB, R studio, python), analyze the data from multiple runs to observe how tracking errors change depending on the haptic feedback conditions you tested
    * If using MATLAB, see [m1_post_process.m](../../../matlab/m1_post_process.m); this function will load a .csv file, segment it into trials (if the *interaction_mode* was set to *spring_collaboration_tracking* or *spring_collaboration_tracking_simulation*), and compute the root-mean-square error of the interaction torque measurements and tracking errors; it is suggested that you run this function in a loop to collect and analyze tracking errors across all group members
    * If not using MATLAB, key variables to look at in the .csv file would be the time (column name: time), mode (column name: mode), actual joint angle (column name: JointPositions_1) and desired joint angle (column name: MM1_DesiredJointPositions_1)
+
+![Figure](angle_matlab.png)

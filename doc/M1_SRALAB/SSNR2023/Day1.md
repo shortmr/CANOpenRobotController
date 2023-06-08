@@ -60,11 +60,20 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
 6. Adjust the sliders on the `/m1_<robot_name>` panel of **Dynamic Reconfigure** to change the amount of feedforward compensation (*ff_ratio*) and PID gains (*kp*, *ki* and *kd*)
    * A suggestion, but not a requirement, is to start by tuning the *ff_ratio*, which controls the amount of compensation for the weight of the pedal and friction of the shaft/motor; then sequentially tune the *kp*, *ki* and *kd* gains, in this order
    * **Note:** make small, incremental changes to each slider individually before testing; large gains can cause instability/oscillations
+
+![Figure](tuning.png)
+
 7. Move your ankle back and forth as you tune each gain of the controller
    * The goal is to feel like you can move your ankle freely (no resistance from the device) while avoiding oscillations or overcompensation caused by the controller
 8. For more precise tuning and visualization, start the **Multiplot** display by pressing the play icon at the top right
    * The top subplot will display your instantaneous ankle angle
+
+![Figure](angle_display.png)
+
    * The bottom subplot will display the measured and desired interaction torques (desired torque is 0 for transparent control)
+
+![Figure](torque_display.png)
+
 9. To display a target trajectory for an example ankle exercise, set the experimental conditions in the `/multi_robot_interaction` panel of **Dynamic Reconfigure**
    * Set *trajectory_mode* to *multi_sine*
    * Set *experimental_cond* to *disable*
@@ -108,6 +117,8 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
 14. Using software of your choice (MATLAB, R studio, python), analyze the data from multiple runs to observe how interaction torque measurements change depending on the controller gains you've set
     * If using MATLAB, see [m1_post_process.m](../../../matlab/m1_post_process.m); this function will load a .csv file, segment it into trials (if the *interaction_mode* was set to *spring_interaction_tracking*), and compute the root-mean-square error of the interaction torque measurements and tracking errors; it is suggested that you run this function in a loop to collect and analyze interaction torque errors across all group members
     * If not using MATLAB, key variables to look at in the .csv file would be the time (column name: time), mode (column name: mode), actual interaction torque (column name: SensorTorques_1) and desired interaction torque (column name: MM1_DesiredInteractionTorques_1)
+
+![Figure](torque_matlab.png)
 
 ## Test haptic feedback
 

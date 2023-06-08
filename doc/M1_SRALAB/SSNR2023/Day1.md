@@ -67,12 +67,9 @@ roslaunch CORC m1_real.launch robot_name:=m1_z
    * The goal is to feel like you can move your ankle freely (no resistance from the device) while avoiding oscillations or overcompensation caused by the controller
 8. For more precise tuning and visualization, start the **Multiplot** display by pressing the play icon at the top right
    * The top subplot will display your instantaneous ankle angle
-
-![Figure](angle_display.png)
-
    * The bottom subplot will display the measured and desired interaction torques (desired torque is 0 for transparent control)
 
-![Figure](torque_display.png)
+![Figure](torque_angle_display.png)
 
 9. To display a target trajectory for an example ankle exercise, set the experimental conditions in the `/multi_robot_interaction` panel of **Dynamic Reconfigure**
    * Set *trajectory_mode* to *multi_sine*

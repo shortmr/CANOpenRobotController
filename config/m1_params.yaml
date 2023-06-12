@@ -1,82 +1,19 @@
 config_flag: true # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
 
-m1_x:
-  id: ['SRALAB_1']
-  c0: [2.181] # coulomb friction constant of joint [Nm]
-  c1: [2.850] # viscous friction constant of joint [Nm/s]
-  c2: [0] # friction square root term
-  i_sin: [0.47] # inertia for sine term (0.84 with previous joint limit)
-  i_cos: [0.22] # inertia for cosine term (0.23 with previous joint limit)
-  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-  force_sensor_scale_factor: [0.074] # scale factor for force calibration
-  force_sensor_offset: [1500] # calibration offset for force sensor
-  ff_ratio: [0.74] # scale factor for feedforward compensation
-  kp: [1.08] # proportional term of PID controller
-  ki: [0.17] # integral term of PID controller
-  kd: [0] # derivative term of PID controller
-  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
-  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
-  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass filter for interaction torque, angle and velocity [Hz]
-  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
-  tick_max: [60.0] # counter for integral term reset [s]
-  spk: [0] # spring stiffness (not implemented) [Nm/rad]
-
-m1_y:
-  id: ['SRALAB_2']
-  c0: [1.6808] # coulomb friction constant of joint [Nm]
-  c1: [2.2137] # viscous friction constant of joint [Nm/s]
-  c2: [0] # 1.2532 friction square root term
-  i_sin: [0.89] # inertia for sine term
-  i_cos: [0.25] # inertia for cosine term
-  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-  force_sensor_scale_factor: [0.074] # scale factor for force calibration
-  force_sensor_offset: [1500] # calibration offset for force sensor
-  ff_ratio: [0.6] # scale factor for feedforward compensation
-  kp: [1.08] # proportional term of PID controller
-  ki: [0.17] # integral term of PID controller
-  kd: [0] # derivative term of PID controller
-  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
-  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
-  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
-  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
-  tick_max: [60.0] # counter for integral term reset [s]
-  spk: [0] # spring stiffness (not implemented) [Nm/rad]
-
-m1_z:
-  id: ['SRALAB_1'] # same parameters as SRALAB_1 (for demonstration)
-  c0: [2.181] # coulomb friction constant of joint [Nm]
-  c1: [2.850] # viscous friction constant of joint [Nm/s]
-  c2: [0] # friction square root term
-  i_sin: [0.47] # inertia for sine term (0.84 with previous joint limit)
-  i_cos: [0.22] # inertia for cosine term (0.23 with previous joint limit)
-  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-  force_sensor_scale_factor: [0.074] # scale factor for force calibration
-  force_sensor_offset: [1500] # calibration offset for force sensor
-  ff_ratio: [0.74] # scale factor for feedforward compensation
-  kp: [1.08] # proportional term of PID controller
-  ki: [0.17] # integral term of PID controller
-  kd: [0] # derivative term of PID controller
-  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
-  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
-  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass filter for interaction torque, angle and velocity [Hz]
-  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
-  tick_max: [60.0] # counter for integral term reset [s]
-  spk: [0] # spring stiffness (not implemented) [Nm/rad]
-
 #m1_x:
-#  id: ['HLM_1']
-#  c0: [2.2424] # coulomb friction constant of joint [Nm] No changed!!
-#  c1: [4.5749] # viscous friction constant of joint [Nm/s] No changed!!
+#  id: ['SRALAB_1']
+#  c0: [2.181] # coulomb friction constant of joint [Nm]
+#  c1: [2.850] # viscous friction constant of joint [Nm/s]
 #  c2: [0] # friction square root term
-#  i_sin: [0.7557] # inertia for sine term (0.84 with previous joint limit)
-#  i_cos: [0.2061] # inertia for cosine term (0.23 with previous joint limit)
+#  i_sin: [0.47] # inertia for sine term (0.84 with previous joint limit)
+#  i_cos: [0.22] # inertia for cosine term (0.23 with previous joint limit)
 #  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-#  force_sensor_scale_factor: [0.0687] # scale factor for force calibration 0.0659
+#  force_sensor_scale_factor: [0.074] # scale factor for force calibration
 #  force_sensor_offset: [1500] # calibration offset for force sensor
-#  ff_ratio: [ 0.55 ] # scale factor for feedforward compensation
-#  kp: [ 0.9 ] # proportional term of PID controller
-#  ki: [ 0.002 ] # integral term of PID controller
-#  kd: [ 0 ] # derivative term of PID controller
+#  ff_ratio: [0.74] # scale factor for feedforward compensation
+#  kp: [1.08] # proportional term of PID controller
+#  ki: [0.17] # integral term of PID controller
+#  kd: [0] # derivative term of PID controller
 #  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
 #  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
 #  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass filter for interaction torque, angle and velocity [Hz]
@@ -85,18 +22,18 @@ m1_z:
 #  spk: [0] # spring stiffness (not implemented) [Nm/rad]
 #
 #m1_y:
-#  id: ['HLM_2']
-#  c0: [2.0898] # coulomb friction constant of joint [Nm]
-#  c1: [2.4152] # viscous friction constant of joint [Nm/s]
+#  id: ['SRALAB_2']
+#  c0: [1.6808] # coulomb friction constant of joint [Nm]
+#  c1: [2.2137] # viscous friction constant of joint [Nm/s]
 #  c2: [0] # 1.2532 friction square root term
-#  i_sin: [0.99] # inertia for sine term
-#  i_cos: [0.33] # inertia for cosine term
+#  i_sin: [0.89] # inertia for sine term
+#  i_cos: [0.25] # inertia for cosine term
 #  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-#  force_sensor_scale_factor: [0.066] # scale factor for force calibration
+#  force_sensor_scale_factor: [0.074] # scale factor for force calibration
 #  force_sensor_offset: [1500] # calibration offset for force sensor
-#  ff_ratio: [0.55] # scale factor for feedforward compensation
-#  kp: [0.9] # proportional term of PID controller
-#  ki: [0.002] # integral term of PID controller
+#  ff_ratio: [0.6] # scale factor for feedforward compensation
+#  kp: [1.08] # proportional term of PID controller
+#  ki: [0.17] # integral term of PID controller
 #  kd: [0] # derivative term of PID controller
 #  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
 #  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
@@ -106,22 +43,85 @@ m1_z:
 #  spk: [0] # spring stiffness (not implemented) [Nm/rad]
 #
 #m1_z:
-#  id: ['HLM_3']
-#  c0: [1.9741] # coulomb friction constant of joint [Nm]
-#  c1: [3.7222] # viscous friction constant of joint [Nm/s]
-#  c2: [0] # 1.2532 friction square root term
-#  i_sin: [0.9436] # inertia for sine term
-#  i_cos: [0.4044] # inertia for cosine term
+#  id: ['SRALAB_1'] # same parameters as SRALAB_1 (for demonstration)
+#  c0: [2.181] # coulomb friction constant of joint [Nm]
+#  c1: [2.850] # viscous friction constant of joint [Nm/s]
+#  c2: [0] # friction square root term
+#  i_sin: [0.47] # inertia for sine term (0.84 with previous joint limit)
+#  i_cos: [0.22] # inertia for cosine term (0.23 with previous joint limit)
 #  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
-#  force_sensor_scale_factor: [0.0674] # scale factor for force calibration
-#  force_sensor_offset: [1501] # calibration offset for force sensor
-#  ff_ratio: [ 0.55 ] # scale factor for feedforward compensation
-#  kp: [ 0.9 ] # proportional term of PID controller
-#  ki: [ 0.002 ] # integral term of PID controller
-#  kd: [ 0 ] # derivative term of PID controller
+#  force_sensor_scale_factor: [0.074] # scale factor for force calibration
+#  force_sensor_offset: [1500] # calibration offset for force sensor
+#  ff_ratio: [0.74] # scale factor for feedforward compensation
+#  kp: [1.08] # proportional term of PID controller
+#  ki: [0.17] # integral term of PID controller
+#  kd: [0] # derivative term of PID controller
 #  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
 #  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
-#  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
+#  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass filter for interaction torque, angle and velocity [Hz]
 #  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
 #  tick_max: [60.0] # counter for integral term reset [s]
 #  spk: [0] # spring stiffness (not implemented) [Nm/rad]
+
+m1_x:
+  id: ['HLM_1']
+  c0: [2.2424] # coulomb friction constant of joint [Nm] No changed!!
+  c1: [4.5749] # viscous friction constant of joint [Nm/s] No changed!!
+  c2: [0] # friction square root term
+  i_sin: [0.7557] # inertia for sine term (0.84 with previous joint limit)
+  i_cos: [0.2061] # inertia for cosine term (0.23 with previous joint limit)
+  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
+  force_sensor_scale_factor: [0.0687] # scale factor for force calibration 0.0659
+  force_sensor_offset: [1500] # calibration offset for force sensor
+  ff_ratio: [ 0.55 ] # scale factor for feedforward compensation
+  kp: [ 0.9 ] # proportional term of PID controller
+  ki: [ 0.002 ] # integral term of PID controller
+  kd: [ 0 ] # derivative term of PID controller
+  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
+  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
+  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass filter for interaction torque, angle and velocity [Hz]
+  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
+  tick_max: [60.0] # counter for integral term reset [s]
+  spk: [0] # spring stiffness (not implemented) [Nm/rad]
+
+m1_y:
+  id: ['HLM_2']
+  c0: [2.0898] # coulomb friction constant of joint [Nm]
+  c1: [2.4152] # viscous friction constant of joint [Nm/s]
+  c2: [0] # 1.2532 friction square root term
+  i_sin: [0.99] # inertia for sine term
+  i_cos: [0.33] # inertia for cosine term
+  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
+  force_sensor_scale_factor: [0.066] # scale factor for force calibration
+  force_sensor_offset: [1500] # calibration offset for force sensor
+  ff_ratio: [0.55] # scale factor for feedforward compensation
+  kp: [0.9] # proportional term of PID controller
+  ki: [0.002] # integral term of PID controller
+  kd: [0] # derivative term of PID controller
+  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
+  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
+  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
+  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
+  tick_max: [60.0] # counter for integral term reset [s]
+  spk: [0] # spring stiffness (not implemented) [Nm/rad]
+
+m1_z:
+  id: ['HLM_3']
+  c0: [1.9741] # coulomb friction constant of joint [Nm]
+  c1: [3.7222] # viscous friction constant of joint [Nm/s]
+  c2: [0] # 1.2532 friction square root term
+  i_sin: [0.9436] # inertia for sine term
+  i_cos: [0.4044] # inertia for cosine term
+  t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
+  force_sensor_scale_factor: [0.0674] # scale factor for force calibration
+  force_sensor_offset: [1501] # calibration offset for force sensor
+  ff_ratio: [ 0.55 ] # scale factor for feedforward compensation
+  kp: [ 0.9 ] # proportional term of PID controller
+  ki: [ 0.002 ] # integral term of PID controller
+  kd: [ 0 ] # derivative term of PID controller
+  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
+  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
+  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
+  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
+  tick_max: [60.0] # counter for integral term reset [s]
+  spk: [0] # spring stiffness (not implemented) [Nm/rad]

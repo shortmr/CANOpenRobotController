@@ -51,7 +51,7 @@ void MultiControllerState::entry(void) {
     delta_error = 0;
     integral_error = 0;
     tick_count = 0;
-    cali_tau_thresh = -13;
+    cali_tau_thresh = -17;
     cali_vel_thresh = 2;
 
     controller_mode_ = -1;

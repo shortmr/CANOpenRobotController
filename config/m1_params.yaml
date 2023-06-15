@@ -1,4 +1,4 @@
-config_flag: true # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
+config_flag: false # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
 
 #m1_x:
 #  id: ['SRALAB_1']
@@ -73,10 +73,10 @@ m1_x:
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
   force_sensor_scale_factor: [0.0687] # scale factor for force calibration 0.0659
   force_sensor_offset: [1500] # calibration offset for force sensor
-  ff_ratio: [ 0.55 ] # scale factor for feedforward compensation
-  kp: [ 0.9 ] # proportional term of PID controller
-  ki: [ 0.002 ] # integral term of PID controller
-  kd: [ 0 ] # derivative term of PID controller
+  ff_ratio: [ 0.72 ] # scale factor for feedforward compensation
+  kp: [1.6] # proportional term of PID controller
+  ki: [0.05] # integral term of PID controller
+  kd: [0] # derivative term of PID controller
   vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
   tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
   lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass filter for interaction torque, angle and velocity [Hz]
@@ -94,9 +94,9 @@ m1_y:
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
   force_sensor_scale_factor: [0.066] # scale factor for force calibration
   force_sensor_offset: [1500] # calibration offset for force sensor
-  ff_ratio: [0.55] # scale factor for feedforward compensation
-  kp: [0.9] # proportional term of PID controller
-  ki: [0.002] # integral term of PID controller
+  ff_ratio: [0.85] # scale factor for feedforward compensation
+  kp: [2.5] # proportional term of PID controller
+  ki: [0.05] # integral term of PID controller
   kd: [0] # derivative term of PID controller
   vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
   tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
@@ -115,9 +115,9 @@ m1_z:
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
   force_sensor_scale_factor: [0.0674] # scale factor for force calibration
   force_sensor_offset: [1501] # calibration offset for force sensor
-  ff_ratio: [ 0.55 ] # scale factor for feedforward compensation
-  kp: [ 0.9 ] # proportional term of PID controller
-  ki: [ 0.002 ] # integral term of PID controller
+  ff_ratio: [0.85] # scale factor for feedforward compensation
+  kp: [2.5] # proportional term of PID controller
+  ki: [0.05] # integral term of PID controller
   kd: [ 0 ] # derivative term of PID controller
   vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
   tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]

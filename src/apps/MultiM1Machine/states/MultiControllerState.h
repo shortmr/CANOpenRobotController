@@ -42,6 +42,7 @@ public:
     int cali_stage;
     int cali_velocity;
     double cali_tau_thresh;
+    double cali_tau_safety;
     double cali_vel_thresh;
 
     // Fixed neutral terms

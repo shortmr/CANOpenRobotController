@@ -52,6 +52,7 @@ void MultiControllerState::entry(void) {
     integral_error = 0;
     tick_count = 0;
     cali_tau_thresh = -17;
+    cali_tau_safety = 21;
     cali_vel_thresh = 2;
 
     controller_mode_ = -1;
@@ -106,6 +107,14 @@ void MultiControllerState::during(void) {
             } else {
                 robot_->printJointStatus();
             }
+
+            // safety tau
+            if (abs(tau(0)) >= cali_tau_safety) {
+                robot_->initTorqueControl();
+                std::cout << "Calibration safety error!" << std::endl;
+                cali_stage = 4;
+            }
+
         } else if (cali_stage == 2) {
             // set position control to vertical
             JointVec q_t;
@@ -123,6 +132,9 @@ void MultiControllerState::during(void) {
             else {
                 robot_->printJointStatus();
             }
+        } else if (cali_stage == 4) {
+            // safety tau default
+            robot_->setJointTor(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
         }
     }
     else if (controller_mode_ == 1) {  // zero torque mode

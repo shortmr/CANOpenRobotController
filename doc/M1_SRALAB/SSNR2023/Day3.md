@@ -27,7 +27,7 @@ source devel/setup.bash
 
 ## (Simulation) Initialize CAN communication
 
-1. Connect one of the M1 devices (m1_z) to the operating computer via CAN USB cable
+1. Connect one of the M1 devices (m1_) to the operating computer via CAN USB cable
 2. From a terminal, initialize CAN communication for a single device on can0 (enter password: *ssnr2023* when prompted)
 ```bash
 cd ~/catkin_ws/src/CANOpenRobotController/script
@@ -49,7 +49,7 @@ The haptic feedback implemented here is a spring which virtually connects your a
 ```bash
 roslaunch CORC multi_m1_sim.launch
 ```
-3. On the `/m1_z` panel of **Dynamic Reconfigure**, set *controller_mode* to *zero_calibration* and wait until calibration is complete
+3. On the `/m1_x` panel of **Dynamic Reconfigure**, set *controller_mode* to *zero_calibration* and wait until calibration is complete
 4. Set *controller_mode* to *virtual_spring*
 5. Strap into the device while seated in a chair
 6. Start the **Multiplot** display by pressing the play icon at the top right of each panel
@@ -69,13 +69,13 @@ roslaunch CORC multi_m1_sim.launch
 
 ## (Real) Initialize CAN communication
 
-1. Connect two of the M1 devices (m1_x and m1_y) to the operating computer via CAN USB cables (multi-channel adapter)
+1. Connect two of the M1 devices (m1_x and m1_z) to the operating computer via CAN USB cables (multi-channel adapter)
 2. From a terminal, initialize CAN communication for both devices (enter password: *ssnr2023* when prompted)
 ```bash
 cd ~/catkin_ws/src/CANOpenRobotController/script
 sudo ./initCAN0CAN1.sh
 ```
-3. **Important!** Make sure m1_x is mapped to can0 and m1_y is mapped to can1
+3. **Important!** Make sure m1_x is mapped to can0 and m1_z is mapped to can1
 4. Return to the project workspace
 ```bash
 cd ~/catkin_ws
@@ -92,7 +92,7 @@ The haptic feedback implemented here is a spring which virtually connects two us
 ```bash
 roslaunch CORC multi_m1_real.launch
 ```
-3. On the `/m1_x` and `/m1_y` panels of **Dynamic Reconfigure**, set *controller_mode* to *zero_calibration* and wait until calibration is complete for each M1 robot
+3. On the `/m1_x` and `/m1_z` panels of **Dynamic Reconfigure**, set *controller_mode* to *zero_calibration* and wait until calibration is complete for each M1 robot
 4. Set *controller_mode* to *virtual_spring* for each robot
 5. Have 2 users strap into the device while seated in a chair
 6. Start the **Multiplot** display by pressing the play icon at the top right of each panel
@@ -117,7 +117,7 @@ As a group, you will design a simple experiment to evaluate how tracking perform
       * Tracking performance can be evaluated using target and actual trajectories from M1 position data
       * Data from each M1 robot (interaction torque, desired and actual trajectories etc.) are continuously logged from when roslaunch is called, to when the program is ended (ctrl + C)
 2. Repeat the steps associated with **Test interaction with a partner** (either real or simulated), according to the experiment you have planned
-3. After collecting data on a number of group members, navigate to the log folder within ~\.ros\spdlogs and find the folder for your robot (m1_x, m1_y or m1_z)
+3. After collecting data on a number of group members, navigate to the log folder within ~\.ros\spdlogs and find the folder for your robot (m1_x or m1_z)
 4. Transfer the .csv files associated with one or more previous runs (check timestamps) to a separate laptop
 5. Using software of your choice (MATLAB, R studio, python), analyze the data from multiple runs to observe how tracking errors change depending on the haptic feedback conditions you tested
    * If using MATLAB, see [m1_post_process.m](../../../matlab/m1_post_process.m); this function will load a .csv file, segment it into trials (if the *interaction_mode* was set to *spring_collaboration_tracking* or *spring_collaboration_tracking_simulation*), and compute the root-mean-square error of the interaction torque measurements and tracking errors; it is suggested that you run this function in a loop to collect and analyze tracking errors across all group members

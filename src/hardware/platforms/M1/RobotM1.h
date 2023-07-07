@@ -298,7 +298,7 @@ public:
     void setStimDF(double stim_amp);
     void setStimPF(double stim_amp);
     void setStimCalibrate(bool stim_calib);
-    double setTorqueOffset();
+    void setTorqueOffset(double tau_filt);
 
     void printStatus();
     void printJointStatus();

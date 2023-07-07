@@ -67,13 +67,6 @@ private:
     ros::ServiceServer calibrateForceSensorsService_;
     bool calibrateForceSensorsCallback(std_srvs::Trigger::Request& req,
                                        std_srvs::Trigger::Response& res);
-    ros::ServiceServer setFixedAngleService_;
-    bool setFixedAngleCallback(std_srvs::Trigger::Request& req,
-                               std_srvs::Trigger::Response& res);
-
-    ros::ServiceServer setTorqueOffsetService_;
-    bool setTorqueOffsetCallback(std_srvs::Trigger::Request& req,
-                               std_srvs::Trigger::Response& res);
 };
 
 #endif  //SRC_MultiM1MachineROS_H

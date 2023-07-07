@@ -138,11 +138,19 @@ void MultiControllerState::during(void) {
     else if (controller_mode_ == 4 || controller_mode_ == 5) { // virtual spring or transparency - torque mode
         tau = robot_->getJointTor();
 
-        // filter position
+        // filter position and check for ROM update
         q = robot_->getJointPos();
         q_raw = q(0);
         alpha_q = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
         q_filtered = robot_->filter_q(alpha_q);
+        if (set_rom_) {
+            if (q_filtered > rom_df) {
+                rom_df = q_filtered;
+            }
+            if (q_filtered < rom_pf) {
+                rom_pf = q_filtered;
+            }
+        }
 
         // filter velocity
         dq = robot_->getJointVel();
@@ -157,7 +165,7 @@ void MultiControllerState::during(void) {
         tau_filtered = robot_->filter_tau_s(alpha_tau_s);
 
         // get interaction torque from virtual spring
-        spring_tor = -multiM1MachineRos_->interactionTorqueCommand_(0);
+        spring_tor = multiM1MachineRos_->interactionTorqueCommand_(0);
         robot_->tau_spring[0] = spring_tor; // for ROS publish only
 
         // apply PID for feedback control
@@ -179,7 +187,7 @@ void MultiControllerState::during(void) {
             tick_count = 0;
         }
     }
-    else if (controller_mode_ == 6) {  // fixed neutral - zero velocity mode
+    else if (controller_mode_ == 6) {  // fixed angle - zero velocity mode
         if (fixed_stage == 1) {
             // set calibration velocity
             JointVec dq_t;
@@ -200,7 +208,7 @@ void MultiControllerState::during(void) {
             }
         }
         if (fixed_stage == 2) {
-            // set fixed neutral position
+            // set fixed angular position
             JointVec q_t;
             q_t(0) = fixed_q;
             if(robot_->setJointPos(q_t) != SUCCESS){
@@ -211,7 +219,7 @@ void MultiControllerState::during(void) {
             q = robot_->getJointPos();
             if (abs(q(0)-fixed_q)<0.001){
                 robot_->initVelocityControl();
-                std::cout << "Holding neutral position with zero velocity" << std::endl;
+                std::cout << "Holding fixed position with zero velocity" << std::endl;
                 fixed_stage = 3;
             }
             else {
@@ -222,18 +230,18 @@ void MultiControllerState::during(void) {
             robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
         }
     }
-    else if (controller_mode_ == 7) {  // fixed angle - zero velocity mode (slider angle selection)
+    else if (controller_mode_ == 7) {  // center angle (ROM) - zero velocity mode
         if (fixed_stage == 2) {
-            // set fixed neutral position
+            // set fixed center angle
             JointVec q_t;
-            q_t(0) = slider_q;
+            q_t(0) = rom_center;
             if(robot_->setJointPos(q_t) != SUCCESS){
                 std::cout << "Error: " << std::endl;
             }
 
             // monitor position
             q = robot_->getJointPos();
-            if (abs(q(0)-slider_q)<0.001){
+            if (abs(q(0)-rom_center)<0.001){
                 robot_->initVelocityControl();
                 std::cout << "Holding user position with zero velocity" << std::endl;
                 fixed_stage = 3;
@@ -246,9 +254,23 @@ void MultiControllerState::during(void) {
             robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
         }
 
-//        //filter interaction torque for arduino publishing
-//        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
-//        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
+        //filter interaction torque for subject-specific torque measures
+        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
+
+        if (set_offset_) {
+            n_offset += 1;
+            mvc_offset = (mvc_offset+tau_filtered)/n_offset;
+        }
+
+        if (set_mvc_) {
+            if (tau_filtered > mvc_df) {
+                mvc_df = tau_filtered;
+            }
+            if (tau_filtered < mvc_pf) {
+                mvc_pf = tau_filtered;
+            }
+        }
     }
     else if(controller_mode_ == 8) {  // system identification - torque mode
         counter = counter + 1;
@@ -388,15 +410,60 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         std::cout << "Dynamic reconfigure parameter setting is disabled (set configFlag to true to enable)" << std::endl;
     }
 
-    slider_angle_ = config.slider_angle + v_bias; //relative to vertical position
-
-    // arduino stimulation parameters
-    robot_->setMaxDF(config.max_torque_df);
-    robot_->setMaxPF(config.max_torque_pf);
+    // Arduino stimulation parameters
     robot_->setStimDF(config.stim_amp_df);
     robot_->setStimPF(config.stim_amp_pf);
     robot_->setStimCalibrate(config.stim_calibrate);
 
+    // Switch between ROM measurement
+    if(set_rom_!=config.set_rom) {
+        set_rom_ = config.set_rom;
+        if (!set_rom_) {
+            // End measurement
+            if (rom_df == 0 && rom_pf == 0) {
+                std::cout << "ROM measurement error " << std::endl;
+                rom_center = 45; // safety angle
+            } else{
+                rom_center = 0.5*(rom_df+rom_pf);
+            }
+            std::cout << std::setprecision(2) << "Maximum DF angle: " << rom_df << std::endl;
+            std::cout << std::setprecision(2) << "Maximum PF angle: " << rom_pf << std::endl;
+            std::cout << std::setprecision(2) << "Center angle: " << rom_center << std::endl;
+        } else {
+            std::cout << "Begin ROM measurement... " << std::endl;
+            rom_df = 0;
+            rom_pf = 0;
+            rom_center = 45;
+        }
+    }
+    // Switch between MVC measurement
+    if(set_mvc_!=config.set_mvc) {
+        set_mvc_ = config.set_mvc;
+        if (!set_mvc_) {
+            // End measurement
+            std::cout << std::setprecision(2) << "Maximum DF torque: " << mvc_df - mvc_offset << std::endl;
+            std::cout << std::setprecision(2) << "Maximum PF torque: " << mvc_pf - mvc_offset << std::endl;
+            robot_->setMaxDF(mvc_df - mvc_offset);
+            robot_->setMaxPF(abs(mvc_pf - mvc_offset));
+        } else {
+            std::cout << "Begin MVC measurement... " << std::endl;
+            mvc_df = 1;
+            mvc_pf = -1;
+        }
+    }
+    // Switch between torque offset measurement
+    if(set_offset_!=config.set_offset) {
+        set_offset_ = config.set_offset;
+        if (!set_offset_) {
+            // End measurement
+            std::cout << std::setprecision(2) << "Torque offset: " << mvc_offset << std::endl;
+            robot_->setTorqueOffset(mvc_offset);
+        } else {
+            std::cout << "Begin offset measurement... " << std::endl;
+            mvc_offset = 0;
+            n_offset = 1;
+        }
+    }
     // Change control mode on RQT GUI change
     if(controller_mode_!=config.controller_mode)
     {
@@ -425,7 +492,6 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         if (controller_mode_ == 7) {
             robot_->initPositionControl();
             fixed_stage = 2;
-            slider_q = slider_angle_; // get updated slider value (force calibration = 90+v_bias)
         }
         if (controller_mode_ == 8) {
             robot_->initTorqueControl();

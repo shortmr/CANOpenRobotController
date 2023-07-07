@@ -635,9 +635,8 @@ void RobotM1::setStimCalibrate(bool stim_calib) {
     stim_calib_ = stim_calib;
 }
 
-double RobotM1::setTorqueOffset() {
-    tau_offset_ = tau_s_filt(0);
-    return tau_offset_;
+void RobotM1::setTorqueOffset(double tau_filt) {
+    tau_offset_ = tau_filt;
 }
 
 short RobotM1::sign(double val) { return (val > 0) ? 1 : ((val < 0) ? -1 : 0); }

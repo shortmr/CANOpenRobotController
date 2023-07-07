@@ -23,8 +23,6 @@ void MultiM1MachineROS::initialize() {
     interactionTorqueCommand_ = Eigen::VectorXd(M1_NUM_INTERACTION);
     qFixed_ = Eigen::VectorXd::Zero(M1_NUM_INTERACTION);
 
-    setFixedAngleService_ = nodeHandle_->advertiseService("set_fixed_angle", &MultiM1MachineROS::setFixedAngleCallback, this);
-    setTorqueOffsetService_ = nodeHandle_->advertiseService("set_torque_offset", &MultiM1MachineROS::setTorqueOffsetCallback, this);
     calibrateForceSensorsService_ = nodeHandle_->advertiseService("calibrate_force_sensors", &MultiM1MachineROS::calibrateForceSensorsCallback, this);
 }
 
@@ -58,9 +56,9 @@ void MultiM1MachineROS::publishInteractionForces() {
 
     interactionWrenchMsg_.header.stamp = time;
     interactionWrenchMsg_.header.frame_id = "interaction_torque_sensor";
-    interactionWrenchMsg_.wrench.torque.y = -robot_->tau_spring[0];
-    interactionWrenchMsg_.wrench.torque.z = interactionTorque[0];
-    interactionWrenchMsg_.wrench.torque.x = -interactionTorque[0];
+    interactionWrenchMsg_.wrench.torque.y = robot_->tau_spring[0];
+    interactionWrenchMsg_.wrench.torque.z = -interactionTorque[0];
+    interactionWrenchMsg_.wrench.torque.x = interactionTorque[0];
 
     interactionWrenchPublisher_.publish(interactionWrenchMsg_);
 }
@@ -72,7 +70,7 @@ void MultiM1MachineROS::publishInteractionScaled() {
     if (robot_->stim_calib_) {
         torqueScaled = 1;
     } else {
-        if (interactionTorqueFiltered[0] > 0) {
+        if ((interactionTorqueFiltered[0]-robot_->tau_offset_) > 0) {
             torqueScaled = (interactionTorqueFiltered[0]-robot_->tau_offset_)/(robot_->tau_df_);
         } else {
             torqueScaled = (interactionTorqueFiltered[0]-robot_->tau_offset_)/(robot_->tau_pf_);
@@ -108,19 +106,5 @@ void MultiM1MachineROS::interactionTorqueCommandCallback(const std_msgs::Float64
 bool MultiM1MachineROS::calibrateForceSensorsCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
     // only use when shaft is not bearing load (pedal)
     res.success = robot_->calibrateForceSensors();
-    return true;
-}
-
-bool MultiM1MachineROS::setFixedAngleCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
-    qFixed_ = robot_->getJointPos();
-    res.success = true;
-    res.message = std::to_string(qFixed_[0]);
-    return true;
-}
-
-bool MultiM1MachineROS::setTorqueOffsetCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
-    double tau_s_filt_ = robot_->setTorqueOffset();
-    res.success = true;
-    res.message = std::to_string(tau_s_filt_);
     return true;
 }

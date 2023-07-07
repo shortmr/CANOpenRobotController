@@ -44,11 +44,22 @@ public:
     double cali_tau_thresh;
     double cali_vel_thresh;
 
-    // Fixed neutral terms
+    // Fixed angle terms
     int fixed_stage;
-    double fixed_q; //neutral position in degrees
-    double slider_q; //user selected position in degrees plus bias
-    double slider_angle_; //user selected position in degrees
+    double fixed_q; //fixed angular position in degrees
+
+    // Subject-specific settings
+    bool set_rom_ = false;
+    double rom_df = 0;
+    double rom_pf = 0;
+    double rom_center = 45;
+
+    bool set_mvc_ = false;
+    double mvc_df = 1;
+    double mvc_pf = -1;
+    double mvc_offset = 0;
+    double n_offset = 0;
+    bool set_offset_ = false;
 
     // System identification with torque control
     int cycle; // cycle counter for system identification

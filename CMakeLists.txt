@@ -10,22 +10,29 @@ project(CORC C CXX)
 
 ## Select the application by setting the state machine to use
 #(it should be the class name and have corresponding header naming in a corresponding folder)
-# If your application use ROS, don't forget to change the flag bellow to.
+# If your application use ROS, don't forget to change the flag bellow too.
+
+#set (STATE_MACHINE_NAME "ExoTestMachine")
 #set (STATE_MACHINE_NAME "M3DemoMachine")
+#set (STATE_MACHINE_NAME "M2DemoMachine")
 #set (STATE_MACHINE_NAME "M3Machining")
 #set (STATE_MACHINE_NAME "M3Chai")
-#set (STATE_MACHINE_NAME "ExoTestMachine")
 #set (STATE_MACHINE_NAME "X2DemoMachine")
-set (PLATFORM_NAME "M1")
-#set (STATE_MACHINE_NAME "M1TestMachine")
-set (STATE_MACHINE_NAME "M1DemoMachine")
+#set (STATE_MACHINE_NAME "M1DemoMachine")
+set (STATE_MACHINE_NAME "MultiM1Machine")
+#set (STATE_MACHINE_NAME "LoggingDevice")
 
 # Comment to use actual hardware, uncomment for a nor robot (virtual) app
 set(NO_ROBOT OFF)
 
 # ROS Flag. set ON if you want to use ROS. Else, set OFF.
-set(USE_ROS OFF)
+set(USE_ROS ON)
 
+# Select desired logging level (Options: TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL OFF)
+# INFO is the recommended level in normal operation
+set(CORC_LOGGING_LEVEL INFO)
+
+################################################################################
 if(USE_ROS)
 	add_definitions(-DUSEROS)
 endif()
@@ -34,6 +41,8 @@ if(NO_ROBOT AND USE_ROS)
 	set(SIM ON)
     add_definitions(-DSIM)
 endif()
+
+add_definitions(-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${CORC_LOGGING_LEVEL})
 
 
 ## Compile as C++11
@@ -55,16 +64,20 @@ endif()
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-add_definitions(-DSTATE_MACHINE_TYPE=${STATE_MACHINE_NAME})
-add_definitions(-DSTATE_MACHINE_INCLUDE="${STATE_MACHINE_NAME}.h")
+## Current state machine (APP) to be build
+if(NOT STATE_MACHINE_NAME)
+	message(FATAL_ERROR "ERROR: No state machine (APP) selected: Abort.")
+else()
+	add_definitions(-DSTATE_MACHINE_TYPE=${STATE_MACHINE_NAME})
+	add_definitions(-DSTATE_MACHINE_INCLUDE="${STATE_MACHINE_NAME}.h")
+endif()
 if(NO_ROBOT)
 	add_definitions(-DNOROBOT=1)
 endif()
 
-
 ## Get all source and header files (only the target app folder is included)
-file(GLOB_RECURSE SOURCES "src/core/*.cpp" "src/core/*.c" "src/hardware/IO/*.cpp" "src/hardware/IO/*.c" "src/hardware/drives/*.cpp" "src/hardware/drives/*.c" "src/hardware/platforms/${PLATFORM_NAME}/*.cpp" "src/hardware/platforms/${PLATFORM_NAME}/*.c" "src/apps/${STATE_MACHINE_NAME}/*.c" "src/apps/${STATE_MACHINE_NAME}/*.cpp")
-file(GLOB_RECURSE HEADERS "src/core/*.h" "src/hardware/IO/*.h" "src/hardware/drives/*.h" "src/hardware/platforms/${PLATFORM_NAME}/*.h" "src/apps/${STATE_MACHINE_NAME}/*.h")
+file(GLOB_RECURSE SOURCES "src/core/*.cpp" "src/core/*.c" "src/hardware/*.cpp" "src/hardware/*.c" "src/apps/${STATE_MACHINE_NAME}/*.c" "src/apps/${STATE_MACHINE_NAME}/*.cpp" "lib/FLNL/*.cpp")
+file(GLOB_RECURSE HEADERS "src/core/*.h" "src/hardware/*.h" "src/apps/${STATE_MACHINE_NAME}/*.h")
 
 ## Set every folder containing .h file as include directory
 set (INCLUDE_DIRS "")
@@ -76,6 +89,15 @@ list(REMOVE_DUPLICATES INCLUDE_DIRS)
 ## Add libraries headers
 list (APPEND INCLUDE_DIRS lib/)
 
+add_subdirectory(lib/yaml-cpp/)
+
+
+## Hack for Yaml files path (absolute path required for ROS use, see X2Robot::initializeRobotParams)
+if(CMAKE_CROSSCOMPILING)
+	add_definitions(-DBASE_DIRECTORY=.)
+else()
+	add_definitions(-DBASE_DIRECTORY=${CMAKE_SOURCE_DIR})
+endif()
 
 ## Add ROS dependencies
 if(USE_ROS)
@@ -87,8 +109,12 @@ if(USE_ROS)
 				roscpp
 				rospy
 				std_msgs
+				std_srvs
 				sensor_msgs
 				geometry_msgs
+				multi_robot_interaction
+				dynamic_reconfigure
+				rosserial_python
         )
 		if(SIM)
 			find_package(catkin REQUIRED COMPONENTS
@@ -98,11 +124,25 @@ if(USE_ROS)
 			)
 		endif()
 
+		generate_dynamic_reconfigure_options(
+				config/m1_dynamic_params.cfg
+#				config/x2_dynamic_params.cfg
+		)
+
 
 		catkin_package(
 				#  INCLUDE_DIRS include
 				#  LIBRARIES x2
-				#  CATKIN_DEPENDS roscpp rospy std_msgs
+				  CATKIN_DEPENDS
+					roscpp
+					rospy
+					std_msgs
+					std_srvs
+					sensor_msgs
+					geometry_msgs
+					multi_robot_interaction
+					dynamic_reconfigure
+					rosserial_python
 				#  DEPENDS system_lib
 		)
 
@@ -140,6 +180,7 @@ if(USE_ROS)
 endif()
 
 
+
 ## Executable name: {STATEMACHINENAME}_APP
 set (APP_NAME ${STATE_MACHINE_NAME}_APP)
 if(NO_ROBOT)
@@ -147,8 +188,7 @@ if(NO_ROBOT)
 endif()
 add_executable(${APP_NAME}
 				${SOURCES}
-		src/apps/M1TestMachine/M1TestMachine.cpp src/apps/M1TestMachine/M1TestMachine.h)
-
+		       )
 
 ## Includes
 target_include_directories(${APP_NAME} PRIVATE ${INCLUDE_DIRS})
@@ -157,11 +197,16 @@ target_include_directories(${APP_NAME} PRIVATE ${INCLUDE_DIRS})
 find_package(Threads REQUIRED)
 
 ## Link non-ROS libraries
-target_link_libraries(${APP_NAME} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${APP_NAME}
+		${CMAKE_THREAD_LIBS_INIT}
+		yaml-cpp)
 
 ## Link ROS libraries
 if(USE_ROS)
 	target_link_libraries(${APP_NAME} ${ROS_LIBRARIES})
+
+	# make sure configure headers are built before any node using them
+	add_dependencies(${APP_NAME} ${PROJECT_NAME}_gencfg)
 endif()
 
 message("-----------------------------------------------\nBuilding application ${APP_NAME}\n-----------------------------------------------")

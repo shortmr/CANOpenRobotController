@@ -11,8 +11,10 @@
 
 #include "DummyTrajectoryGenerator.h"
 
-double sitting[6] = {90, 90, 90, 90, 0, 0};
-double standing[6] = {180, 180, 0, 0, 0, 0};
+
+double sitting[6] = {deg2rad(95), deg2rad(95), deg2rad(90), deg2rad(90), 0, 0};
+double standing[6] = {0, 0, 0, 0, 0, 0};
+Eigen::VectorXd startPos(6); 
 
 DummyTrajectoryGenerator::DummyTrajectoryGenerator(int NumOfJoints) {
     numJoints = NumOfJoints;
@@ -21,6 +23,7 @@ DummyTrajectoryGenerator::DummyTrajectoryGenerator(int NumOfJoints) {
 bool DummyTrajectoryGenerator::initialiseTrajectory() {
     currTraj = SIT;
     trajTime = 2;
+    lastProgress = 0;
     return true;
 }
 
@@ -28,9 +31,12 @@ bool DummyTrajectoryGenerator::initialiseTrajectory() {
      * @brief 
      * 
      */
-bool DummyTrajectoryGenerator::initialiseTrajectory(Trajectory traj, double time) {
+bool DummyTrajectoryGenerator::initialiseTrajectory(Trajectory traj, double time, Eigen::VectorXd &startPos_) {
     currTraj = traj;
     trajTime = time;
+    startPos = startPos_;
+    lastProgress = 0;
+
     return true;
 }
 
@@ -40,28 +46,31 @@ bool DummyTrajectoryGenerator::initialiseTrajectory(Trajectory traj, double time
      * 
      * @return vector<double> 
      */
-std::vector<double> DummyTrajectoryGenerator::getSetPoint(double time) {
+
+Eigen::VectorXd DummyTrajectoryGenerator::getSetPoint(double time) {
     double progress = time / trajTime;
-    std::vector<double> angles;
+    Eigen::VectorXd angles(numJoints);
 
     if (currTraj == SIT) {
         for (int i = 0; i < numJoints; i++) {
+
             if (progress > 1) {
-                angles.push_back(sitting[i]);
+                angles(i) = sitting[i];
             } else {
-                angles.push_back(standing[i] + progress * (sitting[i] - standing[i]));
+                angles(i) = startPos[i] + progress * (sitting[i] - startPos[i]);
             }
         }
     } else {
         for (int i = 0; i < numJoints; i++) {
             if (progress > 1) {
-                angles.push_back(standing[i]);
+                angles(i) = standing[i];
             } else {
-                angles.push_back(sitting[i] + progress * (standing[i] - sitting[i]));
+                angles(i) = startPos[i]  + progress * (standing[i] - startPos[i]);
             }
         }
     }
     lastProgress = progress;
+
     return angles;
 }
 

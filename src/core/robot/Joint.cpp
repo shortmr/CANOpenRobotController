@@ -34,7 +34,7 @@ Joint::Joint(int jointID, double jointMin, double jointMax, double q0, Drive *jo
     velocity = 0;
     torque = 0;
     this->drive = jointDrive;
-    calibrated = false;
+    calibrated = false; // TODO: check SDO state to see if setPositionOffset has been called?
 }
 
 Joint::~Joint() {
@@ -58,7 +58,11 @@ void Joint::printStatus() {
     std::cout << "Joint " << name << "(ID " << id << ") @ pos " << getPosition() << " deg" << std::endl;
 }
 
-// Methods if joint is actuated
+bool Joint::configureMasterPDOs(){
+    return drive->configureMasterPDOs();
+}
+
+    // Methods if joint is actuated
 
 bool Joint::updateValue() {
     position = updatePosition();
@@ -114,13 +118,18 @@ ControlMode Joint::setMode(ControlMode driveMode_) {
 
 setMovementReturnCode_t Joint::setPosition(double desQ) {
     if (actuated) {
-        if (driveMode == CM_POSITION_CONTROL) {
-            drive->setPos(jointPositionToDriveUnit(desQ + q0));
-            drive->posControlConfirmSP();
-            return SUCCESS;
-        } else {
-            // Replace once complete
-            return INCORRECT_MODE;
+        if (std::isfinite(desQ)) {
+            if (driveMode == CM_POSITION_CONTROL) {
+                drive->setPos(jointPositionToDriveUnit(desQ + q0));
+                drive->posControlConfirmSP();
+                return SUCCESS;
+            } else {
+                return INCORRECT_MODE;
+            }
+        }
+        else {
+            spdlog::error("Joint {} set position to incorrect value ({})", id, desQ);
+            return OUTSIDE_LIMITS;
         }
     }
     return UNACTUATED_JOINT;
@@ -128,12 +137,16 @@ setMovementReturnCode_t Joint::setPosition(double desQ) {
 
 setMovementReturnCode_t Joint::setVelocity(double velocity) {
     if (actuated) {
-        if (driveMode == CM_VELOCITY_CONTROL) {
-            drive->setVel(jointVelocityToDriveUnit(velocity));
-            return SUCCESS;
+        if (std::isfinite(velocity)) {
+            if (driveMode == CM_VELOCITY_CONTROL) {
+                drive->setVel(jointVelocityToDriveUnit(velocity));
+                return SUCCESS;
+            } else {
+                return INCORRECT_MODE;
+            }
         } else {
-            // Replace once complete
-            return INCORRECT_MODE;
+            spdlog::error("Joint {} set velocity to incorrect value ({})", id, velocity);
+            return OUTSIDE_LIMITS;
         }
     }
     return UNACTUATED_JOINT;
@@ -141,11 +154,17 @@ setMovementReturnCode_t Joint::setVelocity(double velocity) {
 
 setMovementReturnCode_t Joint::setTorque(double torque) {
     if (actuated) {
-        if (driveMode == CM_TORQUE_CONTROL) {
-            drive->setTorque(jointTorqueToDriveUnit(torque));
-            return SUCCESS;
+        if (std::isfinite(torque)) {
+            if (driveMode == CM_TORQUE_CONTROL) {
+                drive->setTorque(jointTorqueToDriveUnit(torque));
+                return SUCCESS;
+            }
+            return INCORRECT_MODE;
         }
-        return INCORRECT_MODE;
+        else {
+            spdlog::error("Joint {} set torque to incorrect value ({})", id, torque);
+            return OUTSIDE_LIMITS;
+        }
     }
     return UNACTUATED_JOINT;
 }
@@ -188,6 +207,12 @@ bool Joint::start() {
 
 }
 
+void Joint::resetErrors() {
+    if (actuated) {
+        drive->resetErrors();
+    }
+}
+
 void Joint::readyToSwitchOn() {
     if (actuated) {
         drive->readyToSwitchOn();
@@ -208,5 +233,15 @@ bool Joint::disable() {
     if (actuated) {
         drive->readyToSwitchOn();  //Ready to switch on is also power off state
     }
+    return false;
+}
+
+
+// For Position Control
+bool Joint::setPosControlContinuousProfile(bool continuous) {
+    if (drive->getState() == ENABLED  && driveMode  == CM_POSITION_CONTROL && actuated) {
+        return (drive->posControlSetContinuousProfile(continuous));
+    }
+    spdlog::error("SetPosControlContinuous: Drive is not enabled, in incorrect mode or not actuated");
     return false;
 }

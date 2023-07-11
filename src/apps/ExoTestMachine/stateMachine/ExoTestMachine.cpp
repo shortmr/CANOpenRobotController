@@ -4,14 +4,16 @@
 #define OWNER ((ExoTestMachine *)owner)
 
 ExoTestMachine::ExoTestMachine() {
-    trajectoryGenerator = new DummyTrajectoryGenerator(6);
-    robot = new ExoRobot();
+    trajectoryGenerator = new DummyTrajectoryGenerator(X2_NUM_JOINTS);
+    robot = new X2Robot();
 
     // Create PRE-DESIGNED State Machine events and state objects.
     isAPressed = new IsAPressed(this);
     endTraj = new EndTraj(this);
     startButtonsPressed = new StartButtonsPressed(this);
     startExo = new StartExo(this);
+    startExoCal = new StartExoCal(this);
+
     startSit = new StartSit(this);
     startStand = new StartStand(this);
     initState = new InitState(this, robot, trajectoryGenerator);
@@ -26,7 +28,8 @@ ExoTestMachine::ExoTestMachine() {
      * NewTranstion(State A,Event c, State B)
      *
      */
-    NewTransition(initState, startExo, sitting);
+    NewTransition(initState, startExo, standing);
+    NewTransition(initState, startExoCal, standing);
     NewTransition(sitting, startStand, standingUp);
     NewTransition(standingUp, endTraj, standing);
     NewTransition(standing, startSit, sittingDwn);
@@ -43,10 +46,18 @@ void ExoTestMachine::init() {
     spdlog::debug("ExoTestMachine::init()");
     initialised = robot->initialise();
     running = true;
+
+    // Initialising the data logger
+    time0 = std::chrono::steady_clock::now();
+    dataLogger.initLogger("test_logger", "logs/testLog.csv", LogFormat::CSV, true);
+    dataLogger.add(time, "time");
+    dataLogger.add(robot->getPosition(), "JointPositions");
+    dataLogger.startLogger();
 }
 
 void ExoTestMachine::end() {
     spdlog::debug("Ending ExoTestMachine");
+    dataLogger.endLog();
     delete robot;
 }
 
@@ -79,6 +90,23 @@ bool ExoTestMachine::StartExo::check(void) {
     }
     return false;
 }
+bool ExoTestMachine::StartExoCal::check(void) {
+    if (OWNER->robot->keyboard->getA() == true) {
+        #ifndef NOROBOT
+            spdlog::info("LEAVING INIT and entering Sitting");
+            spdlog::info("Homing");
+
+            OWNER->robot->disable();
+            OWNER->robot->homing();
+            spdlog::info("Finished");
+        #else
+            spdlog::warn("Calibration Not Avaiable in Simulation (NoRobot) Mode");
+        #endif
+        return true;
+    }
+    return false;
+}
+
 bool ExoTestMachine::StartStand::check(void) {
     if (OWNER->robot->keyboard->getW() == true) {
         return true;
@@ -99,4 +127,24 @@ bool ExoTestMachine::StartSit::check(void) {
  */
 void ExoTestMachine::hwStateUpdate(void) {
     robot->updateRobot();
+}
+
+void ExoTestMachine::configureMasterPDOs() {
+    spdlog::debug("ExoTestMachine::configureMasterPDOs()");
+    robot->configureMasterPDOs();
+}
+
+/**
+ * \brief Statemachine update: overloaded to include logging
+ *
+ */
+void ExoTestMachine::update() {
+    // Update time (used for log)
+    time = (std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() - time0)
+                .count()) /
+           1e6;
+    spdlog::trace("Update()");
+    StateMachine::update();
+    dataLogger.recordLogData();
 }

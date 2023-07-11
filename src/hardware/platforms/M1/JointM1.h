@@ -22,16 +22,15 @@
  */
 class JointM1 : public Joint {
    private:
+    short int sign;
     double qMin, qMax, dqMin, dqMax, tauMin, tauMax;
     double d2j_Pos, d2j_Vel, d2j_Trq, j2d_Pos, j2d_Vel, j2d_Trq;
     double d2r, r2d;
-    short int sign;
     int encoderCounts;       //Encoder counts per turn
     double reductionRatio;   // Reduction ratio due to gear head
 
     double Ipeak;                //Kinco FD123 peak current
     double motorTorqueConstant;  //SMC60S-0020 motor torque constant
-//    KincoDrive *drive;
 
     /**
      * \brief Conversion between drive unit (encoder count) and joint unit (radian).
@@ -73,6 +72,30 @@ class JointM1 : public Joint {
      * \return false if drive is currently not in the correct state to enable
      */
     void errorMessage(setMovementReturnCode_t errorCode);
+
+    /**
+           * Writes the desired digital out value to the drive
+           *
+           * \return true if successful
+           * \return false if not
+           */
+    bool setDigitalOut(int digital_out);
+
+    /**
+           * Returns the value of digital IN
+           * \return Digital in state from the motor drive
+           */
+    virtual int getDigitalIn();
+
+    /**
+          * \brief Set the current position as offset
+          *
+          * /param offset, joint position value to be at the homing position [rad]
+          *
+         * \return true if successful
+         * \return false if not
+         */
+    void setPositionOffset(double offset);
 };
 
 #endif

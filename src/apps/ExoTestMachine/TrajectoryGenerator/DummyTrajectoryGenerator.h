@@ -14,8 +14,11 @@
 
 #include <time.h>
 
+#include <Eigen/Dense>
 #include <cmath>
 #include <vector>
+
+#include "spdlog/helper/LogHelper.h"
 
 
 #define deg2rad(deg) ((deg)*M_PI / 180.0)
@@ -39,7 +42,7 @@ class DummyTrajectoryGenerator {
     std::vector<double[2]> endPoints;
     Trajectory currTraj = SIT;
     double trajTime = 2;
-    int numJoints = 6;
+    int numJoints = 4;
     double lastProgress = 0;
 
     /** Parameters associated with Trajectory Progression */
@@ -61,7 +64,7 @@ class DummyTrajectoryGenerator {
      * and length of time the trajectory will take.
      *
      */
-    bool initialiseTrajectory(Trajectory traj, double time);
+    bool initialiseTrajectory(Trajectory traj, double time, Eigen::VectorXd &startPos_);
 
     /**
      * \brief Implementation of the getSetPoint method in TrajectoryGenerator
@@ -69,7 +72,7 @@ class DummyTrajectoryGenerator {
      *
      * \return vector<double>
      */
-    std::vector<double> getSetPoint(double time);
+    Eigen::VectorXd getSetPoint(double time);
 
     /**
      * \brief Check if the trajectory has been completed based on last elapsed time

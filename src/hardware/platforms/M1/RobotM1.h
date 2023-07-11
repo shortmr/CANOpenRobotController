@@ -21,8 +21,19 @@
 #include "Keyboard.h"
 #include "Joystick.h"
 #include "Robot.h"
-#include "M1ForceSensor.h"
+#include "FourierForceSensor.h"
 #include "KincoDrive.h"
+
+// yaml-parser
+#include <fstream>
+#include "yaml-cpp/yaml.h"
+
+// These are used to access the MACRO: BASE_DIRECTORY
+#define XSTR(x) STR(x)
+#define STR(x) #x
+
+#define M1_NUM_JOINTS 1
+#define M1_NUM_INTERACTION 1
 
 //typedef unsigned int uint;
 
@@ -33,6 +44,27 @@ typedef Eigen::Matrix<double, nJoints, 1> JointVec;
 typedef Eigen::Matrix<double, nEndEff, 1> EndEffVec;
 typedef Eigen::Matrix<double, nJoints, nEndEff> JacMtx;
 
+struct RobotParameters {
+    bool configFlag; // flag for using dynamic reconfigure
+    Eigen::VectorXd c0; // coulomb friction const of joint [Nm]
+    Eigen::VectorXd c1; // viscous fric constant of joint [Nm/s]
+    Eigen::VectorXd c2; // friction square root term
+    Eigen::VectorXd i_sin; // inertia for sine term
+    Eigen::VectorXd i_cos; // inertia for cosine term
+    Eigen::VectorXd t_bias; // theta bias from vertical axis [rad]
+    Eigen::VectorXd force_sensor_scale_factor; // scale factor for force calibration
+    Eigen::VectorXd force_sensor_offset; // offset for torque sensor
+    Eigen::VectorXd ff_ratio; // scale factor for feedforward compensation
+    Eigen::VectorXd kp; // proportional term of PID controller
+    Eigen::VectorXd ki; // integral term of PID controller
+    Eigen::VectorXd kd; // derivative term of PID controller
+    Eigen::VectorXd vel_thresh; // velocity threshold for implementing dynamic friction [deg/s]
+    Eigen::VectorXd tau_thresh; // torque threshold for implementing dynamic friction [deg/s]
+    Eigen::VectorXd lowpass_cutoff_freq; // cutoff frequency for interaction torque, position and velocity filter [Hz]
+    Eigen::VectorXd motor_torque_cutoff_freq; // cutoff frequency for motor torque command filter [Hz]
+    Eigen::VectorXd tick_max; // counter for integral term reset [s]
+    Eigen::VectorXd spk; // spring stiffness (not implemented) [Nm/rad]
+};
 
 /**
  * An enum type.
@@ -61,6 +93,8 @@ class RobotM1 : public Robot {
      */
     motorProfile posControlMotorProfile{2000000, 80000, 80000};
 
+    RobotParameters m1Params;
+
     JointVec LinkLengths;   // Link lengths used for kinematic models (in m)
     JointVec LinkMasses;    // Link masses used for gravity compensation (in kg)
     JointVec CoGLengths;    // Length along link(s) to the Center og Gravity
@@ -71,8 +105,10 @@ class RobotM1 : public Robot {
     /*!< Conversion factors between degrees and radians */
     double d2r, r2d;
 
-    // Storage variables for real-time updated values from CANopn
-    JointVec q, dq, tau, tau_s, tau_cmd;
+    // Storage variables for real-time updated values from CANopen
+    JointVec q, dq, tau, tau_s, tau_sc, tau_cmd;
+    JointVec q_filt, dq_filt, tau_s_filt;
+    JointVec q_filt_pre, dq_filt_pre, tau_s_filt_pre;
 
     JointVec qCalibration;  // Calibration configuration: posture in which the robot is when using the calibration procedure
 
@@ -80,20 +116,44 @@ class RobotM1 : public Robot {
     double maxEndEffVel; /*!< Maximal end-effector allowable velocity. Used in checkSafety when robot is calibrated.*/
     double maxEndEffForce; /*!< Maximal end-effector allowable force. Used in checkSafety when robot is calibrated. */
 
+    std::string robotName_;
+
+    double velThresh_, torqueThresh_;
+
+    double filteredMotorTorqueCommand_, previousFilteredTorqueCommand_;
+
+    double motorTorqueCutOff_;
+
+    double controlFreq_;
+
+    double i_sin_, i_cos_, t_bias_;
+
+    double f_s_, f_d_, c2_;
+
+    bool initializeRobotParams(std::string robotName);
+
+    short int sign(double val);
+
 public:
     /**
       * \brief Default <code>RobotM1</code> constructor.
       * Initialize memory for the <code>Joint</code> + sensor.
       * Load in parameters to  <code>TrajectoryGenerator.</code>.
       */
-    RobotM1();
+    RobotM1(std::string robotName);
     ~RobotM1();
-
+    JointVec tau_motor;
     Keyboard *keyboard;
     Joystick *joystick;
-    M1ForceSensor *m1ForceSensor;
+    FourierForceSensor *m1ForceSensor;
     RobotState status;
     int mode;
+    double tau_offset_, tau_df_, tau_pf_;
+    double stim_df_, stim_pf_;
+    bool stim_calib_;
+    double q_df_, q_pf_;
+
+    JointVec tau_spring;
 
     bool initMonitoring();
     /**
@@ -157,6 +217,10 @@ public:
     *  q=qcalibration in current configuration.
     */
     void applyCalibration();
+    /**
+    * \brief Send internal calibration command to torque sensor
+    *
+    */
     bool calibrateForceSensors();
 
     bool isCalibrated() {return calibrated;}
@@ -189,6 +253,25 @@ public:
     void updateRobot();
 
     /**
+       * Writes the desired digital out value to the drive
+       *
+       * \return true if called
+       */
+    bool setDigitalOut(int digital_out);
+
+    /**
+           * Returns the value of digital IN
+           * \return Digital in state from the motor drive
+           */
+    virtual int getDigitalIn();
+
+    /**
+       * Returns the value of vertical bias from parameter list
+       * \return Angle (degrees) between lower joint limit and vertical pose for M1
+       */
+    double getVerticalBias();
+
+    /**
      * \brief Check if current end effector force and velocities are within limits (if calibrated, otherwise
      *  check that joints velocity and torque are within limits).
      *
@@ -196,9 +279,31 @@ public:
      */
     setMovementReturnCode_t safetyCheck();
 
+
+    /**
+     * \brief get the name of the robot that is obtained from node name
+     *
+     * \return std::string name of the robot
+     */
+    std::string & getRobotName();
+
+    RobotParameters sendRobotParams();
+
+    void setControlFreq(double controlFreq);
+    void setVelThresh(double velThresh);
+    void setTorqueThresh(double torqueThresh);
+    void setMotorTorqueCutOff(double cutOff);
+    void setMaxTorqueDF(double tau_filt);
+    void setMaxTorquePF(double tau_filt);
+    void setMaxAngleDF(double q_current);
+    void setMaxAnglePF(double q_current);
+    void setStimDF(double stim_amp);
+    void setStimPF(double stim_amp);
+    void setStimCalibrate(bool stim_calib);
+    void setTorqueOffset(double tau_filt);
+
     void printStatus();
     void printJointStatus();
-
 
     JacMtx J();
     EndEffVec directKinematic(JointVec q);
@@ -209,7 +314,12 @@ public:
     JointVec getJointVel();
     JointVec getJointTor();
     JointVec& getJointTor_s();
+    JointVec& getJointTor_s_filt();
     JointVec& getJointTor_cmd();
+
+    double filter_q(double alpha_q);
+    double filter_dq(double alpha_dq);
+    double filter_tau_s(double alpha_tau_s);
 //    EndEffVec getEndEffPos();
 //    EndEffVec getEndEffVel();
 //    EndEffVec getEndEffFor();
@@ -217,11 +327,6 @@ public:
     setMovementReturnCode_t setJointPos(JointVec pos);
     setMovementReturnCode_t setJointVel(JointVec vel);
     setMovementReturnCode_t setJointTor(JointVec tor);
-    setMovementReturnCode_t setJointTor_comp(JointVec tor, JointVec tor_s);
-    JointVec compensateJointTor(JointVec tor, JointVec tor_s);
-//    setMovementReturnCode_t setEndEffPos(EndEffVec X);
-//    setMovementReturnCode_t setEndEffVel(EndEffVec dX);
-//    setMovementReturnCode_t setEndEffFor(EndEffVec F);
-//    setMovementReturnCode_t setEndEffForWithCompensation(EndEffVec F);
+    setMovementReturnCode_t setJointTor_comp(JointVec tor, double ffRatio);
 };
 #endif /*RobotM1_H*/

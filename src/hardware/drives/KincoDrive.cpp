@@ -12,8 +12,9 @@ KincoDrive::~KincoDrive() {
 }
 
 bool KincoDrive::init() {
-    std::cout << "KincoDrive::init()" << std::endl;
+    spdlog::debug("NodeID {} KincoDrive::init()", NodeID);
     preop();//Set preop first to disable PDO during initialisation
+    resetError();
     if(initPDOs()) {
         resetError();
         return true;
@@ -21,8 +22,9 @@ bool KincoDrive::init() {
     return false;
 }
 bool KincoDrive::init(motorProfile profile) {
-    std::cout << "KincoDrive::init(motorProfile profile)" << std::endl;
+    spdlog::debug("NodeID {} KincoDrive::init(motorProfile profile)", NodeID);
     preop();//Set preop first to disable PDO during initialisation
+    resetError();
     if(setMotorProfile(profile)) {
         if(initPDOs()) {
             return true;
@@ -48,14 +50,15 @@ bool KincoDrive::initPosControl(motorProfile posControlMotorProfile) {
      */
     return true;
 }
-//bool KincoDrive::initPosControl() {
-//    spdlog::debug("NodeID {} Initialising Position Control", NodeID);
-//
-//    sendSDOMessages(generatePosControlConfigSDO());
-//    return true;
-//}
+bool KincoDrive::initPosControl() {
+    spdlog::debug("NodeID {} Initialising Position Control", NodeID);
+
+    sendSDOMessages(Drive::generatePosControlConfigSDO());
+    return true;
+}
 bool KincoDrive::initVelControl(motorProfile velControlMotorProfile) {
     spdlog::debug("NodeID {} Initialising Velocity Control", NodeID);
+    resetError();
     /**
      * \todo create velControlMOTORPROFILE and test on exo
      * \todo Tune velocity loop gain index 0x2381 to optimize V control
@@ -64,12 +67,12 @@ bool KincoDrive::initVelControl(motorProfile velControlMotorProfile) {
     sendSDOMessages(generateVelControlConfigSDO(velControlMotorProfile));
     return true;
 }
-//bool KincoDrive::initVelControl() {
-//    spdlog::debug("NodeID {} Initialising Velocity Control", NodeID);
-//
-//    sendSDOMessages(generateVelControlConfigSDO());
-//    return true;
-//}
+bool KincoDrive::initVelControl() {
+    spdlog::debug("NodeID {} Initialising Velocity Control", NodeID);
+
+    sendSDOMessages(Drive::generateVelControlConfigSDO());
+    return true;
+}
 bool KincoDrive::initTorqueControl() {
     spdlog::debug("NodeID {} Initialising Torque Control", NodeID);
     sendSDOMessages(generateTorqueControlConfigSDO());
@@ -85,50 +88,68 @@ bool KincoDrive::resetError(){
 
 bool KincoDrive::initPDOs() {
     spdlog::debug("KincoDrive::initPDOs");
-
-    spdlog::debug("Set up STATUS_WORD TPDO");
-    if(sendSDOMessages(generateTPDOConfigSDO({STATUS_WORD}, 1, 0xFF))<0) {
+    int TPDO_Num = 1;
+    if (sendSDOMessages(generateTPDOConfigSDO(TPDO_MappedObjects[TPDO_Num], TPDO_Num, TPDO_COBID[TPDO_Num] + NodeID, 0xFF)) < 0) {
         spdlog::error("Set up STATUS_WORD TPDO FAILED on node {}", NodeID);
         return false;
     }
 
-    spdlog::debug("Set up ACTUAL_POS and ACTUAL_VEL TPDO");
-    if(sendSDOMessages(generateTPDOConfigSDO({ACTUAL_POS, ACTUAL_VEL}, 2, 0x01))<0) {
+    spdlog::info("Set up ACTUAL_POS and ACTUAL_VEL TPDO on Node {}", NodeID);
+    TPDO_Num = 2;
+    if (sendSDOMessages(generateTPDOConfigSDO(TPDO_MappedObjects[TPDO_Num], TPDO_Num, TPDO_COBID[TPDO_Num] + NodeID, 0x01)) < 0) {
         spdlog::error("Set up ACTUAL_POS and ACTUAL_VEL TPDO FAILED on node {}", NodeID);
         return false;
     }
 
-    spdlog::debug("Set up ACTUAL_TOR TPDO");
-    if(sendSDOMessages(generateTPDOConfigSDO({ACTUAL_TOR}, 3, 0x01))<0) {
+
+    spdlog::info("Set up ACTUAL_TOR TPDO on Node {}", NodeID);
+    TPDO_Num = 3;
+    if (sendSDOMessages(generateTPDOConfigSDO(TPDO_MappedObjects[TPDO_Num], TPDO_Num, TPDO_COBID[TPDO_Num] + NodeID, 0x01)) < 0) {
         spdlog::error("Set up ACTUAL_TOR TPDO FAILED on node {}", NodeID);
         return false;
     }
 
-    spdlog::debug("Set up CONTROL_WORD RPDO");
-    if(sendSDOMessages(generateRPDOConfigSDO({CONTROL_WORD}, 1, 0xff))<0) {
-        spdlog::error("Set up CONTROL_WORD RPDO FAILED on node {}", NodeID);
+    TPDO_Num = 4;
+    if (sendSDOMessages(generateTPDOConfigSDO(TPDO_MappedObjects[TPDO_Num], TPDO_Num, TPDO_COBID[TPDO_Num] + NodeID, 0x01, 11)) < 0) {
+        spdlog::error("Set up DIGITAL IN TPDO FAILED on node {}", NodeID);
         return false;
     }
 
-    spdlog::debug("Set up TARGET_POS RPDO");
-    if(sendSDOMessages(generateRPDOConfigSDO({TARGET_POS}, 2, 0xff))<0) {
+    // Calculate COB_ID. If RPDO:
+    //int COB_ID = 0x100 * (PDO_Num+1) + NodeID;
+
+    //spdlog::info("Set up CONTROL_WORD RPDO on Node {}", NodeID);
+    //int RPDO_Num = 1;
+    //if (sendSDOMessages(generateRPDOConfigSDO(RPDO_MappedObjects[RPDO_Num], RPDO_Num, RPDO_COBID[RPDO_Num] + NodeID, 0xff)) < 0) {
+    //    spdlog::error("Set up CONTROL_WORD RPDO FAILED on node {}", NodeID);
+    //    return false;
+    //}
+
+    spdlog::info("Set up DIGITAL_OUT RPDO on Node {}", NodeID);
+    int RPDO_Num = 1;
+    if (sendSDOMessages(generateRPDOConfigSDO(RPDO_MappedObjects[RPDO_Num], RPDO_Num, RPDO_COBID[RPDO_Num] + NodeID, 0xff, 14)) < 0) {
+        spdlog::error("Set up DIGITAL_OUT RPDO FAILED on node {}", NodeID);
+        return false;
+    }
+
+    spdlog::info("Set up TARGET_POS RPDO on Node {}", NodeID);
+    RPDO_Num = 2;
+    if (sendSDOMessages(generateRPDOConfigSDO(RPDO_MappedObjects[RPDO_Num], RPDO_Num, RPDO_COBID[RPDO_Num] + NodeID, 0xff)) < 0) {
         spdlog::error("Set up TARGET_POS RPDO FAILED on node {}", NodeID);
         return false;
     }
-
-    spdlog::debug("Set up TARGET_VEL RPDO");
-    if(sendSDOMessages(generateRPDOConfigSDO({TARGET_VEL}, 3, 0xff))<0) {
+    spdlog::info("Set up TARGET_VEL RPDO on Node {}", NodeID);
+    RPDO_Num = 3;
+    if (sendSDOMessages(generateRPDOConfigSDO(RPDO_MappedObjects[RPDO_Num], RPDO_Num, RPDO_COBID[RPDO_Num] + NodeID, 0xff)) < 0) {
         spdlog::error("Set up ARGET_VEL RPDO FAILED on node {}", NodeID);
         return false;
     }
-
-    spdlog::debug("Set up TARGET_TOR RPDO");
-    if(sendSDOMessages(generateRPDOConfigSDO({TARGET_TOR}, 4, 0xff, 0x08))<0) {
-        //Kinco has a specific word for this with a dedicated subindex
+    spdlog::info("Set up TARGET_TOR RPDO on Node {}", NodeID);
+    RPDO_Num = 4;
+    if (sendSDOMessages(generateRPDOConfigSDO(RPDO_MappedObjects[RPDO_Num], RPDO_Num, RPDO_COBID[RPDO_Num] + NodeID, 0xff, 0x08)) < 0) {
         spdlog::error("Set up TARGET_TOR RPDO FAILED on node {}", NodeID);
         return false;
     }
-
     return true;
 }
 
@@ -246,4 +267,38 @@ std::vector<std::string> KincoDrive::writeSDOMessage(int address, int value) {
     sstream.str(std::string());
 
     return CANCommands;
+}
+
+std::vector<std::string> KincoDrive::generatePositionOffsetSDO(int offset) {
+    // Define Vector to be returned as part of this method
+    std::vector<std::string> CANCommands;
+    // Define stringstream for ease of constructing hex strings
+    std::stringstream sstream;
+
+    // set mode of operation
+    sstream << "[1] " << NodeID << " write 0x6060 0 i8 6";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+    // set the home offset
+    sstream << "[1] " << NodeID << " write 0x607C 0 i32 "<< std::dec << offset;
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+    // set homing method to 0
+    sstream << "[1] " << NodeID << " write 0X6098 0 i8 0";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+    // set control word to start homing
+    sstream << "[1] " << NodeID << " write 0x6040 0 u16 0x1f";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+
+    return CANCommands;
+}
+
+bool KincoDrive::setPositionOffset(int offset) {
+    spdlog::debug("NodeID {} Setting Position Offset", NodeID);
+
+    sendSDOMessages(generatePositionOffsetSDO(offset));
+
+    return true;
 }

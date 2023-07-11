@@ -11,8 +11,8 @@
  *  @defgroup stateMachine State Machine module
  * A group of abstract classes, used to build event-driven state machines.
  */
-#ifndef EXO_STATEMACHINE_H
-#define EXO_STATEMACHINE_H
+#ifndef STATEMACHINE_H
+#define STATEMACHINE_H
 
 class State;
 
@@ -32,6 +32,11 @@ class StateMachine {
      *
      */
     StateMachine(void);
+    /**
+     * \brief Default destructor
+     *
+     */
+    virtual ~StateMachine(){};
     /**
      * \brief Sets the current state. Note: No check made
      *
@@ -61,7 +66,13 @@ class StateMachine {
     virtual void update(void);
 
     /**
-     * \brief End the current state
+     * \brief Custom initialisation of the state machine
+     *
+     */
+    virtual void init(void) = 0;
+
+    /**
+     * \brief End the state machine execution state
      *
      */
     virtual void end(void) = 0;
@@ -80,6 +91,7 @@ class StateMachine {
      * Required to be initialised in the derived state machine init()
      */
     LogHelper logHelper;
+
 };
 
 /**
@@ -106,4 +118,4 @@ class StateMachine {
 #define NewTransition(_from_, _event_, _to_) \
     _from_->addArc(new Transition(_to_, _event_))
 
-#endif  //EXO_STATEMACHINE_H
+#endif  //STATEMACHINE_H

@@ -2,13 +2,10 @@
 
 using namespace Eigen;
 
-// Moved to Robot.h - TMH
-short int sign(double val) { return (val > 0) ? 1 : ((val < 0) ? -1 : 0); }
-
-RobotM1::RobotM1() : Robot(), calibrated(false), maxEndEffVel(2), maxEndEffForce(60) {
+RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffVel(2), maxEndEffForce(60), robotName_(robotName) {
     // Conversion factors between degrees and radians
-    d2r = M_PIf64 / 180.;
-    r2d = 180. / M_PIf64;
+    d2r = M_PI / 180.;
+    r2d = 180. / M_PI;
 
     //Define the robot structure: each joint with limits and drive - TMH
     // JOINT 0 - the only joint in the case of M1
@@ -23,16 +20,45 @@ RobotM1::RobotM1() : Robot(), calibrated(false), maxEndEffVel(2), maxEndEffForce
 
     // Calibration configuration: posture in which the robot is when using the calibration procedure
     qCalibration(0) = 0 * d2r;
+    tau_motor(0) = 0;
+    q_filt(0) = 0;
+    dq_filt(0) = 0;
+    tau_s_filt(0) = 0;
+    q_filt_pre(0) = 0;
+    dq_filt_pre(0) = 0;
+    tau_s_filt_pre(0) = 0;
 
+    // Initializing the yaml parameters to zero
+    m1Params.configFlag = true;
+    m1Params.c0 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.c1 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.c2 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.i_sin = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.i_cos = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.t_bias = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.force_sensor_scale_factor = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.force_sensor_offset = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.ff_ratio = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.kp = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.ki = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.kd = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.vel_thresh = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.tau_thresh = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.lowpass_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.motor_torque_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.tick_max = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.spk = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+
+    initializeRobotParams(robotName_);
+
+    // Set up the motor profile
     posControlMotorProfile.profileVelocity = 600.*512*10000/1875;
     posControlMotorProfile.profileAcceleration = 500.*65535*10000/4000000;
     posControlMotorProfile.profileDeceleration = 500.*65535*10000/4000000;
 
-    joints.push_back(new JointM1(0, -100, 100, 1, -max_speed(0), max_speed(0), -tau_max(0), tau_max(0), new KincoDrive(1), "q1"));
+    initialiseJoints();
+    initialiseInputs();
 
-    inputs.push_back(keyboard = new Keyboard());
-    inputs.push_back(joystick = new Joystick());
-    inputs.push_back(m1ForceSensor = new M1ForceSensor(1));
     mode = 0;
 
     status = R_SUCCESS;
@@ -48,16 +74,15 @@ RobotM1::~RobotM1() {
     joints.clear();
     inputs.clear();
     delete keyboard;
-    delete joystick;
     spdlog::debug("RobotM1 deleted");
 }
 
 bool RobotM1::initialiseJoints() {
+    joints.push_back(new JointM1(0, -100, 100, 1, -max_speed(0), max_speed(0), -tau_max(0), tau_max(0), new KincoDrive(1), "q1"));
     return true;
 }
-bool RobotM1::initialiseNetwork() {
-//    std::cout << "RobotM1::initialiseNetwork()" << std::endl;
 
+bool RobotM1::initialiseNetwork() {
     bool status;
     for (auto joint : joints) {
         status = joint->initNetwork();
@@ -66,25 +91,105 @@ bool RobotM1::initialiseNetwork() {
     }
     //Give time to drives PDO initialisation
     //TODO: Parameterize the number of PDOs for situations like the one below
-    spdlog::debug("...");
-    for (uint i = 0; i < 5; i++) {
-        spdlog::debug(".");
-        usleep(10000);
-    }
-//    std::cout << "RobotM1::initialiseNetwork() end" << std::endl;
-
+    //
+    // spdlog::debug("...");
+    // for (uint i = 0; i < 5; i++) {
+    //     spdlog::debug(".");
+    //     usleep(10000);
+    // }
     return true;
 }
 
 bool RobotM1::initialiseInputs() {
-    /*nothing to do*/
-//    inputs.push_back(&keyboard);
-//
-//    for (int id = 0; id < X2_NUM_FORCE_SENSORS; id++) {
-//        forceSensors.push_back(new X2ForceSensor(id));
-//        inputs.push_back(forceSensors[id]);
-//    }
+    inputs.push_back(keyboard = new Keyboard());
+    inputs.push_back(m1ForceSensor = new FourierForceSensor(17,
+                                                            m1Params.force_sensor_scale_factor[0],
+                                                            1,
+                                                            m1Params.force_sensor_offset[0]));
     return true;
+}
+
+bool RobotM1::initializeRobotParams(std::string robotName) {
+
+    // need to use address of base directory because when run with ROS, working directory is ~/.ros
+    std::string baseDirectory = XSTR(BASE_DIRECTORY);
+    std::string relativeFilePath = "/config/m1_params.yaml";
+
+    YAML::Node params = YAML::LoadFile(baseDirectory + relativeFilePath);
+
+    // if the robotName does not match with the name in m1_params.yaml
+    if(!params[robotName]){
+        spdlog::error("Parameters of {} couldn't be found in {} !", robotName, baseDirectory + relativeFilePath);
+        spdlog::error("All parameters are zero !");
+        return false;
+    }
+
+    if(params[robotName]["c0"].size() != M1_NUM_JOINTS || params[robotName]["c1"].size() != M1_NUM_JOINTS ||
+       params[robotName]["c2"].size() != M1_NUM_JOINTS || params[robotName]["i_sin"].size() != M1_NUM_JOINTS ||
+       params[robotName]["i_cos"].size() != M1_NUM_JOINTS || params[robotName]["t_bias"].size() != M1_NUM_JOINTS ||
+       params[robotName]["force_sensor_scale_factor"].size() != M1_NUM_JOINTS ||
+       params[robotName]["force_sensor_offset"].size() != M1_NUM_JOINTS ||
+       params[robotName]["ff_ratio"].size() != M1_NUM_JOINTS || params[robotName]["kp"].size() != M1_NUM_JOINTS ||
+       params[robotName]["ki"].size() != M1_NUM_JOINTS || params[robotName]["kd"].size() != M1_NUM_JOINTS ||
+       params[robotName]["vel_thresh"].size() != M1_NUM_JOINTS || params[robotName]["tau_thresh"].size() != M1_NUM_JOINTS ||
+       params[robotName]["lowpass_cutoff_freq"].size() != M1_NUM_JOINTS ||
+       params[robotName]["motor_torque_cutoff_freq"].size() != M1_NUM_JOINTS ||
+       params[robotName]["tick_max"].size() != M1_NUM_JOINTS || params[robotName]["spk"].size() != M1_NUM_JOINTS) {
+
+        spdlog::error("Parameter sizes are not consistent");
+        spdlog::error("All parameters are zero !");
+
+        return false;
+    }
+
+    // getting the parameters from the yaml file
+    for(int i = 0; i<M1_NUM_JOINTS; i++){
+        m1Params.configFlag = params["config_flag"].as<bool>();
+        m1Params.c0[i] = params[robotName]["c0"][i].as<double>();
+        m1Params.c1[i] = params[robotName]["c1"][i].as<double>();
+        m1Params.c2[i] = params[robotName]["c2"][i].as<double>();
+        m1Params.i_sin[i] = params[robotName]["i_sin"][i].as<double>();
+        m1Params.i_cos[i] = params[robotName]["i_cos"][i].as<double>();
+        m1Params.t_bias[i] = params[robotName]["t_bias"][i].as<double>();
+        m1Params.force_sensor_scale_factor[i] = params[robotName]["force_sensor_scale_factor"][i].as<double>();
+        m1Params.force_sensor_offset[i] = params[robotName]["force_sensor_offset"][i].as<double>();
+        m1Params.ff_ratio[i] = params[robotName]["ff_ratio"][i].as<double>();
+        m1Params.kp[i] = params[robotName]["kp"][i].as<double>();
+        m1Params.ki[i] = params[robotName]["ki"][i].as<double>();
+        m1Params.kd[i] = params[robotName]["kd"][i].as<double>();
+        m1Params.vel_thresh[i] = params[robotName]["vel_thresh"][i].as<double>();
+        m1Params.tau_thresh[i] = params[robotName]["tau_thresh"][i].as<double>();
+        m1Params.lowpass_cutoff_freq[i] = params[robotName]["lowpass_cutoff_freq"][i].as<double>();
+        m1Params.motor_torque_cutoff_freq[i] = params[robotName]["motor_torque_cutoff_freq"][i].as<double>();
+        m1Params.tick_max[i] = params[robotName]["tick_max"][i].as<double>();
+        m1Params.spk[i] = params[robotName]["spk"][i].as<double>();
+    }
+
+    // Set static parameter values
+    i_sin_ = m1Params.i_sin[0];
+    i_cos_ = m1Params.i_cos[0];
+    t_bias_ = m1Params.t_bias[0];
+    f_s_ = m1Params.c0[0];
+    f_d_ = m1Params.c1[0];
+    c2_ = m1Params.c2[0];
+    if (!m1Params.configFlag) {
+        velThresh_ = m1Params.vel_thresh[0] * d2r;
+        torqueThresh_ = m1Params.tau_thresh[0];
+        motorTorqueCutOff_ = m1Params.motor_torque_cutoff_freq[0];
+    }
+    tau_offset_ = 0;
+    tau_df_ = 1;
+    tau_pf_ = 1;
+    q_df_ = 0;
+    q_pf_ = 0;
+    stim_df_ = 0;
+    stim_pf_ = 0;
+    stim_calib_ = false;
+    return true;
+}
+
+RobotParameters RobotM1::sendRobotParams() {
+    return m1Params;
 }
 
 bool RobotM1::stop() {
@@ -103,25 +208,24 @@ void RobotM1::applyCalibration() {
 }
 
 bool RobotM1::calibrateForceSensors() {
-    if(m1ForceSensor->calibrate()){
-        spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing of force sensors are successfully completed.");
+    //if(m1ForceSensor->calibrate()){
+    //    spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing of force sensors are successfully completed.");
+    //    return true;
+    //} else{
+    //    spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing failed.");
+    //    return false;
+    //}
+
+    if(m1ForceSensor->sendInternalCalibrateSDOMessage()){
+        spdlog::info("[RobotM1::calibrateForceSensors]: Force sensor zeroing completed. Sensor value is {}", m1ForceSensor->getSensorValue());
         return true;
-    } else{
-        spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing failed.");
+    } else {
+        spdlog::info("[RobotM1::calibrateForceSensors]: Zeroing failed.");
         return false;
     }
 }
 
-//Eigen::VectorXd X2Robot::getInteractionForce() {
-//    Eigen::VectorXd actualInteractionForces(X2_NUM_FORCE_SENSORS);
-//    for (int i = 0; i< X2_NUM_FORCE_SENSORS; i++) {
-//        actualInteractionForces[i] = forceSensors[i]->getForce();
-//    }
-//    return actualInteractionForces;
-//}
-
 void RobotM1::updateRobot() {
-//    std::cout << "RobotM1::updateRobot()" << std::endl;
     Robot::updateRobot();   // Trigger RT data update at the joint level
     // Gather joint data at the Robot level
     //TODO: we should probably do this with all PDO data, if we are setting it up
@@ -129,21 +233,32 @@ void RobotM1::updateRobot() {
     // sending it in real-time to conserve bandwidth. It would also be good to break
     // down the status word into a vector of booleans and have descriptive indices to
     // be able to clearly access the bits in a meaningful and readable way. -TMH
-//    std::cout << "RobotM1::updateRobot" << std::endl; //YW debug
+
     for(uint i = 0; i < nJoints; i++) {
-//        std::cout << "update values" << std::endl;  //YW debug
         q(i) = ((JointM1 *)joints[i])->getPosition();
         dq(i) = ((JointM1 *)joints[i])->getVelocity();
         tau(i) = ((JointM1 *)joints[i])->getTorque();
         tau_s(i) = m1ForceSensor[i].getForce();
+//        updateEstimatedAcceleration(); // based on velocity measurements
+
+        //std::cout << std::setprecision(4) << tau_s(i) << std::endl;
+
+        // compensate inertia for torque sensor measurement (comment this line when zeroing force sensor)
+        tau_s(i) =  tau_s(i) + i_sin_*sin(q(i)+t_bias_) + i_cos_*cos(q(i)+t_bias_);
     }
-//    std::cout << "safety check" << std::endl; // YW debug
     if (safetyCheck() != SUCCESS) {
         status = R_OUTSIDE_LIMITS;
         stop();
     }
-//    std::cout << "RobotM1::updateRobot() end" << std::endl;
-//    std::cout << "safety check done" << std::endl; // YW debug
+}
+
+bool RobotM1::setDigitalOut(int digital_out) {
+    ((JointM1 *)joints[0])->setDigitalOut(digital_out);
+    return true;
+}
+
+int RobotM1::getDigitalIn() {
+    return ((JointM1 *)joints[0])->getDigitalIn();
 }
 
 setMovementReturnCode_t RobotM1::safetyCheck() {
@@ -166,7 +281,7 @@ void RobotM1::printStatus() {
 }
 
 void RobotM1::printJointStatus() {
-    std::cout << std::setprecision(1) << std::fixed;
+    std::cout << std::setprecision(3) << std::fixed;
     std::cout << "q=[ " << getJointPos().transpose() << " ]\t";
     std::cout << "dq=[ " << getJointVel().transpose() << " ]\t";
     std::cout << "tau=[ " << getJointTor().transpose() << " ]\t";
@@ -182,7 +297,7 @@ bool RobotM1::initMonitoring() {
     bool returnValue = true;
     for (auto p : joints) {
         if (((JointM1 *)p)->setMode(CM_POSITION_CONTROL, posControlMotorProfile) != CM_POSITION_CONTROL) {
-            // Something bad happened if were are here
+            // Something bad happened if we are here
             spdlog::debug("Something bad happened.");
             returnValue = false;
         }
@@ -204,7 +319,7 @@ bool RobotM1::initPositionControl() {
 
     for (auto p : joints) {
         if (((JointM1 *)p)->setMode(CM_POSITION_CONTROL, posControlMotorProfile) != CM_POSITION_CONTROL) {
-            // Something bad happened if were are here
+            // Something bad happened if we are here
             spdlog::debug("Something bad happened.");
             returnValue = false;
         }
@@ -213,10 +328,10 @@ bool RobotM1::initPositionControl() {
     }
 
     // Pause for a bit to let commands go
-//    usleep(2000);
-//    for (auto p : joints) {
-//        ((JointM1 *)p)->enable();
-//    }
+   usleep(2000);
+   for (auto p : joints) {
+       ((JointM1 *)p)->enable();
+   }
     mode = 1;
     return returnValue;
 }
@@ -226,14 +341,13 @@ bool RobotM1::initVelocityControl() {
     bool returnValue = true;
     for (auto p : joints) {
         if (((JointM1 *)p)->setMode(CM_VELOCITY_CONTROL, posControlMotorProfile) != CM_VELOCITY_CONTROL) {
-            // Something bad happened if were are here
+            // Something bad happened if we are here
             spdlog::debug("Something bad happened.");
             returnValue = false;
         }
         // Put into ReadyToSwitchOn()
         ((JointM1 *)p)->readyToSwitchOn();
     }
-
     // Pause for a bit to let commands go
     usleep(2000);
     for (auto p : joints) {
@@ -248,7 +362,7 @@ bool RobotM1::initTorqueControl() {
     bool returnValue = true;
     for (auto p : joints) {
         if (((JointM1 *)p)->setMode(CM_TORQUE_CONTROL) != CM_TORQUE_CONTROL) {
-            // Something bad happened if were are here
+            // Something bad happened if we are here
             spdlog::debug("Something bad happened.");
             returnValue = false;
         }
@@ -348,7 +462,7 @@ JacMtx RobotM1::J() {
 
     return J;
 }
-//*
+
 JointVec RobotM1::calculateGravityTorques() {
     JointVec tau_g;
 
@@ -370,13 +484,51 @@ JointVec RobotM1::getJointTor() {
     return tau;
 }
 
-JointVec& RobotM1::getJointTor_s() {
-    return tau_s;
+double RobotM1::filter_q(double alpha_q){
+    q_filt(0) = alpha_q*q(0)+(1-alpha_q)*q_filt_pre(0);
+    q_filt_pre(0) = q_filt(0);
+    return q_filt(0);
 }
 
-JointVec& RobotM1::getJointTor_cmd() {
-    return tau_cmd;
+double RobotM1::filter_dq(double alpha_dq){
+    dq_filt(0) = alpha_dq*dq(0)+(1-alpha_dq)*dq_filt_pre(0);
+    dq_filt_pre(0) = dq_filt(0);
+    return dq_filt(0);
 }
+
+double RobotM1::filter_tau_s(double alpha_tau_s){
+    tau_s_filt(0) = alpha_tau_s*tau_s(0)+(1-alpha_tau_s)*tau_s_filt_pre(0);
+    tau_s_filt_pre(0) = tau_s_filt(0);
+    return tau_s_filt(0);
+}
+
+JointVec& RobotM1::getJointTor_s() {
+    tau_sc(0) =  tau_s(0);
+    return tau_sc;
+}
+
+JointVec& RobotM1::getJointTor_s_filt() {
+    return tau_s_filt;
+}
+
+//void RobotM1::updateEstimatedAcceleration() {
+//
+//    // estimate acceleration as derivative of velocity TODO: use IMU data for less delay
+//    acc(0) = controlFreq_*(dq(0) - dq_pre(0)); //2 most recent velocity values divided by timestep
+//
+//    // filter acceleration signal (hardcoded filter of 50 Hz)
+//    double alpha = (2*M_PI*50/controlFreq_)/(2*M_PI*50/controlFreq_+1);
+//    acc_filt(0) = alpha*acc(0)+(1-alpha)*acc_filt_pre(0);
+//    acc_filt_pre(0) = acc_filt(0);
+//
+//    filteredGeneralizedAccByDerivative_.tail(X2_NUM_JOINTS) = alphaJoint*generalizedAccByDerivative_.tail(X2_NUM_JOINTS) +
+//                                                              (1.0 - alphaJoint)*previousFilteredGeneralizedAccByDerivative_.tail(X2_NUM_JOINTS);
+//
+//    previousFilteredGeneralizedAccByDerivative_ = filteredGeneralizedAccByDerivative_;
+//    dq_pre(0) = dq(0);
+//
+//    estimatedGeneralizedAcceleration_ = filteredGeneralizedAccByDerivative_;
+//}
 
 setMovementReturnCode_t RobotM1::setJointPos(JointVec pos_d) {
     return applyPosition(pos_d*d2r);
@@ -387,154 +539,112 @@ setMovementReturnCode_t RobotM1::setJointVel(JointVec vel_d) {
 }
 
 setMovementReturnCode_t RobotM1::setJointTor(JointVec tor_d) {
-    tau_cmd = tor_d;
+    // filter torque commands with previous command
+    tau_motor(0) = (tor_d(0)+tau_motor(0)*2.0)/3.0;
     return applyTorque(tor_d);
 }
 
-setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor_d, JointVec tor_s) {
-    tau_cmd = compensateJointTor(tor_d, tor_s);
-    return applyTorque(tau_cmd);
-}
+setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double ffRatio) {
+    double tor_ff;
+    double vel = dq_filt(0); //dq(0);
+    double pos = q(0); //q(0)
 
-JointVec RobotM1::compensateJointTor(JointVec tor, JointVec tor_s){
-/*** f_s is the static friction,
- f_d is dynamic friction
- inertia_c is the inertia compensation
+    // previous version
+    //double tor_s = tau_s_filt(0);
+    //if(abs(vel)<velThresh_)
+    //{
+    //    if(abs(tor_s)>torqueThresh_)
+    //    {
+    //        tor_ff = f_s_*sign(tor_s) + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
+    //    }
+    //    else
+    //    {
+    //        tor_ff = i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
+    //    }
+    //}
+    //else
+    //{
+    //    vel = vel-sign(vel)*0.1;
+    //    tor_ff = f_s_*sign(vel) + f_d_*vel + i_sin_*sin(q(0)+t_bias_) + i_cos_*cos(q(0)+t_bias_) + c2_*sqrt(abs(vel))*sign(vel);
+    //}
 
- ***/
-
-//    double f_s = 1.57;
-//    double f_d = 2.02;
-//    double inertia_c = 0.24;
-
-// manually adjusted values
-//    double f_s = 1.57;
-//    double f_d = 1.0;   //1.2
-//    double inertia_c = 0.24;
-
-// calibration with foot plate
-//    double f_s = 0.6503;
-//    double f_d = 0.3015;   //1.2
-//    double inertia_s = 1.0323; // m*s*g =
-//    double inertia_c = 0.2560;
-//    double theta_bias = 0.0601;
-//    double c2 =  1.5; //2.6209; //
-// calibration with foot plate without c2
-    double f_s = 1.2302;
-    double f_d = 1.2723;   //1.2
-    double inertia_s = 1.0592; // m*s*g =
-    double inertia_c = 0.3258;
-    double theta_bias = 0.1604;
-    double c2 = 1.2532;
-    double tor_ff = 0;
-    if(abs(dq(0))<0.32)
+    // check velocity to apply dynamic friction term
+    if(abs(vel)<velThresh_)
     {
-//         tor_ff = f_s*sign(tor_s(0)) + f_d*dq(0)+inertia_c*sin(q(0));
-        if(abs(tor_s(0))>0.2)
-        {
-            tor_ff = f_s*sign(tor_s(0)) + inertia_s*sin(q(0)+theta_bias) + inertia_c*cos(q(0)+theta_bias);
-        }
-        else
-        {
-            tor_ff = inertia_s*sin(q(0)+theta_bias) + inertia_c*cos(q(0)+theta_bias);
-        }
-    }
-    else
-    {
-//        tor_ff = f_s*sign(dq(0))+ f_d*dq(0)+inertia_c*sin(q(0));
-        tor_ff = f_s*sign(dq(0)) + f_d*dq(0) + inertia_s*sin(q(0)+theta_bias) + inertia_c*cos(q(0)+theta_bias) + c2*sqrt(abs(dq(0)))*sign(dq(0));
-    }
-    tor(0) = tor(0) + tor_ff*0.8;
-    return tor;
-}
-/*
-EndEffVec RobotM1::getEndEffPos() {
-    //return directKinematic(getJointPos());
-    EndEffVec s;
-    return s;
-}
-
-EndEffVec RobotM1::getEndEffVel() {
-    // return J() * getJointVel();
-    EndEffVec s;
-    return s;
-
-}
-
-EndEffVec RobotM1::getEndEffFor() {
-    //return (J().transpose()).inverse() * getJointTor();
-    EndEffVec s;
-    return s;
-
-}
-
-setMovementReturnCode_t RobotM1::setEndEffPos(EndEffVec X_d) {
-    if (!calibrated) {
-        return NOT_CALIBRATED;
-    }
-
-    //TODO: add a limit check
-    if (false) {
-        return OUTSIDE_LIMITS;
-    }
-
-    Vector3d q_d = inverseKinematic(X_d);
-    if (std::isnan(q_d[0]) || std::isnan(q_d[1]) || std::isnan(q_d[2])) {
-        return OUTSIDE_LIMITS;
+        double slowCoef = f_s_/velThresh_; // linear region for static friction
+        tor_ff = slowCoef*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
     } else {
-        return setJointPos(q_d);
+        tor_ff = f_s_*sign(vel) + f_d_*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_) + c2_*sqrt(abs(vel))*sign(vel);
+    }
+    tor(0) = tor(0) + tor_ff*ffRatio;
+
+    // filter command signal
+    double alpha = (2*M_PI*motorTorqueCutOff_/controlFreq_)/(2*M_PI*motorTorqueCutOff_/controlFreq_+1);
+    filteredMotorTorqueCommand_ = alpha*tor(0)+(1-alpha)*previousFilteredTorqueCommand_;
+    previousFilteredTorqueCommand_ = filteredMotorTorqueCommand_;
+
+    JointVec finalMotorTorqueCommand(M1_NUM_JOINTS);
+    finalMotorTorqueCommand(0) = filteredMotorTorqueCommand_;
+
+    return setJointTor(finalMotorTorqueCommand);
+}
+
+std::string & RobotM1::getRobotName() {
+    return robotName_;
+}
+
+void RobotM1::setControlFreq(double controlFreq) {
+    controlFreq_ = controlFreq;
+}
+
+void RobotM1::setVelThresh(double velThresh) {
+    if (m1Params.configFlag) {
+        velThresh_ = velThresh * d2r;
     }
 }
 
-setMovementReturnCode_t RobotM1::setEndEffVel(EndEffVec dX_d) {
-    if (!calibrated) {
-        return NOT_CALIBRATED;
+void RobotM1::setTorqueThresh(double torqueThresh) {
+    if (m1Params.configFlag) {
+        torqueThresh_ = torqueThresh;
     }
-
-    //TODO: add a limit check
-    if (false) {
-        return OUTSIDE_LIMITS;
-    }
-
-    JointVec dq_d = J().inverse() * dX_d;
-    return setJointVel(dq_d);
 }
 
-setMovementReturnCode_t RobotM1::setEndEffFor(EndEffVec F_d) {
-    if (!calibrated) {
-        return NOT_CALIBRATED;
+void RobotM1::setMotorTorqueCutOff(double cutOff) {
+    if (m1Params.configFlag) {
+        motorTorqueCutOff_ = cutOff;
     }
-
-    //TODO: add a limit check
-    if (false) {
-        return OUTSIDE_LIMITS;
-    }
-
-    JointVec tau_d = J().transpose() * F_d;
-    return setJointTor(tau_d);
 }
 
-setMovementReturnCode_t RobotM1::setEndEffForWithCompensation(EndEffVec F_d) {
-    if (!calibrated) {
-        return NOT_CALIBRATED;
-    }
+void RobotM1::setMaxTorqueDF(double tau_filt) {
+    tau_df_ = tau_filt;
+}
 
-    //TODO: add a limit check
-    if (false) {
-        return OUTSIDE_LIMITS;
-    }
-    JointVec tau_g = calculateGravityTorques();  //Gravity compensation torque
-    JointVec tau_f;                              //Friction compensation torque
-    //TODO: how are these values determined? Do they need to be tuned for each device? Joint?
-    double alpha = 0.5, beta = 0.03, threshold = 0.000000;
-    for (uint i = 0; i < nJoints; i++) {
-        //double dq = ((JointM1 *)joints[i])->getVelocity();
-	double dq_t = dq(i);
-        if (abs(dq_t) > threshold) {
-            tau_f(i) = alpha * sign(dq_t) + beta * dq_t;
-        }
-    }
+void RobotM1::setMaxTorquePF(double tau_filt) {
+    tau_pf_ = tau_filt;
+}
 
-    JointVec tau_d = J().transpose() * F_d + tau_g + tau_f;
-    return setJointTor(tau_d);
-}//*/
+void RobotM1::setStimDF(double stim_amp) {
+    stim_df_ = stim_amp;
+}
+
+void RobotM1::setStimPF(double stim_amp) {
+    stim_pf_ = stim_amp;
+}
+
+void RobotM1::setStimCalibrate(bool stim_calib) {
+    stim_calib_ = stim_calib;
+}
+
+void RobotM1::setTorqueOffset(double tau_filt) {
+    tau_offset_ = tau_filt;
+}
+
+void RobotM1::setMaxAngleDF(double q_current) {
+    q_df_ = q_current;
+}
+
+void RobotM1::setMaxAnglePF(double q_current) {
+    q_pf_ = q_current;
+}
+
+short RobotM1::sign(double val) { return (val > 0) ? 1 : ((val < 0) ? -1 : 0); }

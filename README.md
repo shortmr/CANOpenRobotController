@@ -2,14 +2,12 @@
 
 CORC is a free and open source robotic development software stack, written in C++.
 
-The project has been under development at the University of Melbourne in partnership with Fourier Intelligence. The project was developed to run on an X2 Exoskeleton powered by a Beaglebone Black, however, the software is designed to be extensible to any embedded Linux and CANopen enabled Robotic platform.
-
-> Note (12/5/2020): At this stage, this software has not been tested on physical hardware due to lab access limitations due to COVID-19.
+The project was initiated at the University of Melbourne in partnership with Fourier Intelligence, however has welcomed (and continues to welcome) collaborators from all institutions. The project was initially developed to run on an ExoMotus X2 Exoskeleton powered by a Beaglebone Black, however, the software is designed to be extensible to any embedded Linux and CANopen enabled Robotic platform. The repository currently also includes code which has been run on the ArmMotus M1 and M3 rehabilitation devices, and using desktop or laptop Ubuntu installations.
 
 ## The CANOpen Robot Controller project includes:
 
-- An extensible framework to represent multibody robotic systems.
-- An event driven state machine to develop custom applications (see [here](doc/StateMachine.md))
+- An extensible framework to represent multibody rigid robotic systems.
+- An event driven state machine to develop custom applications (see [here](doc/StateMachine.md)).
 - An implementation of [CANopen Socket](https://github.com/CANopenNode/CANopenSocket) to provide an interface between CAN enabled embedded Linux system and CANopen-based motor drivers/sensors.
 - [Documentation](https://unimelb-human-robotics-lab.github.io//CANOpenRobotController/index.html)
 - Functional application examples.
@@ -30,7 +28,7 @@ The following instructions detail the building and testing of a simple test stat
 
 At the end of these instructions, you should be to compile and run this example CORC application, verifying that all development tools have been installed correctly. 
 
-### Before you start - Installation Instructions.
+### Before you start - Installation Instructions
 
 These instructions assume that you have a suitable test platform (i.e. a Target), and a workbench environment (i.e. a Host). It is suggested that the Target and Host you use for his guide are the platforms you intend to develop on for your own application.
 
@@ -59,7 +57,7 @@ $ git clone https://github.com/UniMelb-Human-Robotics-Lab/CANOpenRobotController
 This repository includes all the sources files required for this example. (If you are running Github Desktop, you can simply clone by using File > Clone Repository...)
 
 ### Building ExoTestMachine
-CMake is used to generate an appropriate makefile for CORC framework. By default, the generated makefile is configured to compile an executable `ExoTestMachine_APP` using the default C/C++ compilers. To generate a cross-compiled executable (suitable for running on a Beaglebone Black) using the following commands on the host:
+CMake is used to generate an appropriate makefile for CORC framework. By default, the generated makefile is configured to compile an executable `ExoTestMachine_APP` using the default C/C++ compilers. To generate a cross-compiled executable (suitable for running on a Beaglebone Black) use the following commands on the host:
 ```bash
 $ mkdir build
 $ cd build
@@ -89,13 +87,15 @@ Using an FTP Client on the Host (if you do not have one - or a preferred client,
 - **Username:** debian
 - **Password:** temppwd
 
-On the host, using the FTP client, transfer the build executable in `build/ExoTestMachine_APP`, along with the contents of the `initRobot` folder, to the Beaglebone.
+On the host, using the FTP client, transfer the build executable in `build/ExoTestMachine_APP`, along with the contents of the `script` folder, to the Beaglebone.
 
-Alternatively, you can use the [script/uploadBB.sh](script/uploadBB.sh) to automatically upload the content of the script folder and the build/\*APP to the BeagleBone if you are developing on a Linux Machine. 
+Alternatively, you can use the [script/uploadBB.sh](script/uploadBB.sh) to automatically upload the content of the script folder and the build/\*APP to the BeagleBone through ssh. 
 
-> Note: The `initRobot` folder contains scripts for setting up the CAN interfaces that CORC uses for communication
+> Note: The `script` folder contains scripts for setting up the CAN interfaces that CORC uses for communication. In case you use a PEAK CAN USB device, make sure to either use the `initPCAN` script or to manually setup the CAN queue length to 1000 (`ifconfig can0 txqueuelen 1000`).
 
-**[DEPLOY-LOCAL]** This entire step is not required if you are running on your development machine - just note the location of your `ExoTestMachine_APP` and `initRobot` folder. 
+In addition, copy the `config` folder to the same directory as the executable - this is used to set some parameters in the X2Robot. 
+
+**[DEPLOY-LOCAL]** This entire step is not required if you are running on your development machine - just note the location of your `ExoTestMachine_APP` and `script` folder. 
 
 ## Run Virtual ExoTestMachine
 
@@ -120,12 +120,12 @@ This must be repeated for the `.sh` scripts as well.
 The CORC Application requires the a CAN device to send commands to. For this test, we create a virtual CAN device (so no hardware is required). To do this, initialise the Virtual CAN device to set up, bind to and run candump ([candump manpage](https://manpages.debian.org/testing/can-utils/candump.1.en.html)) on the VCAN interface using the `initVCAN` script. 
 
 ```bash
-$  cd initRobot
+$  cd script
 $  ./initVCAN.sh
 ```
 This initialises a virtual CAN interface, and prints the contents of the bus to the terminal window.
 
-> Note: This can be changed to use a non-virtual CAN interface, but this requires some minor changes to the code before compilation, and the use of the `X2_startCAN.sh` script instead.
+> Note: This can be changed to use a non-virtual CAN interface, but this requires some minor changes to the code before compilation, and the use of the `initCAN0.sh` script (or `initPCAN.sh` if you use a PEAK CAN USB device) instead.
 
 SSH into the BeagleBone in a second terminal window (**[DEPLOY-LOCAL]** or launch a second terminal) to launch the application:
 
@@ -182,7 +182,13 @@ explain me -->
 See [this detailed explanation](doc/CustomApplication.md) for instructions to customise an application or derive your own.
 
 ### ROS Support
-See [here](doc/ROSApplication.md) for instructions on how to build and run a CORC app with ROS support.
+See [here](doc/Simulation.md) for instructions on how to build and run a CORC app with ROS support.
+
+### Network communication
+See [here](doc/NetworkCommunication.md) for instructions on using libFLNL for communication.
+
+### CAN-USB adapters
+See [this page](doc/USBCANadapters.md) for notes on tested USB-CAN adapters.
 
 ## Developer Information
 
@@ -199,16 +205,13 @@ The following individuals have made contributions to CORC:
 - Vincent Crocher
 - Emek Barış Küçüktabak 
 - Justin Fong
+- Yue Wen
+- Tim Haswell
+- Xinliang Guo
 
 Please contact fong.j[at]unimelb.edu.au with questions or suggestions for continuing development, or if you wish to be more involved in the planning/organisation of CORC.
 
 ## License
-​
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-​
-http://www.apache.org/licenses/LICENSE-2.0
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 .
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-​
-This program is distributed in the hope that it will be us
 
-<!-- ## Maintainers -->

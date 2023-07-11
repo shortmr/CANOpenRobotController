@@ -59,7 +59,8 @@ class KincoDrive : public Drive {
          * \return false if not
          */
     bool initPosControl(motorProfile posControlMotorProfile);
-//    bool initPosControl();
+    bool initPosControl();
+
     /**
          * Sets the drive to Velocity control with default parameters (through SDO messages)
          *
@@ -69,7 +70,7 @@ class KincoDrive : public Drive {
          * \return false if not
          */
     bool initVelControl(motorProfile velControlMotorProfile);
-//    bool initVelControl();
+    bool initVelControl();
 
     /**
          * Sets the drive to Torque control with default parameters (through SDO messages)
@@ -112,6 +113,9 @@ class KincoDrive : public Drive {
 
     bool resetError();
 
+    UNSIGNED16 digitalIn=0;
+    UNSIGNED16 digitalOut=0;
+
     std::vector<std::string> writeSDOMessage(int address, int value);
     std::vector<std::string> readSDOMessage(int address, int len);
 
@@ -119,6 +123,25 @@ class KincoDrive : public Drive {
 //    std::vector<std::string> generateVelControlConfigSDO(motorProfile velocityProfile);
 //    std::vector<std::string> generateTorqueControlConfigSDO();
     std::vector<std::string> generateResetErrorSDO();
+
+    /**
+      * \brief Generates the SDO commands to set the current position as offset
+      *
+      * /param offset, joint position value to be at the homing position [encoder count]
+      *
+      *
+      */
+    std::vector<std::string> generatePositionOffsetSDO(int offset);
+
+    /**
+          * \brief Set the current position as offset
+          *
+          * /param offset, joint position value to be at the homing position [encoder count]
+          *
+         * \return true if successful
+         * \return false if not
+         */
+    bool setPositionOffset(int offset);
 };
 
 #endif

@@ -43,6 +43,7 @@ public:
     int cali_velocity;
     double cali_tau_thresh;
     double cali_vel_thresh;
+    double cali_tau_safety;
 
     // Fixed angle terms
     int fixed_stage;

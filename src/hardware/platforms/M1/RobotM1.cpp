@@ -180,6 +180,8 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     tau_offset_ = 0;
     tau_df_ = 1;
     tau_pf_ = 1;
+    q_df_ = 0;
+    q_pf_ = 0;
     stim_df_ = 0;
     stim_pf_ = 0;
     stim_calib_ = false;
@@ -615,11 +617,11 @@ void RobotM1::setMotorTorqueCutOff(double cutOff) {
     }
 }
 
-void RobotM1::setMaxDF(double tau_filt) {
+void RobotM1::setMaxTorqueDF(double tau_filt) {
     tau_df_ = tau_filt;
 }
 
-void RobotM1::setMaxPF(double tau_filt) {
+void RobotM1::setMaxTorquePF(double tau_filt) {
     tau_pf_ = tau_filt;
 }
 
@@ -637,6 +639,14 @@ void RobotM1::setStimCalibrate(bool stim_calib) {
 
 void RobotM1::setTorqueOffset(double tau_filt) {
     tau_offset_ = tau_filt;
+}
+
+void RobotM1::setMaxAngleDF(double q_current) {
+    q_df_ = q_current;
+}
+
+void RobotM1::setMaxAnglePF(double q_current) {
+    q_pf_ = q_current;
 }
 
 short RobotM1::sign(double val) { return (val > 0) ? 1 : ((val < 0) ? -1 : 0); }

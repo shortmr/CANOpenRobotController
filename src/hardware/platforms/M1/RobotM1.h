@@ -152,6 +152,7 @@ public:
     double tau_offset_, tau_df_, tau_pf_;
     double stim_df_, stim_pf_;
     bool stim_calib_;
+    double q_df_, q_pf_;
 
     JointVec tau_spring;
 
@@ -293,8 +294,10 @@ public:
     void setVelThresh(double velThresh);
     void setTorqueThresh(double torqueThresh);
     void setMotorTorqueCutOff(double cutOff);
-    void setMaxDF(double tau_filt);
-    void setMaxPF(double tau_filt);
+    void setMaxTorqueDF(double tau_filt);
+    void setMaxTorquePF(double tau_filt);
+    void setMaxAngleDF(double q_current);
+    void setMaxAnglePF(double q_current);
     void setStimDF(double stim_amp);
     void setStimPF(double stim_amp);
     void setStimCalibrate(bool stim_calib);

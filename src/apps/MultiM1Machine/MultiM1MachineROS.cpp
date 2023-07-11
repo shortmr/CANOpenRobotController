@@ -16,6 +16,7 @@ void MultiM1MachineROS::initialize() {
     jointStatePublisher_ = nodeHandle_->advertise<sensor_msgs::JointState>("joint_states", 10);
     interactionWrenchPublisher_ = nodeHandle_->advertise<geometry_msgs::WrenchStamped>("interaction_wrench", 10);
     interactionScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("interaction_mvc", 10);
+    jointScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("joint_scaled", 10);
 
     jointPositionCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointVelocityCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -29,7 +30,7 @@ void MultiM1MachineROS::initialize() {
 void MultiM1MachineROS::update() {
     publishJointStates();
     publishInteractionForces();
-    publishInteractionScaled();
+    publishJointScaled(); // publishInteractionScaled();
 }
 
 void MultiM1MachineROS::publishJointStates() {
@@ -81,6 +82,31 @@ void MultiM1MachineROS::publishInteractionScaled() {
     interactionScaledMsg_.y = robot_->stim_df_; // stimulation amplitude channel 1
     interactionScaledMsg_.z = robot_->stim_pf_; // stimulation amplitude channel 2
     interactionScaledPublisher_.publish(interactionScaledMsg_);
+}
+
+void MultiM1MachineROS::publishJointScaled() {
+    Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_s_filt(); // filtered with weight compensation
+    Eigen::VectorXd jointAngle = robot_->getJointPos();
+    double torqueScaled;
+    double angleScaled;
+
+    // scale torque
+    if ((interactionTorqueFiltered[0]-robot_->tau_offset_) > 0) {
+        torqueScaled = (interactionTorqueFiltered[0]-robot_->tau_offset_)/(robot_->tau_df_);
+    } else {
+        torqueScaled = (interactionTorqueFiltered[0]-robot_->tau_offset_)/(robot_->tau_pf_);
+    }
+
+    // scale angle
+    if (robot_->q_df_==0 && robot_->q_pf_==90) {
+        angleScaled = jointAngle[0]; // unscaled
+    } else {
+        angleScaled = (jointAngle[0] - 0.5*(robot_->q_df_ + robot_->q_pf_))/(robot_->q_df_ - robot_->q_pf_);
+    }
+
+    jointScaledMsg_.x = torqueScaled; // scaled torque (fraction of MVC different for DF and PF; -1 to 1)
+    jointScaledMsg_.y = angleScaled; // scaled angular position (fraction of ROM; -0.5 to 0.5)
+    jointScaledPublisher_.publish(jointScaledMsg_);
 }
 
 void MultiM1MachineROS::setNodeHandle(ros::NodeHandle &nodeHandle) {

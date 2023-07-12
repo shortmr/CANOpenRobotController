@@ -272,7 +272,7 @@ void MultiControllerState::during(void) {
 
         if (set_offset_) {
             n_offset += 1;
-            mvc_offset = (mvc_offset+tau_filtered)/n_offset;
+            mvc_offset = (mvc_offset+tau_filtered);
         }
 
         if (set_mvc_) {
@@ -453,10 +453,10 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         set_mvc_ = config.set_mvc;
         if (!set_mvc_) {
             // End measurement
-            std::cout << std::setprecision(2) << "Maximum DF torque: " << mvc_df - mvc_offset << std::endl;
-            std::cout << std::setprecision(2) << "Maximum PF torque: " << mvc_pf - mvc_offset << std::endl;
-            robot_->setMaxTorqueDF(mvc_df - mvc_offset);
-            robot_->setMaxTorquePF(abs(mvc_pf - mvc_offset));
+            std::cout << std::setprecision(2) << "Maximum DF torque: " << mvc_df - (mvc_offset/n_offset) << std::endl;
+            std::cout << std::setprecision(2) << "Maximum PF torque: " << mvc_pf - (mvc_offset/n_offset) << std::endl;
+            robot_->setMaxTorqueDF(mvc_df - (mvc_offset/n_offset));
+            robot_->setMaxTorquePF(abs(mvc_pf - (mvc_offset/n_offset)));
         } else {
             std::cout << "Begin MVC measurement... " << std::endl;
             mvc_df = -1;
@@ -468,8 +468,8 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         set_offset_ = config.set_offset;
         if (!set_offset_) {
             // End measurement
-            std::cout << std::setprecision(2) << "Torque offset: " << mvc_offset << std::endl;
-            robot_->setTorqueOffset(mvc_offset);
+            std::cout << std::setprecision(2) << "Torque offset: " << (mvc_offset/n_offset) << std::endl;
+            robot_->setTorqueOffset((mvc_offset/n_offset));
         } else {
             std::cout << "Begin offset measurement... " << std::endl;
             mvc_offset = 0;

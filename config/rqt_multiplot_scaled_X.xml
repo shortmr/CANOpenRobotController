@@ -36,20 +36,20 @@
                                         <type>2</type>
                                     </scale>
                                     <topic>/m1_x/joint_scaled</topic>
-                                    <type>geometry_msgs/Point32</type>
+                                    <type>CORC/JointScaled32</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>y</field>
+                                    <field>q</field>
                                     <field_type>0</field_type>
                                     <scale>
-                                        <absolute_maximum>0.5</absolute_maximum>
-                                        <absolute_minimum>-0.5</absolute_minimum>
+                                        <absolute_maximum>1</absolute_maximum>
+                                        <absolute_minimum>-1</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
                                     <topic>/m1_x/joint_scaled</topic>
-                                    <type>geometry_msgs/Point32</type>
+                                    <type>CORC/JointScaled32</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -112,10 +112,10 @@
                                         <type>2</type>
                                     </scale>
                                     <topic>/m1_x/joint_scaled</topic>
-                                    <type>geometry_msgs/Point32</type>
+                                    <type>CORC/JointScaled32</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>x</field>
+                                    <field>tau_s</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1</absolute_maximum>
@@ -125,7 +125,7 @@
                                         <type>1</type>
                                     </scale>
                                     <topic>/m1_x/joint_scaled</topic>
-                                    <type>geometry_msgs/Point32</type>
+                                    <type>CORC/JointScaled32</type>
                                 </y_axis>
                             </axes>
                             <color>

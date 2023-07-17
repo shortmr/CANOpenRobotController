@@ -266,8 +266,8 @@ void MultiControllerState::during(void) {
             robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
         }
 
-        //filter interaction torque for subject-specific torque measures
-        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        //filter interaction torque for subject-specific torque measures (20 Hz lowpass)
+        alpha_tau_s = (2*M_PI*dt*20)/(2*M_PI*dt*20+1);
         tau_filtered = robot_->filter_tau_s(alpha_tau_s);
 
         if (set_offset_) {

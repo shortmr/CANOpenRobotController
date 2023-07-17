@@ -16,13 +16,12 @@ void MultiM1MachineROS::initialize() {
     jointStatePublisher_ = nodeHandle_->advertise<sensor_msgs::JointState>("joint_states", 10);
     interactionWrenchPublisher_ = nodeHandle_->advertise<geometry_msgs::WrenchStamped>("interaction_wrench", 10);
     interactionScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("interaction_mvc", 10);
-    jointScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("joint_scaled", 10);
+    jointScaledPublisher_ = nodeHandle_->advertise<CORC::JointScaled32>("joint_scaled", 10);
 
     jointPositionCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointVelocityCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointTorqueCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     interactionTorqueCommand_ = Eigen::VectorXd(M1_NUM_INTERACTION);
-    qFixed_ = Eigen::VectorXd::Zero(M1_NUM_INTERACTION);
 
     calibrateForceSensorsService_ = nodeHandle_->advertiseService("calibrate_force_sensors", &MultiM1MachineROS::calibrateForceSensorsCallback, this);
 }
@@ -89,23 +88,32 @@ void MultiM1MachineROS::publishJointScaled() {
     Eigen::VectorXd jointAngle = robot_->getJointPos();
     double torqueScaled;
     double angleScaled;
+    double tau_df = robot_->tau_df_;
+    double tau_pf = robot_->tau_pf_;
+    double q_df = robot_->q_df_;
+    double q_pf = robot_->q_pf_;
+    double tau_offset = robot_->tau_offset_;
 
     // scale torque
-    if ((interactionTorqueFiltered[0]-robot_->tau_offset_) > 0) {
-        torqueScaled = (interactionTorqueFiltered[0]-robot_->tau_offset_)/(robot_->tau_df_);
+    if ((interactionTorqueFiltered[0]-tau_offset) > 0) {
+        torqueScaled = (interactionTorqueFiltered[0]-tau_offset)/tau_df;
     } else {
-        torqueScaled = (interactionTorqueFiltered[0]-robot_->tau_offset_)/(robot_->tau_pf_);
+        torqueScaled = (interactionTorqueFiltered[0]-tau_offset)/tau_pf;
     }
 
     // scale angle
-    if (robot_->q_df_==0 && robot_->q_pf_==90) {
+    if (q_df==0 && q_pf==90) {
         angleScaled = jointAngle[0]; // unscaled
     } else {
-        angleScaled = (jointAngle[0] - 0.5*(robot_->q_df_ + robot_->q_pf_))/(robot_->q_df_ - robot_->q_pf_);
+        angleScaled = 2*(jointAngle[0] - 0.5*(q_df + q_pf))/(q_df - q_pf);
     }
 
-    jointScaledMsg_.x = torqueScaled; // scaled torque (fraction of MVC different for DF and PF; -1 to 1)
-    jointScaledMsg_.y = angleScaled; // scaled angular position (fraction of ROM; -0.5 to 0.5)
+    jointScaledMsg_.tau_s = torqueScaled; // scaled torque (fraction of MVC different for DF and PF; -1 to 1)
+    jointScaledMsg_.q = angleScaled; // scaled angular position (fraction of ROM; -1 to 1)
+    jointScaledMsg_.tau_df = tau_df; // maximum torque in dorsiflexion (Nm)
+    jointScaledMsg_.tau_pf = tau_pf; // maximum torque in plantarflexion (Nm)
+    jointScaledMsg_.q_df = q_df; // maximum angle in dorsiflexion (deg)
+    jointScaledMsg_.q_pf = q_pf; // maximum angle in plantarflexion (deg)
     jointScaledPublisher_.publish(jointScaledMsg_);
 }
 

@@ -177,11 +177,12 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         torqueThresh_ = m1Params.tau_thresh[0];
         motorTorqueCutOff_ = m1Params.motor_torque_cutoff_freq[0];
     }
-    tau_offset_ = 0;
-    tau_df_ = 1;
-    tau_pf_ = 1;
-    q_df_ = 0;
-    q_pf_ = 0;
+    tau_offset_ = 0; // Nm
+    tau_df_ = 1; // Nm
+    tau_pf_ = 1; // Nm
+    q_offset_ = 0; // radians
+    q_df_ = 0; // radians
+    q_pf_ = 0; // radians
     stim_df_ = 0;
     stim_pf_ = 0;
     stim_calib_ = false;
@@ -641,12 +642,16 @@ void RobotM1::setTorqueOffset(double tau_filt) {
     tau_offset_ = tau_filt;
 }
 
+void RobotM1::setAngleOffset(double q_offset) {
+    q_offset_ = q_offset*d2r; // center angle in radians
+}
+
 void RobotM1::setMaxAngleDF(double q_current) {
-    q_df_ = q_current;
+    q_df_ = q_current*d2r; // maximum dorsiflexion angle in radians
 }
 
 void RobotM1::setMaxAnglePF(double q_current) {
-    q_pf_ = q_current;
+    q_pf_ = q_current*d2r; // maximum plantarflexion angle in radians
 }
 
 short RobotM1::sign(double val) { return (val > 0) ? 1 : ((val < 0) ? -1 : 0); }

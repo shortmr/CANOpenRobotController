@@ -243,6 +243,7 @@ void MultiControllerState::during(void) {
         }
     }
     else if (controller_mode_ == 7) {  // center angle (ROM) - zero velocity mode
+        // TODO: improve with position control or custom velocity control loop (monitor difference in angle)
         if (fixed_stage == 2) {
             // set fixed center angle
             JointVec q_t;
@@ -441,6 +442,7 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
             std::cout << std::setprecision(2) << "Center angle: " << rom_center << std::endl;
             robot_->setMaxAngleDF(rom_df);
             robot_->setMaxAnglePF(rom_pf);
+            robot_->setAngleOffset(rom_center);
         } else {
             std::cout << "Begin ROM measurement... " << std::endl;
             rom_df = 0;

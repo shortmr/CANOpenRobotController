@@ -96,6 +96,8 @@ void MultiM1Machine::init() {
     logHelper.add(multiControllerState_->digitalInValue_, "digitalIn");
     logHelper.add(multiControllerState_->digitalOutValue_, "digitalOut");
 
+    logHelper.add(robot_->q_offset_, "JointPositionOffset"); // center of range of motion in radians
+
     logHelper.startLogger();
 }
 

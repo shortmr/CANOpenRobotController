@@ -152,7 +152,7 @@ public:
     double tau_offset_, tau_df_, tau_pf_;
     double stim_df_, stim_pf_;
     bool stim_calib_;
-    double q_df_, q_pf_;
+    double q_offset_, q_df_, q_pf_;
 
     JointVec tau_spring;
 
@@ -302,6 +302,7 @@ public:
     void setStimPF(double stim_amp);
     void setStimCalibrate(bool stim_calib);
     void setTorqueOffset(double tau_filt);
+    void setAngleOffset(double q_offset);
 
     void printStatus();
     void printJointStatus();

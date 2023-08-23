@@ -34,6 +34,7 @@ public:
     void publishInteractionForces(void);
     void publishInteractionScaled(void);
     void publishJointScaled(void);
+    void publishJointTracking(void);
     void initialize();
     void setNodeHandle(ros::NodeHandle& nodeHandle);
 
@@ -66,6 +67,10 @@ private:
     // Publisher and message for simple scaled joint messages
     ros::Publisher jointScaledPublisher_;
     CORC::JointScaled32 jointScaledMsg_;
+
+    // Publisher and message for actual and desired joint angles (bias removed)
+    ros::Publisher jointTrackingPublisher_;
+    geometry_msgs::Point32 jointTrackingMsg_;
 
     RobotM1 *robot_;
 

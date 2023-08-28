@@ -115,6 +115,7 @@ if(USE_ROS)
 				multi_robot_interaction
 				dynamic_reconfigure
 				rosserial_python
+				message_generation
         )
 		if(SIM)
 			find_package(catkin REQUIRED COMPONENTS
@@ -129,6 +130,19 @@ if(USE_ROS)
 #				config/x2_dynamic_params.cfg
 		)
 
+		add_message_files(
+				DIRECTORY msg
+				FILES
+				JointScaled32.msg
+		)
+
+
+		generate_messages(
+				DEPENDENCIES
+				std_msgs
+				sensor_msgs
+				geometry_msgs
+		)
 
 		catkin_package(
 				#  INCLUDE_DIRS include
@@ -143,6 +157,7 @@ if(USE_ROS)
 					multi_robot_interaction
 					dynamic_reconfigure
 					rosserial_python
+					message_runtime
 				#  DEPENDS system_lib
 		)
 

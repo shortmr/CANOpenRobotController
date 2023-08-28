@@ -22,6 +22,7 @@
 
 #include "RobotM1.h"
 #include "ros/ros.h"  // This state machine requires ROS
+#include <CORC/JointScaled32.h>
 
 class MultiM1MachineROS {
 public:
@@ -33,6 +34,7 @@ public:
     void publishInteractionForces(void);
     void publishInteractionScaled(void);
     void publishJointScaled(void);
+    void publishJointTracking(void);
     void initialize();
     void setNodeHandle(ros::NodeHandle& nodeHandle);
 
@@ -40,7 +42,6 @@ public:
 
     Eigen::VectorXd jointPositionCommand_, jointVelocityCommand_, jointTorqueCommand_;
     Eigen::VectorXd interactionTorqueCommand_;
-    Eigen::VectorXd qFixed_;
 
 private:
     // Subscriber and callback func for joint command subscription
@@ -65,7 +66,11 @@ private:
 
     // Publisher and message for simple scaled joint messages
     ros::Publisher jointScaledPublisher_;
-    geometry_msgs::Point32 jointScaledMsg_;
+    CORC::JointScaled32 jointScaledMsg_;
+
+    // Publisher and message for actual and desired joint angles (bias removed)
+    ros::Publisher jointTrackingPublisher_;
+    geometry_msgs::Point32 jointTrackingMsg_;
 
     RobotM1 *robot_;
 

@@ -35,11 +35,11 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/joint_scaled</topic>
-                                    <type>CORC/JointScaled32</type>
+                                    <topic>/m1_x/joint_tracking</topic>
+                                    <type>geometry_msgs/Point32</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>q</field>
+                                    <field>x</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1</absolute_maximum>
@@ -48,8 +48,8 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/joint_scaled</topic>
-                                    <type>CORC/JointScaled32</type>
+                                    <topic>/m1_x/joint_tracking</topic>
+                                    <type>geometry_msgs/Point32</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -72,34 +72,9 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Actual</title>
+                            <title>centered angle</title>
                         </curve_0>
-                    </curves>
-                    <legend>
-                        <visible>true</visible>
-                    </legend>
-                    <plot_rate>30</plot_rate>
-                    <title>M1_X scaled angle</title>
-                </column_0>
-            </row_0>
-            <row_1>
-                <column_0>
-                    <axes>
-                        <axes>
-                            <x_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
-                                <title_visible>true</title_visible>
-                            </x_axis>
-                            <y_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
-                                <title_visible>true</title_visible>
-                            </y_axis>
-                        </axes>
-                    </axes>
-                    <curves>
-                        <curve_0>
+                        <curve_1>
                             <axes>
                                 <x_axis>
                                     <field></field>
@@ -111,11 +86,11 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/joint_scaled</topic>
-                                    <type>CORC/JointScaled32</type>
+                                    <topic>/m1_x/joint_tracking</topic>
+                                    <type>geometry_msgs/Point32</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>tau_s</field>
+                                    <field>y</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1</absolute_maximum>
@@ -124,12 +99,12 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/joint_scaled</topic>
-                                    <type>CORC/JointScaled32</type>
+                                    <topic>/m1_x/joint_tracking</topic>
+                                    <type>geometry_msgs/Point32</type>
                                 </y_axis>
                             </axes>
                             <color>
-                                <custom_color>#30b9f4</custom_color>
+                                <custom_color>#ff0000</custom_color>
                                 <type>1</type>
                             </color>
                             <data>
@@ -148,16 +123,16 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Actual</title>
-                        </curve_0>
+                            <title>desired angle</title>
+                        </curve_1>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>M1_X scaled torque</title>
+                    <title>M1_X</title>
                 </column_0>
-            </row_1>
+            </row_0>
         </plots>
         <track_points>false</track_points>
     </table>

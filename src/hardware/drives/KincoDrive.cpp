@@ -196,6 +196,60 @@ std::vector<std::string> KincoDrive::generatePosControlConfigSDO(motorProfile po
     return CANCommands;
 }
 
+std::vector<std::string> KincoDrive::generateVelControlConfigSDO(motorProfile velocityProfile) {
+    // Define Vector to be returned as part of this method
+    std::vector<std::string> CANCommands;
+    // Define stringstream for ease of constructing hex strings
+    std::stringstream sstream;
+    // start drive
+    sstream << "[1] " << NodeID << " start";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+
+    //Set control word to power up (enable)
+    sstream << "[1] " << NodeID << " write 0x6040 0 u16 0x0f";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+
+    //enable profile Velocity mode
+    sstream << "[1] " << NodeID << " write 0x6060 0 i8 3";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+
+    //Set velocity loop gain
+    sstream << "[1] " << NodeID << " write 0x60F9 1 u16 " << std::dec << 100;
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+
+    //Set acceleration profile
+    sstream << "[1] " << NodeID << " write 0x6083 0 i32 " << std::dec << velocityProfile.profileAcceleration;
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+
+    //Set deceleration profile
+    sstream << "[1] " << NodeID << " write 0x6084 0 i32 " << std::dec << velocityProfile.profileDeceleration;
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+
+    return CANCommands;
+}
+std::vector<std::string> KincoDrive::generateTorqueControlConfigSDO() {
+    // Define Vector to be returned as part of this method
+    std::vector<std::string> CANCommands;
+    // Define stringstream for ease of constructing hex strings
+    std::stringstream sstream;
+    // start drive
+    sstream << "[1] " << NodeID << " start";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+    //enable Torque Control mode
+    sstream << "[1] " << NodeID << " write 0x6060 0 i8 4";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+
+    return CANCommands;
+}
+
 std::vector<std::string> KincoDrive::generateResetErrorSDO() {
     // Define Vector to be returned as part of this method
     std::vector<std::string> CANCommands;

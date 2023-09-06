@@ -97,7 +97,7 @@ void MultiControllerState::during(void) {
                 std::cout << "Error: " << std::endl;
             }
 
-            // monitor velocity and interaction torque
+            // monitor velocity and motor torque
             dq= robot_->getJointVel();
             tau = robot_->getJointTor();
             if ((dq(0) <= cali_vel_thresh) & (tau(0) <= cali_tau_thresh)) {

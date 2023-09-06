@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="m1" default="m1_x"/>
+    <arg name="m1" default="m1_a"/>
     <arg name="can" default="can0"/>
     <arg name="name_spaces" default="[$(arg m1)]"/>
     <arg name="unity" default="false"/>

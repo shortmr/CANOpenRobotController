@@ -11,6 +11,10 @@ MultiM1MachineROS::~MultiM1MachineROS() {
 void MultiM1MachineROS::initialize() {
     spdlog::debug("MultiM1MachineROS::init()");
 
+    // Conversion factors between degrees and radians
+    d2r = M_PI / 180.;
+    r2d = 180. / M_PI;
+
     jointCommandSubscriber_ = nodeHandle_->subscribe("joint_commands", 1, &MultiM1MachineROS::jointCommandCallback, this);
     interactionTorqueCommandSubscriber_ = nodeHandle_->subscribe("interaction_effort_commands", 1, &MultiM1MachineROS::interactionTorqueCommandCallback, this);
     jointStatePublisher_ = nodeHandle_->advertise<sensor_msgs::JointState>("joint_states", 10);
@@ -30,7 +34,7 @@ void MultiM1MachineROS::initialize() {
 void MultiM1MachineROS::update() {
     publishJointStates();
     publishInteractionForces();
-//    publishJointScaled(); // sPES-stroke validation
+    publishJointScaled(); // sPES-stroke validation
     publishJointTracking(); // HRCEML validation (m1_cloud_game)
 }
 
@@ -105,7 +109,7 @@ void MultiM1MachineROS::publishJointScaled() {
     }
 
     // scale angle
-    if (q_df==0 && q_pf==90) {
+    if (q_df==0*d2r && q_pf==90*d2r) {
         angleScaled = jointPositions[0]; // unscaled
     } else {
         angleScaled = 2*(jointPositions[0] - 0.5*(q_df + q_pf))/(q_df - q_pf);
@@ -115,8 +119,8 @@ void MultiM1MachineROS::publishJointScaled() {
     jointScaledMsg_.q = angleScaled; // scaled angular position (fraction of ROM; -1 to 1)
     jointScaledMsg_.tau_df = tau_df; // maximum torque in dorsiflexion (Nm)
     jointScaledMsg_.tau_pf = tau_pf; // maximum torque in plantarflexion (Nm)
-    jointScaledMsg_.q_df = q_df; // maximum angle in dorsiflexion (deg)
-    jointScaledMsg_.q_pf = q_pf; // maximum angle in plantarflexion (deg)
+    jointScaledMsg_.q_df = q_df; // maximum angle in dorsiflexion (rad)
+    jointScaledMsg_.q_pf = q_pf; // maximum angle in plantarflexion (rad)
     jointScaledPublisher_.publish(jointScaledMsg_);
 }
 

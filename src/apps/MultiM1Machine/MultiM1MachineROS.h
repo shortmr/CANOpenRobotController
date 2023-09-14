@@ -77,6 +77,9 @@ private:
     ros::ServiceServer calibrateForceSensorsService_;
     bool calibrateForceSensorsCallback(std_srvs::Trigger::Request& req,
                                        std_srvs::Trigger::Response& res);
+
+    // Conversion factors between degrees and radians
+    double d2r, r2d;
 };
 
 #endif  //SRC_MultiM1MachineROS_H

@@ -48,6 +48,7 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     m1Params.motor_torque_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.tick_max = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.spk = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.tracking_offset = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
 
     initializeRobotParams(robotName_);
 
@@ -134,7 +135,8 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
        params[robotName]["vel_thresh"].size() != M1_NUM_JOINTS || params[robotName]["tau_thresh"].size() != M1_NUM_JOINTS ||
        params[robotName]["lowpass_cutoff_freq"].size() != M1_NUM_JOINTS ||
        params[robotName]["motor_torque_cutoff_freq"].size() != M1_NUM_JOINTS ||
-       params[robotName]["tick_max"].size() != M1_NUM_JOINTS || params[robotName]["spk"].size() != M1_NUM_JOINTS) {
+       params[robotName]["tick_max"].size() != M1_NUM_JOINTS || params[robotName]["spk"].size() != M1_NUM_JOINTS ||
+       params[robotName]["tracking_offset"].size() != M1_NUM_JOINTS) {
 
         spdlog::error("Parameter sizes are not consistent");
         spdlog::error("All parameters are zero !");
@@ -163,6 +165,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         m1Params.motor_torque_cutoff_freq[i] = params[robotName]["motor_torque_cutoff_freq"][i].as<double>();
         m1Params.tick_max[i] = params[robotName]["tick_max"][i].as<double>();
         m1Params.spk[i] = params[robotName]["spk"][i].as<double>();
+        m1Params.tracking_offset[i] = params[robotName]["tracking_offset"][i].as<double>();
     }
 
     // Set static parameter values
@@ -172,6 +175,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     f_s_ = m1Params.c0[0];
     f_d_ = m1Params.c1[0];
     c2_ = m1Params.c2[0];
+    q_offset_ = m1Params.tracking_offset[0]*d2r; // radians
     if (!m1Params.configFlag) {
         velThresh_ = m1Params.vel_thresh[0] * d2r;
         torqueThresh_ = m1Params.tau_thresh[0];
@@ -180,7 +184,6 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     tau_offset_ = 0; // Nm
     tau_df_ = 1; // Nm
     tau_pf_ = 1; // Nm
-    q_offset_ = 0; // radians
     q_df_ = 0; // radians
     q_pf_ = 0; // radians
     stim_df_ = 0;

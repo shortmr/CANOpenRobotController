@@ -136,6 +136,11 @@ if(USE_ROS)
 				JointScaled32.msg
 		)
 
+		add_service_files(
+				DIRECTORY srv
+				FILES
+				SetOffset.srv
+		)
 
 		generate_messages(
 				DEPENDENCIES

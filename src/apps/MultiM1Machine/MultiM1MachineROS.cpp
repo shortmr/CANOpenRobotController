@@ -29,6 +29,7 @@ void MultiM1MachineROS::initialize() {
     interactionTorqueCommand_ = Eigen::VectorXd(M1_NUM_INTERACTION);
 
     calibrateForceSensorsService_ = nodeHandle_->advertiseService("calibrate_force_sensors", &MultiM1MachineROS::calibrateForceSensorsCallback, this);
+    setTrackingOffsetService_ = nodeHandle_->advertiseService("set_tracking_offset", &MultiM1MachineROS::setTrackingOffsetCallback, this);
 }
 
 void MultiM1MachineROS::update() {
@@ -157,4 +158,10 @@ bool MultiM1MachineROS::calibrateForceSensorsCallback(std_srvs::Trigger::Request
     // only use when shaft is not bearing load (pedal)
     res.success = robot_->calibrateForceSensors();
     return true;
+}
+
+bool MultiM1MachineROS::setTrackingOffsetCallback(CORC::SetOffset::Request &req, CORC::SetOffset::Response &res) {
+    robot_->setAngleOffset(req.q);
+    res.q_new = r2d*(robot_->q_offset_);
+    return res.q_new;
 }

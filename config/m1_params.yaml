@@ -20,6 +20,7 @@ m1_x:
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
   spk: [0] # spring stiffness (not implemented) [Nm/rad]
+  tracking_offset: [45.0] # center of range of motion [deg]
 
 m1_y:
   id: ['ankleHRCEML']
@@ -41,6 +42,7 @@ m1_y:
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
   spk: [0] # spring stiffness (not implemented) [Nm/rad]
+  tracking_offset: [45.0] # center of range of motion [deg]
 
 m1_a:
   id: ['ankleSPES']
@@ -62,6 +64,7 @@ m1_a:
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
   spk: [0] # spring stiffness (not implemented) [Nm/rad]
+  tracking_offset: [45.0] # center of range of motion [deg]
 
 #m1_x:
 #  id: ['V1R01']
@@ -83,6 +86,7 @@ m1_a:
 #  motor_torque_cutoff_freq: [50.0] # cutoff frequency for motor torque command filter [Hz]
 #  tick_max: [60.0] # counter for integral term reset [s]
 #  spk: [0] # spring stiffness (not implemented) [Nm/rad]
+#  tracking_offset: [45.0] # center of range of motion [deg]
 
 #m1_y:
 #  id: ['V2R02']
@@ -104,3 +108,4 @@ m1_a:
 #  motor_torque_cutoff_freq: [50.0] # cutoff frequency for motor torque command filter [Hz]
 #  tick_max: [60.0] # counter for integral term reset [s]
 #  spk: [0] # spring stiffness (not implemented) [Nm/rad]
+#  tracking_offset: [45.0] # center of range of motion [deg]

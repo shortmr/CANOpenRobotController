@@ -64,6 +64,7 @@ struct RobotParameters {
     Eigen::VectorXd motor_torque_cutoff_freq; // cutoff frequency for motor torque command filter [Hz]
     Eigen::VectorXd tick_max; // counter for integral term reset [s]
     Eigen::VectorXd spk; // spring stiffness (not implemented) [Nm/rad]
+    Eigen::VectorXd tracking_offset; // center of range of motion [deg]
 };
 
 /**

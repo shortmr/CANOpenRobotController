@@ -21,6 +21,7 @@ void MultiControllerState::entry(void) {
     // Initialize static parameters (if configFlag is not set, bypass dynamic reconfigure for parameters)
     m1Params = robot_->sendRobotParams();
     v_bias = -1 * m1Params.t_bias[0] * 180. / M_PI;
+    rom_center = m1Params.tracking_offset[0];
     if (!m1Params.configFlag) {
         // Update PID and feedforward gains from yaml parameter file
         kp_ = m1Params.kp[0];
@@ -31,7 +32,6 @@ void MultiControllerState::entry(void) {
         spk_ = m1Params.spk[0];
         tick_max_ = m1Params.tick_max[0];
     }
-
     robot_->initTorqueControl();
     robot_->tau_spring[0] = 0;   // for ROS publish only
 

@@ -23,6 +23,7 @@
 #include "RobotM1.h"
 #include "ros/ros.h"  // This state machine requires ROS
 #include <CORC/JointScaled32.h>
+#include <CORC/SetOffset.h>
 
 class MultiM1MachineROS {
 public:
@@ -77,6 +78,10 @@ private:
     ros::ServiceServer calibrateForceSensorsService_;
     bool calibrateForceSensorsCallback(std_srvs::Trigger::Request& req,
                                        std_srvs::Trigger::Response& res);
+
+    ros::ServiceServer setTrackingOffsetService_;
+    bool setTrackingOffsetCallback(CORC::SetOffset::Request& req,
+                                   CORC::SetOffset::Response& res);
 
     // Conversion factors between degrees and radians
     double d2r, r2d;

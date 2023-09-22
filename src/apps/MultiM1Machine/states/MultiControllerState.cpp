@@ -46,7 +46,7 @@ void MultiControllerState::entry(void) {
     tau_cmd = Eigen::VectorXd::Zero(1);
 
     // Initialize parameters
-    control_freq = 400.0; //400
+    control_freq = 1/0.003; //400 Hz
     error = 0;
     delta_error = 0;
     integral_error = 0;

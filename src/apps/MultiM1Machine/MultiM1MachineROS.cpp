@@ -131,6 +131,7 @@ void MultiM1MachineROS::publishJointTracking() {
 
     jointTrackingMsg_.x = jointPositions[0] - q_offset; // angular position (bias removed)
     jointTrackingMsg_.y = jointPositionCommand_[0]; // desired angle
+    jointTrackingMsg_.z = jointVelocityCommand_[0]; // starting position of target
     jointTrackingPublisher_.publish(jointTrackingMsg_);
 }
 

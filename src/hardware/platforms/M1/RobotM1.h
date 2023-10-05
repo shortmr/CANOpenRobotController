@@ -46,6 +46,7 @@ typedef Eigen::Matrix<double, nJoints, nEndEff> JacMtx;
 
 struct RobotParameters {
     bool configFlag; // flag for using dynamic reconfigure
+    bool wristFlag; // flag for wrist or ankle device
     Eigen::VectorXd c0; // coulomb friction const of joint [Nm]
     Eigen::VectorXd c1; // viscous fric constant of joint [Nm/s]
     Eigen::VectorXd c2; // friction square root term
@@ -127,7 +128,7 @@ class RobotM1 : public Robot {
 
     double controlFreq_;
 
-    double i_sin_, i_cos_, t_bias_;
+    double i_sin_, i_cos_, t_bias_, t_bias_offset_;
 
     double f_s_, f_d_, c2_;
 

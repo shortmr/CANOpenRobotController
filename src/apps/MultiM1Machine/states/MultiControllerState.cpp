@@ -300,9 +300,9 @@ void MultiControllerState::during(void) {
             if (id_mode == 1) {
                 mag = mag + 0.2; // sine wave magnitude (torque)
                 freq = freq + 0.1; // sine wave frequency (torque)
-                if (mag > 5.0) {
+                if (mag > 4.6) {
                     freq = 0.1;
-                    mag = 3;
+                    mag = 2.6;
                     id_mode = 2;
                     std::cout << "switch to ramp" << std::endl;
                 }
@@ -326,7 +326,7 @@ void MultiControllerState::during(void) {
                           << "; Cycle: " << cycle << std::endl;
             }
             s_mag = sin(2 * M_PI * freq * counter / control_freq);
-            tau_cmd(0) = mag * s_mag + 0.8; //mag * s_mag + 0.8;
+            tau_cmd(0) = mag * s_mag + 0.2; //mag * s_mag + 0.8;
             if(s_mag_prev < 0 && s_mag > 0)
             {
                 cycle = cycle + 1;
@@ -510,7 +510,7 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         if (controller_mode_ == 8) {
             robot_->initTorqueControl();
             freq = 0.1;
-            mag = 3;   // magnitude for sine wave (without compensation = 3, with compensation = 0.6)
+            mag = 2.6;   // magnitude for sine wave (without compensation = 3, with compensation = 0.6)
             s_mag = 0; // current value of sine wave
             s_mag_prev = 0; // previous value of sine wave
             step = 0.1; // step for ramp

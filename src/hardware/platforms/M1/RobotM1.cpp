@@ -30,6 +30,7 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
 
     // Initializing the yaml parameters to zero
     m1Params.configFlag = true;
+    m1Params.wristFlag = false;
     m1Params.c0 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.c1 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.c2 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -145,8 +146,9 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     }
 
     // getting the parameters from the yaml file
+    m1Params.configFlag = params["config_flag"].as<bool>();
+    m1Params.wristFlag = params[robotName]["wrist"].as<bool>();
     for(int i = 0; i<M1_NUM_JOINTS; i++){
-        m1Params.configFlag = params["config_flag"].as<bool>();
         m1Params.c0[i] = params[robotName]["c0"][i].as<double>();
         m1Params.c1[i] = params[robotName]["c1"][i].as<double>();
         m1Params.c2[i] = params[robotName]["c2"][i].as<double>();
@@ -169,9 +171,13 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     }
 
     // Set static parameter values
+    t_bias_offset_ = 0.0;
+    if (m1Params.wristFlag) {
+        t_bias_offset_ = 90*d2r;
+    }
     i_sin_ = m1Params.i_sin[0];
     i_cos_ = m1Params.i_cos[0];
-    t_bias_ = m1Params.t_bias[0];
+    t_bias_ = m1Params.t_bias[0]+t_bias_offset_;
     f_s_ = m1Params.c0[0];
     f_d_ = m1Params.c1[0];
     c2_ = m1Params.c2[0];
@@ -181,6 +187,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         torqueThresh_ = m1Params.tau_thresh[0];
         motorTorqueCutOff_ = m1Params.motor_torque_cutoff_freq[0];
     }
+
     tau_offset_ = 0; // Nm
     tau_df_ = 1; // Nm
     tau_pf_ = 1; // Nm

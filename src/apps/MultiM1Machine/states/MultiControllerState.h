@@ -48,6 +48,7 @@ public:
     // Fixed angle terms
     int fixed_stage;
     double fixed_q; //fixed angular position in degrees
+    bool isokin_direction ;
 
     // Subject-specific settings
     bool set_rom_ = false;
@@ -95,6 +96,10 @@ public:
     double error;
     double delta_error;
     double integral_error;
+
+    double pos_isometric_;
+    double vel_isokinetic_;
+    double amplitude_isokinetic_;
 
     double spring_tor;
     double tick_count;

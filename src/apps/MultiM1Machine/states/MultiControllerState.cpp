@@ -55,6 +55,10 @@ void MultiControllerState::entry(void) {
     cali_tau_safety = 21;
     cali_vel_thresh = 2;
 
+    pos_isometric_ = 0.0;
+    vel_isokinetic_ =1.0;
+    amplitude_isokinetic_ = 10.0;
+
     controller_mode_ = -1;
 //    cut_off_ = 6.0;
 
@@ -70,6 +74,7 @@ void MultiControllerState::entry(void) {
     step = 0;
     max_tau = 4;
     dir = true;
+    isokin_direction =true;
 
     digitalInValue_ = 0;
     digitalOutValue_ = 0;
@@ -140,6 +145,16 @@ void MultiControllerState::during(void) {
     }
     else if (controller_mode_ == 1) {  // zero torque mode
         robot_->setJointTor(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+        q = robot_->getJointPos();
+        q_raw = q(0); //degrees
+        if (set_rom_) {
+            if (q_raw > rom_df) {
+                rom_df = q_raw;
+            }
+            if (q_raw < rom_pf) {
+                rom_pf = q_raw;
+            }
+        }
     }
     else if (controller_mode_ == 2) { // follow position commands
         robot_->setJointPos(multiM1MachineRos_->jointPositionCommand_);
@@ -247,14 +262,19 @@ void MultiControllerState::during(void) {
         if (fixed_stage == 2) {
             // set fixed center angle
             JointVec q_t;
-            q_t(0) = rom_center;
+            if (rom_center+ pos_isometric_ < rom_df - 5 && rom_center+ pos_isometric_ > rom_pf + 5){
+                q_t(0) = rom_center+ pos_isometric_;
+            }else {
+                std::cout << "--> out of ROM " << std::endl;
+                q_t(0) = rom_center;
+            }
             if(robot_->setJointPos(q_t) != SUCCESS){
                 std::cout << "Error: " << std::endl;
             }
 
             // monitor position
             q = robot_->getJointPos();
-            if (abs(q(0)-rom_center)<0.001){
+            if (abs(q(0) - q_t(0))<0.001){
                 robot_->initVelocityControl();
                 std::cout << "Holding user position with zero velocity" << std::endl;
                 fixed_stage = 3;
@@ -374,6 +394,65 @@ void MultiControllerState::during(void) {
             std::cout << "Error: " << std::endl;
         }
     }
+    else if (controller_mode_ == 9) {  // center angle (ROM) - zero velocity mode
+        // TODO: improve with position control or custom velocity control loop (monitor difference in angle)
+        if (fixed_stage == 2) {
+            // set fixed center angle
+            JointVec q_t;
+            if (rom_center+ pos_isometric_ < rom_df - 5  && rom_center+ pos_isometric_ > rom_pf + 5){
+                q_t(0) = rom_center+ pos_isometric_;
+            }else {
+                std::cout << "--> out of ROM " << std::endl;
+                q_t(0) = rom_center;
+            }
+            if(robot_->setJointPos(q_t) != SUCCESS){
+                std::cout << "Error: " << std::endl;
+            }
+
+            // monitor position
+            q = robot_->getJointPos();
+            if (abs(q(0) - q_t(0))<0.001){
+                robot_->initVelocityControl();
+                std::cout << "Holding user position with zero velocity" << std::endl;
+                fixed_stage = 3;
+            }
+            else {
+                robot_->printJointStatus();
+            }
+        } else if (fixed_stage == 3) {
+            Eigen::VectorXd vel_iso = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+
+            if (q(0)-rom_center + pos_isometric_>amplitude_isokinetic_){
+                isokin_direction = false;
+            }else if (q(0)-rom_center + pos_isometric_< -amplitude_isokinetic_){
+                isokin_direction = true;
+                }
+
+            if (q(0) < rom_df - 5  && q(0) > rom_pf + 5){
+                if (isokin_direction){ // true isokinetic is positive velocity, viceversa false is negative
+                    vel_iso(0) = vel_isokinetic_;
+                }else{
+                    vel_iso(0) = - vel_isokinetic_;
+                }
+            }else {
+                std::cout << "Out of range of motion" << std::endl;
+            }
+
+            
+            
+            if(robot_->setJointVel(vel_iso) != SUCCESS){
+                    std::cout << "Error: " << std::endl;
+              }
+
+            q = robot_->getJointPos(); //degrees
+
+            // std::cout << vel_iso  << " " << q(0)<< std::endl;
+            // apply pos velocity
+            // robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+        }
+
+
+    }
     else if (controller_mode_ == 11) { // Send high for external trigger with NI DAQ
 
         double time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time0).count()/1000.0;
@@ -422,6 +501,20 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
     } else {
         std::cout << "Dynamic reconfigure parameter setting is disabled (set configFlag to true to enable)" << std::endl;
     }
+
+    // parameter isometric
+    if (pos_isometric_ != config.pos_isometric){
+        pos_isometric_ = config.pos_isometric;
+        robot_->initPositionControl();
+        fixed_stage = 2;
+    }
+    if (vel_isokinetic_ != config.vel_isokinetic){
+        vel_isokinetic_ = config.vel_isokinetic;
+    }
+    if (amplitude_isokinetic_ = config.amplitude_isokinetic){
+        amplitude_isokinetic_ = config.amplitude_isokinetic;
+    }
+    
 
     // Arduino stimulation parameters
     robot_->setStimDF(config.stim_amp_df);

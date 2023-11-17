@@ -43,7 +43,7 @@ public:
 
     Eigen::VectorXd jointPositionCommand_, jointVelocityCommand_, jointTorqueCommand_;
     Eigen::VectorXd interactionTorqueCommand_;
-
+    Eigen::VectorXd prbsPositionCommand_;
 private:
     // Subscriber and callback func for joint command subscription
     ros::Subscriber jointCommandSubscriber_;
@@ -52,6 +52,10 @@ private:
     // Subscriber and callback func for interaction torque subscription
     ros::Subscriber interactionTorqueCommandSubscriber_;
     void interactionTorqueCommandCallback(const std_msgs::Float64MultiArray &msg);
+
+    // Subscriber and callback func prbs signal
+    ros::Subscriber prbsCommandSubscriber_;
+    void prbsCommandCallback(const geometry_msgs::Vector3 &msg);
 
     // Publisher and message for joint state publication
     ros::Publisher jointStatePublisher_;

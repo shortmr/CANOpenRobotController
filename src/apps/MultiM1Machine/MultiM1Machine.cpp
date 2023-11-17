@@ -75,28 +75,22 @@ void MultiM1Machine::init() {
     logHelper.add(multiControllerState_->controller_mode_, "mode");
 
     logHelper.add(robot_->getPosition(), "JointPositions");
+    logHelper.add(robot_->q_offset_, "JointPositionOffset"); // center of range of motion in radians
     logHelper.add(robot_->getVelocity(), "JointVelocities");
     logHelper.add(robot_->getTorque(), "JointTorques"); //use for position control system identification
     logHelper.add(robot_->getJointTor_s(), "SensorTorques");
-    logHelper.add(multiControllerState_->tau_raw, "SensorTorques_raw");
     logHelper.add(multiControllerState_->tau_filtered, "SensorTorques_filtered");
 
-    logHelper.add(multiControllerState_->q_raw, "q_raw");
-    logHelper.add(multiControllerState_->q_filtered, "q_filtered");
-
-    logHelper.add(multiControllerState_->spk_, "SpringStiffness");
-    logHelper.add(multiControllerState_->spring_tor, "SpringTorque");
     logHelper.add(multiControllerState_->tau_cmd, "CommandTorque"); // motor_torque = command_torque + compensation_torque
     logHelper.add(robot_->tau_motor, "MotorTorque"); // use this for torque control system identification
 
     logHelper.add(multiM1MachineRos_->jointTorqueCommand_, "MM1_DesiredJointTorques");
     logHelper.add(multiM1MachineRos_->jointPositionCommand_, "MM1_DesiredJointPositions");
     logHelper.add(multiM1MachineRos_->interactionTorqueCommand_, "MM1_DesiredInteractionTorques");
+    logHelper.add(multiM1MachineRos_->prbsPositionCommand_, "MM1_PRBS");
 
     logHelper.add(multiControllerState_->digitalInValue_, "digitalIn");
     logHelper.add(multiControllerState_->digitalOutValue_, "digitalOut");
-
-    logHelper.add(robot_->q_offset_, "JointPositionOffset"); // center of range of motion in radians
 
     logHelper.startLogger();
 }

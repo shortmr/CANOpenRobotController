@@ -9,6 +9,10 @@ void MultiControllerState::entry(void) {
 
     spdlog::info("Multi Controller State is entered.");
 
+    // Conversion factors between degrees and radians
+    d2r = M_PI / 180.;
+    r2d = 180. / M_PI;
+
     //Timing
     clock_gettime(CLOCK_MONOTONIC, &initTime);
     lastTime = timeval_to_sec_t(&initTime);
@@ -22,6 +26,10 @@ void MultiControllerState::entry(void) {
     m1Params = robot_->sendRobotParams();
     v_bias = -1 * m1Params.t_bias[0] * 180. / M_PI;
     rom_center = m1Params.tracking_offset[0];
+    rom_df = m1Params.tracking_df[0];
+    rom_pf = m1Params.tracking_pf[0];
+    mvc_df = m1Params.mvc_df[0];
+    mvc_pf = m1Params.mvc_pf[0];
     if (!m1Params.configFlag) {
         // Update PID and feedforward gains from yaml parameter file
         kp_ = m1Params.kp[0];
@@ -29,7 +37,6 @@ void MultiControllerState::entry(void) {
         kd_ = m1Params.kd[0];
         cut_off_ = m1Params.lowpass_cutoff_freq[0];
         ffRatio_ = m1Params.ff_ratio[0];
-        spk_ = m1Params.spk[0];
         tick_max_ = m1Params.tick_max[0];
     }
     robot_->initTorqueControl();
@@ -142,7 +149,35 @@ void MultiControllerState::during(void) {
         robot_->setJointTor(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
     }
     else if (controller_mode_ == 2) { // follow position commands
-        robot_->setJointPos(multiM1MachineRos_->jointPositionCommand_);
+        JointVec q_cmd;
+        q_cmd = multiM1MachineRos_->jointPositionCommand_;
+        if (q_cmd(0) > -0.75 && q_cmd(0) < 0.75) {
+            q_cmd(0) = r2d*q_cmd(0) + rom_center;
+        }
+        else {
+            q_cmd(0) = rom_center;
+            std::cout << "Position command out of range" << std::endl;
+        }
+        if(robot_->setJointPos(q_cmd) != SUCCESS){
+            std::cout << "Error: " << std::endl;
+        }
+        //filter interaction torque for subject-specific torque measures
+        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
+        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
+
+        if (set_offset_) {
+            n_offset += 1;
+            mvc_offset = (mvc_offset+tau_filtered);
+        }
+
+        if (set_mvc_) {
+            if (tau_filtered > mvc_df) {
+                mvc_df = tau_filtered;
+            }
+            if (tau_filtered < mvc_pf) {
+                mvc_pf = tau_filtered;
+            }
+        }
     }
     else if (controller_mode_ == 3) { // follow torque commands
         robot_->setJointTor(multiM1MachineRos_->jointTorqueCommand_);
@@ -243,7 +278,6 @@ void MultiControllerState::during(void) {
         }
     }
     else if (controller_mode_ == 7) {  // center angle (ROM) - zero velocity mode
-        // TODO: improve with position control or custom velocity control loop (monitor difference in angle)
         if (fixed_stage == 2) {
             // set fixed center angle
             JointVec q_t;
@@ -412,7 +446,9 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
 
         cut_off_ = config.lowpass_cutoff_freq;
         ffRatio_ = config.ff_ratio;
-        spk_ = config.spk;
+
+        // Hysteresis friction
+        robot_->setFrictionParams(config.f_s_hys, config.f_d_hys);
 
         if(tick_max_ != config.tick_max)
         {
@@ -455,10 +491,10 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         set_mvc_ = config.set_mvc;
         if (!set_mvc_) {
             // End measurement
-            std::cout << std::setprecision(2) << "Maximum DF torque: " << mvc_df - (mvc_offset/n_offset) << std::endl;
-            std::cout << std::setprecision(2) << "Maximum PF torque: " << mvc_pf - (mvc_offset/n_offset) << std::endl;
-            robot_->setMaxTorqueDF(mvc_df - (mvc_offset/n_offset));
-            robot_->setMaxTorquePF(abs(mvc_pf - (mvc_offset/n_offset)));
+            std::cout << std::setprecision(2) << "Maximum DF torque: " << mvc_df << std::endl;
+            std::cout << std::setprecision(2) << "Maximum PF torque: " << mvc_pf << std::endl;
+            robot_->setMaxTorqueDF(mvc_df);
+            robot_->setMaxTorquePF(abs(mvc_pf));
         } else {
             std::cout << "Begin MVC measurement... " << std::endl;
             mvc_df = -1;

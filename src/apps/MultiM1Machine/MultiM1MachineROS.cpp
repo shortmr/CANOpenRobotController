@@ -17,6 +17,7 @@ void MultiM1MachineROS::initialize() {
 
     jointCommandSubscriber_ = nodeHandle_->subscribe("joint_commands", 1, &MultiM1MachineROS::jointCommandCallback, this);
     interactionTorqueCommandSubscriber_ = nodeHandle_->subscribe("interaction_effort_commands", 1, &MultiM1MachineROS::interactionTorqueCommandCallback, this);
+    prbsCommandSubscriber_ = nodeHandle_->subscribe("prbs_commands", 1, &MultiM1MachineROS::prbsCommandCallback, this);
     jointStatePublisher_ = nodeHandle_->advertise<sensor_msgs::JointState>("joint_states", 10);
     interactionWrenchPublisher_ = nodeHandle_->advertise<geometry_msgs::WrenchStamped>("interaction_wrench", 10);
     interactionScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("interaction_mvc", 10);
@@ -27,6 +28,7 @@ void MultiM1MachineROS::initialize() {
     jointVelocityCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointTorqueCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     interactionTorqueCommand_ = Eigen::VectorXd(M1_NUM_INTERACTION);
+    prbsPositionCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
 
     calibrateForceSensorsService_ = nodeHandle_->advertiseService("calibrate_force_sensors", &MultiM1MachineROS::calibrateForceSensorsCallback, this);
     setTrackingOffsetService_ = nodeHandle_->advertiseService("set_tracking_offset", &MultiM1MachineROS::setTrackingOffsetCallback, this);
@@ -152,6 +154,13 @@ void MultiM1MachineROS::interactionTorqueCommandCallback(const std_msgs::Float64
 
     for(int i=0; i<M1_NUM_JOINTS; i++){
         interactionTorqueCommand_[i] = msg.data[i];
+    }
+}
+
+void MultiM1MachineROS::prbsCommandCallback(const geometry_msgs::Vector3 &msg) {
+
+    for(int i=0; i<M1_NUM_JOINTS; i++){
+        prbsPositionCommand_[i] = msg.y;
     }
 }
 

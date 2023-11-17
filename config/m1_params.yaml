@@ -20,8 +20,11 @@ m1_x:
   lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass filter for interaction torque, angle and velocity [Hz]
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
-  spk: [0] # spring stiffness (not implemented) [Nm/rad]
-  tracking_offset: [45.0] # center of range of motion [deg]
+  tracking_offset: [45] # center of range of motion [deg]
+  tracking_df: [0] # max range of motion angle [deg]
+  tracking_pf: [90] # min range of motion angle [deg]
+  mvc_df: [-1] # MVCT in dorsiflexion [Nm]
+  mvc_pf: [1] # MVCT in plantarflexion [Nm]
 
 m1_y:
   id: ['ankleHRCEML']
@@ -43,8 +46,11 @@ m1_y:
   lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
-  spk: [0] # spring stiffness (not implemented) [Nm/rad]
-  tracking_offset: [45.0] # center of range of motion [deg]
+  tracking_offset: [62.82] # center of range of motion [deg]
+  tracking_df: [74.66] # max range of motion angle [deg]
+  tracking_pf: [59.66] # min range of motion angle [deg]
+  mvc_df: [-1] # MVCT in dorsiflexion [Nm]
+  mvc_pf: [1] # MVCT in plantarflexion [Nm]
 
 m1_a:
   id: ['ankleSPES']
@@ -66,28 +72,34 @@ m1_a:
   lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
-  spk: [0] # spring stiffness (not implemented) [Nm/rad]
-  tracking_offset: [45.0] # center of range of motion [deg]
+  tracking_offset: [45] # center of range of motion [deg]
+  tracking_df: [0] # max range of motion angle [deg]
+  tracking_pf: [90] # min range of motion angle [deg]
+  mvc_df: [-1] # MVCT in dorsiflexion [Nm]
+  mvc_pf: [1] # MVCT in plantarflexion [Nm]
 
 #m1_y:
 #  id: ['wristHRCEML']
 #  wrist: true # flag for wrist device
-#  c0: [1.939] # coulomb friction constant of joint [Nm]
-#  c1: [2.0623] # viscous friction constant of joint [Nm/s]
+#  c0: [5.25] # coulomb friction constant of joint [Nm] 5
+#  c1: [1.5] # viscous friction constant of joint [Nm/s] 1.5
 #  c2: [0] # friction square root term
 #  i_sin: [0.7] # inertia for sine term
 #  i_cos: [0.0] # inertia for cosine term
 #  t_bias: [-1.14] # theta bias term and angle from vertical position to lower joint limit [rad]
 #  force_sensor_scale_factor: [0.074] # scale factor for force calibration
 #  force_sensor_offset: [1506] # calibration offset for force sensor
-#  ff_ratio: [0.67] # scale factor for feedforward compensation
-#  kp: [1.44] # proportional term of PID controller
+#  ff_ratio: [0.75] # scale factor for feedforward compensation
+#  kp: [2.28] # proportional term of PID controller
 #  ki: [0.17] # integral term of PID controller
-#  kd: [0.01] # derivative term of PID controller
+#  kd: [0.152] # derivative term of PID controller
 #  vel_thresh: [6.0] # velocity threshold for using dynamic friction compensation [deg/s]
 #  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
 #  lowpass_cutoff_freq: [30.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
 #  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
 #  tick_max: [60.0] # counter for integral term reset [s]
-#  spk: [0] # spring stiffness (not implemented) [Nm/rad]
 #  tracking_offset: [72.48] # center of range of motion [deg]
+#  tracking_df: [0] # max range of motion angle [deg]
+#  tracking_pf: [90] # min range of motion angle [deg]
+#  mvc_df: [-1] # MVCT in dorsiflexion [Nm]
+#  mvc_pf: [1] # MVCT in plantarflexion [Nm]

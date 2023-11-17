@@ -64,8 +64,11 @@ struct RobotParameters {
     Eigen::VectorXd lowpass_cutoff_freq; // cutoff frequency for interaction torque, position and velocity filter [Hz]
     Eigen::VectorXd motor_torque_cutoff_freq; // cutoff frequency for motor torque command filter [Hz]
     Eigen::VectorXd tick_max; // counter for integral term reset [s]
-    Eigen::VectorXd spk; // spring stiffness (not implemented) [Nm/rad]
     Eigen::VectorXd tracking_offset; // center of range of motion [deg]
+    Eigen::VectorXd tracking_df; // range of motion [deg]
+    Eigen::VectorXd tracking_pf; // range of motion [deg]
+    Eigen::VectorXd mvc_df; // maximum dorsiflexion torque [Nm]
+    Eigen::VectorXd mvc_pf; // maximum plantarflexion torque [Nm]
 };
 
 /**
@@ -121,6 +124,8 @@ class RobotM1 : public Robot {
     std::string robotName_;
 
     double velThresh_, torqueThresh_;
+
+    double f_s_upper_, f_s_lower_, f_d_up_, f_d_down_, f_s_theta1_, f_s_theta2_;
 
     double filteredMotorTorqueCommand_, previousFilteredTorqueCommand_;
 
@@ -293,6 +298,7 @@ public:
 
     void setControlFreq(double controlFreq);
     void setVelThresh(double velThresh);
+    void setFrictionParams(double f_s, double f_d);
     void setTorqueThresh(double torqueThresh);
     void setMotorTorqueCutOff(double cutOff);
     void setMaxTorqueDF(double tau_filt);

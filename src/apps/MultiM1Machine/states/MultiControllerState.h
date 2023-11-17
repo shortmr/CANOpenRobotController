@@ -78,12 +78,14 @@ public:
     bool start; // flag for initial cycle of system identification
     double v_bias; // vertical bias of robot
 
+    double r2d;
+    double d2r;
+
     // Transparency parameters
     double kp_;
     double ki_;
     double kd_;
     double tick_max_;
-    double spk_;
     double ffRatio_;
     double cut_off_;
     int controller_mode_;

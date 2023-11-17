@@ -48,8 +48,11 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     m1Params.lowpass_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.motor_torque_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.tick_max = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
-    m1Params.spk = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.tracking_offset = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.tracking_df = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.tracking_pf = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.mvc_df = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.mvc_pf = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
 
     initializeRobotParams(robotName_);
 
@@ -136,8 +139,9 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
        params[robotName]["vel_thresh"].size() != M1_NUM_JOINTS || params[robotName]["tau_thresh"].size() != M1_NUM_JOINTS ||
        params[robotName]["lowpass_cutoff_freq"].size() != M1_NUM_JOINTS ||
        params[robotName]["motor_torque_cutoff_freq"].size() != M1_NUM_JOINTS ||
-       params[robotName]["tick_max"].size() != M1_NUM_JOINTS || params[robotName]["spk"].size() != M1_NUM_JOINTS ||
-       params[robotName]["tracking_offset"].size() != M1_NUM_JOINTS) {
+       params[robotName]["tick_max"].size() != M1_NUM_JOINTS || params[robotName]["tracking_offset"].size() != M1_NUM_JOINTS ||
+       params[robotName]["tracking_df"].size() != M1_NUM_JOINTS || params[robotName]["tracking_pf"].size() != M1_NUM_JOINTS ||
+       params[robotName]["mvc_df"].size() != M1_NUM_JOINTS || params[robotName]["mvc_pf"].size() != M1_NUM_JOINTS) {
 
         spdlog::error("Parameter sizes are not consistent");
         spdlog::error("All parameters are zero !");
@@ -166,8 +170,11 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         m1Params.lowpass_cutoff_freq[i] = params[robotName]["lowpass_cutoff_freq"][i].as<double>();
         m1Params.motor_torque_cutoff_freq[i] = params[robotName]["motor_torque_cutoff_freq"][i].as<double>();
         m1Params.tick_max[i] = params[robotName]["tick_max"][i].as<double>();
-        m1Params.spk[i] = params[robotName]["spk"][i].as<double>();
         m1Params.tracking_offset[i] = params[robotName]["tracking_offset"][i].as<double>();
+        m1Params.tracking_df[i] = params[robotName]["tracking_df"][i].as<double>();
+        m1Params.tracking_pf[i] = params[robotName]["tracking_pf"][i].as<double>();
+        m1Params.mvc_df[i] = params[robotName]["mvc_df"][i].as<double>();
+        m1Params.mvc_pf[i] = params[robotName]["mvc_pf"][i].as<double>();
     }
 
     // Set static parameter values
@@ -182,6 +189,10 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     f_d_ = m1Params.c1[0];
     c2_ = m1Params.c2[0];
     q_offset_ = m1Params.tracking_offset[0]*d2r; // radians
+    q_df_ = m1Params.tracking_df[0]*d2r; // radians
+    q_pf_ = m1Params.tracking_pf[0]*d2r; // radians
+    tau_df_ = m1Params.mvc_df[0]; // Nm
+    tau_pf_ = m1Params.mvc_pf[0]; // Nm
     if (!m1Params.configFlag) {
         velThresh_ = m1Params.vel_thresh[0] * d2r;
         torqueThresh_ = m1Params.tau_thresh[0];
@@ -189,13 +200,19 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     }
 
     tau_offset_ = 0; // Nm
-    tau_df_ = 1; // Nm
-    tau_pf_ = 1; // Nm
-    q_df_ = 0; // radians
-    q_pf_ = 0; // radians
+//    tau_df_ = 1; // Nm
+//    tau_pf_ = 1; // Nm
+//    q_df_ = 0; // radians
+//    q_pf_ = 0; // radians
     stim_df_ = 0;
     stim_pf_ = 0;
     stim_calib_ = false;
+    f_s_upper_ = 0;
+    f_s_lower_ = 0;
+    f_d_up_ = 0;
+    f_d_down_ = 0;
+    f_s_theta1_ = 0;
+    f_s_theta2_ = 0;
     return true;
 }
 
@@ -252,7 +269,7 @@ void RobotM1::updateRobot() {
         tau_s(i) = m1ForceSensor[i].getForce();
 //        updateEstimatedAcceleration(); // based on velocity measurements
 
-        //std::cout << std::setprecision(4) << tau_s(i) << std::endl;
+//        std::cout << std::setprecision(4) << tau_s(i) << std::endl;
 
         // compensate inertia for torque sensor measurement (comment this line when zeroing force sensor)
         tau_s(i) =  tau_s(i) + i_sin_*sin(q(i)+t_bias_) + i_cos_*cos(q(i)+t_bias_);
@@ -550,13 +567,13 @@ setMovementReturnCode_t RobotM1::setJointVel(JointVec vel_d) {
 }
 
 setMovementReturnCode_t RobotM1::setJointTor(JointVec tor_d) {
-    // filter torque commands with previous command
-    tau_motor(0) = (tor_d(0)+tau_motor(0)*2.0)/3.0;
+    tau_motor(0) = tor_d(0); //(tor_d(0)+tau_motor(0)*2.0)/3.0; // filter torque commands with previous command
     return applyTorque(tor_d);
 }
 
 setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double ffRatio) {
     double tor_ff;
+    double tor_friction;
     double vel = dq_filt(0); //dq(0);
     double pos = q(0); //q(0)
 
@@ -579,7 +596,7 @@ setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double ffRatio) 
     //    tor_ff = f_s_*sign(vel) + f_d_*vel + i_sin_*sin(q(0)+t_bias_) + i_cos_*cos(q(0)+t_bias_) + c2_*sqrt(abs(vel))*sign(vel);
     //}
 
-    // check velocity to apply dynamic friction term
+    // original implementation
     if(abs(vel)<velThresh_)
     {
         double slowCoef = f_s_/velThresh_; // linear region for static friction
@@ -588,6 +605,40 @@ setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double ffRatio) 
         tor_ff = f_s_*sign(vel) + f_d_*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_) + c2_*sqrt(abs(vel))*sign(vel);
     }
     tor(0) = tor(0) + tor_ff*ffRatio;
+
+//    // original implementation with variable f_s_ and f_d_
+//    if(abs(vel)<velThresh_)
+//    {
+//        double slowCoef = f_s_upper_/velThresh_; // linear region for static friction
+//        tor_ff = slowCoef*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
+//    } else {
+//        tor_ff = f_s_upper_*sign(vel) + f_d_up_*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_) + c2_*sqrt(abs(vel))*sign(vel);
+//    }
+//    tor(0) = tor(0) + tor_ff*ffRatio;
+
+//    // lorenzo hysteresis
+//    if (vel >= 0) {
+//        f_s_theta2_ = 1;
+//    }
+//    else {
+//        f_s_theta2_ = 0;
+//    }
+//    if(abs(vel)<velThresh_) {
+//        double f_s_pos = ((f_s_upper_ - f_s_lower_) / velThresh_) * vel + f_s_lower_;
+//        double f_s_neg = ((f_s_upper_ - f_s_lower_) / velThresh_) * vel + f_s_upper_;
+//        double f_s_up = f_s_upper_ * f_s_theta2_ + f_s_neg * (1 - f_s_theta2_);
+//        double f_s_down = f_s_pos * f_s_theta2_ + f_s_lower_ * (1 - f_s_theta2_);
+//        tor_friction = f_s_up * (1 - f_s_theta1_) + f_s_down * f_s_theta1_;
+//
+//        tor_ff = tor_friction + i_sin_ * sin(pos + t_bias_) + i_cos_ * cos(pos + t_bias_);
+//    } else {
+//        f_s_theta1_ = f_s_theta2_;
+//        double f_d_up = f_d_up_ * (vel - velThresh_) + f_s_upper_;
+//        double f_d_down = f_d_down_ * (vel + velThresh_) + f_s_lower_;
+//        tor_friction = f_d_up * f_s_theta2_ + f_d_down * (1 - f_s_theta2_);
+//    }
+//    tor_ff = tor_friction + i_sin_ * sin(pos + t_bias_) + i_cos_ * cos(pos + t_bias_);
+//    tor(0) = tor(0) + tor_ff*ffRatio;
 
     // filter command signal
     double alpha = (2*M_PI*motorTorqueCutOff_/controlFreq_)/(2*M_PI*motorTorqueCutOff_/controlFreq_+1);
@@ -612,6 +663,13 @@ void RobotM1::setVelThresh(double velThresh) {
     if (m1Params.configFlag) {
         velThresh_ = velThresh * d2r;
     }
+}
+
+void RobotM1::setFrictionParams(double f_s, double f_d) {
+    f_s_upper_ = f_s;
+    f_s_lower_ = -1*f_s; // flip sign of lower static friction
+    f_d_up_ = f_d;
+    f_d_down_ = f_d;
 }
 
 void RobotM1::setTorqueThresh(double torqueThresh) {

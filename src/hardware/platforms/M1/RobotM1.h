@@ -69,6 +69,7 @@ struct RobotParameters {
     Eigen::VectorXd tracking_pf; // range of motion [deg]
     Eigen::VectorXd mvc_df; // maximum dorsiflexion torque [Nm]
     Eigen::VectorXd mvc_pf; // maximum plantarflexion torque [Nm]
+    Eigen::VectorXi muscle_count; // number of EMG channels
 };
 
 /**

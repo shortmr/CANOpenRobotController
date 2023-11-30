@@ -88,6 +88,7 @@ void MultiM1Machine::init() {
     logHelper.add(multiM1MachineRos_->jointPositionCommand_, "MM1_DesiredJointPositions");
     logHelper.add(multiM1MachineRos_->interactionTorqueCommand_, "MM1_DesiredInteractionTorques");
     logHelper.add(multiM1MachineRos_->prbsPositionCommand_, "MM1_PRBS");
+    logHelper.add(multiM1MachineRos_->emgData_, "MM1_EMG");
 
     logHelper.add(multiControllerState_->digitalInValue_, "digitalIn");
     logHelper.add(multiControllerState_->digitalOutValue_, "digitalOut");

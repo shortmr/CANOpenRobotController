@@ -53,6 +53,7 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     m1Params.tracking_pf = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.mvc_df = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.mvc_pf = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.muscle_count = Eigen::VectorXi::Zero(M1_NUM_JOINTS);
 
     initializeRobotParams(robotName_);
 
@@ -141,7 +142,8 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
        params[robotName]["motor_torque_cutoff_freq"].size() != M1_NUM_JOINTS ||
        params[robotName]["tick_max"].size() != M1_NUM_JOINTS || params[robotName]["tracking_offset"].size() != M1_NUM_JOINTS ||
        params[robotName]["tracking_df"].size() != M1_NUM_JOINTS || params[robotName]["tracking_pf"].size() != M1_NUM_JOINTS ||
-       params[robotName]["mvc_df"].size() != M1_NUM_JOINTS || params[robotName]["mvc_pf"].size() != M1_NUM_JOINTS) {
+       params[robotName]["mvc_df"].size() != M1_NUM_JOINTS || params[robotName]["mvc_pf"].size() != M1_NUM_JOINTS ||
+       params[robotName]["muscle_count"].size() != M1_NUM_JOINTS) {
 
         spdlog::error("Parameter sizes are not consistent");
         spdlog::error("All parameters are zero !");
@@ -175,6 +177,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         m1Params.tracking_pf[i] = params[robotName]["tracking_pf"][i].as<double>();
         m1Params.mvc_df[i] = params[robotName]["mvc_df"][i].as<double>();
         m1Params.mvc_pf[i] = params[robotName]["mvc_pf"][i].as<double>();
+        m1Params.muscle_count[i] = params[robotName]["muscle_count"][i].as<int>();
     }
 
     // Set static parameter values

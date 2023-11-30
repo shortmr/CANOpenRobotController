@@ -25,6 +25,7 @@ m1_x:
   tracking_pf: [90] # min range of motion angle [deg]
   mvc_df: [-1] # MVCT in dorsiflexion [Nm]
   mvc_pf: [1] # MVCT in plantarflexion [Nm]
+  muscle_count: [4] # number of muscles for EMG recordings
 
 m1_y:
   id: ['ankleHRCEML']
@@ -51,6 +52,7 @@ m1_y:
   tracking_pf: [59.66] # min range of motion angle [deg]
   mvc_df: [-1] # MVCT in dorsiflexion [Nm]
   mvc_pf: [1] # MVCT in plantarflexion [Nm]
+  muscle_count: [4] # number of muscles for EMG recordings
 
 m1_a:
   id: ['ankleSPES']
@@ -77,6 +79,7 @@ m1_a:
   tracking_pf: [90] # min range of motion angle [deg]
   mvc_df: [-1] # MVCT in dorsiflexion [Nm]
   mvc_pf: [1] # MVCT in plantarflexion [Nm]
+  muscle_count: [4] # number of muscles for EMG recordings
 
 #m1_y:
 #  id: ['wristHRCEML']
@@ -103,3 +106,4 @@ m1_a:
 #  tracking_pf: [90] # min range of motion angle [deg]
 #  mvc_df: [-1] # MVCT in dorsiflexion [Nm]
 #  mvc_pf: [1] # MVCT in plantarflexion [Nm]
+#  muscle_count: [2] # number of muscles for EMG recordings

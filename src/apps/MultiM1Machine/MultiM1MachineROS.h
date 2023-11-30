@@ -44,6 +44,7 @@ public:
     Eigen::VectorXd jointPositionCommand_, jointVelocityCommand_, jointTorqueCommand_;
     Eigen::VectorXd interactionTorqueCommand_;
     Eigen::VectorXd prbsPositionCommand_;
+    Eigen::VectorXd emgData_;
 private:
     // Subscriber and callback func for joint command subscription
     ros::Subscriber jointCommandSubscriber_;
@@ -56,6 +57,10 @@ private:
     // Subscriber and callback func prbs signal
     ros::Subscriber prbsCommandSubscriber_;
     void prbsCommandCallback(const geometry_msgs::Vector3 &msg);
+
+    // Subscriber and callback func emg data
+    ros::Subscriber emgDataSubscriber_;
+    void emgDataCallback(const std_msgs::Float64MultiArray &msg);
 
     // Publisher and message for joint state publication
     ros::Publisher jointStatePublisher_;
@@ -89,6 +94,10 @@ private:
 
     // Conversion factors between degrees and radians
     double d2r, r2d;
+
+    // Parameters for robot name and muscle count
+    RobotParameters m1Params;
+    int muscleCount_;
 };
 
 #endif  //SRC_MultiM1MachineROS_H

@@ -268,6 +268,7 @@ void MultiControllerState::during(void) {
                 std::cout << "--> out of ROM " << std::endl;
                 q_t(0) = rom_center;
             }
+            std::cout << "Going to center position: " << q_t << std::endl;
             if(robot_->setJointPos(q_t) != SUCCESS){
                 std::cout << "Error: " << std::endl;
             }
@@ -303,6 +304,8 @@ void MultiControllerState::during(void) {
             if (tau_filtered < mvc_pf) {
                 mvc_pf = tau_filtered;
             }
+            std::cout << "Maximum dorsi-flection: " << mvc_df << " max plantar "<< mvc_pf << std::endl;
+
         }
     }
     else if(controller_mode_ == 8) {  // system identification - torque mode

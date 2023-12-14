@@ -43,7 +43,7 @@ void MultiM1MachineROS::update() {
     publishJointStates();
     publishInteractionForces();
     publishJointScaled(); // sPES-stroke validation
-    publishJointTracking(); // HRCEML validation (m1_cloud_game)
+//    publishJointTracking(); // HRCEML validation (m1_cloud_game)
 }
 
 void MultiM1MachineROS::publishJointStates() {

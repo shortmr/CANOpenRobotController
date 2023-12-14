@@ -3,10 +3,12 @@
 #initialisation of CAN interfaces on BB
 
 echo "Enabling CAN0"
+sudo ip link set can0 down
 sudo ip link set can0 up type can bitrate 1000000
 sudo ifconfig can0 up
 
 echo "Enabling CAN1"
+sudo ip link set can1 down
 sudo ip link set can1 up type can bitrate 1000000
 sudo ifconfig can1 up
 

@@ -58,7 +58,6 @@
   <build_depend>controller_manager_msgs</build_depend>
   <build_depend>cob_gazebo_ros_control</build_depend>
   <build_depend>x2_description</build_depend>
-  <build_depend>multi_robot_interaction</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>rosserial_python</build_depend>
   <build_depend>message_generation</build_depend>
@@ -71,7 +70,6 @@
   <build_export_depend>controller_manager_msgs</build_export_depend>
   <build_export_depend>cob_gazebo_ros_control</build_export_depend>
   <build_export_depend>x2_description</build_export_depend>
-  <build_export_depend>multi_robot_interaction</build_export_depend>
   <build_export_depend>dynamic_reconfigure</build_export_depend>
   <build_export_depend>rosserial_python</build_export_depend>
   <exec_depend>roscpp</exec_depend>
@@ -84,7 +82,6 @@
   <exec_depend>cob_gazebo_ros_control</exec_depend>
   <exec_depend>x2_description</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
-  <exec_depend>multi_robot_interaction</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
   <exec_depend>rosserial_python</exec_depend>
   <exec_depend>message_runtime</exec_depend>

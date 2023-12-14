@@ -112,7 +112,6 @@ if(USE_ROS)
 				std_srvs
 				sensor_msgs
 				geometry_msgs
-				multi_robot_interaction
 				dynamic_reconfigure
 				rosserial_python
 				message_generation
@@ -159,7 +158,6 @@ if(USE_ROS)
 					std_srvs
 					sensor_msgs
 					geometry_msgs
-					multi_robot_interaction
 					dynamic_reconfigure
 					rosserial_python
 					message_runtime

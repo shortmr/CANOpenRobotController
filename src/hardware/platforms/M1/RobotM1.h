@@ -46,7 +46,8 @@ typedef Eigen::Matrix<double, nJoints, nEndEff> JacMtx;
 
 struct RobotParameters {
     bool configFlag; // flag for using dynamic reconfigure
-    bool wristFlag; // flag for wrist or ankle device
+    bool leftFlag;
+    bool wristFlag;
     Eigen::VectorXd c0; // coulomb friction const of joint [Nm]
     Eigen::VectorXd c1; // viscous fric constant of joint [Nm/s]
     Eigen::VectorXd c2; // friction square root term
@@ -142,6 +143,12 @@ class RobotM1 : public Robot {
 
     short int sign(double val);
 
+    double tau_offset_, tau_df_, tau_pf_;
+    double q_offset_, q_df_, q_pf_;
+
+    Eigen::VectorXd q_lim_;
+    Eigen::VectorXd tau_lim_;
+
 public:
     /**
       * \brief Default <code>RobotM1</code> constructor.
@@ -156,10 +163,8 @@ public:
     FourierForceSensor *m1ForceSensor;
     RobotState status;
     int mode;
-    double tau_offset_, tau_df_, tau_pf_;
     double stim_df_, stim_pf_;
     bool stim_calib_;
-    double q_offset_, q_df_, q_pf_;
 
     JointVec tau_spring;
 
@@ -297,6 +302,8 @@ public:
 
     RobotParameters sendRobotParams();
 
+    double limb_sign_; // left or right limb
+
     void setControlFreq(double controlFreq);
     void setVelThresh(double velThresh);
     void setFrictionParams(double f_s, double f_d);
@@ -310,7 +317,7 @@ public:
     void setStimPF(double stim_amp);
     void setStimCalibrate(bool stim_calib);
     void setTorqueOffset(double tau_filt);
-    void setAngleOffset(double q_offset);
+    void setPositionOffset(double q_offset);
 
     void printStatus();
     void printJointStatus();
@@ -323,9 +330,18 @@ public:
     JointVec getJointPos();
     JointVec getJointVel();
     JointVec getJointTor();
+
     JointVec& getJointTor_s();
     JointVec& getJointTor_s_filt();
     JointVec& getJointTor_cmd();
+    JointVec& getPosition();
+    JointVec& getVelocity();
+    JointVec& getTorque();
+
+    double& getPositionOffset();
+    double& getTorqueOffset();
+    Eigen::VectorXd& getPositionLimits();
+    Eigen::VectorXd& getTorqueLimits();
 
     double filter_q(double alpha_q);
     double filter_dq(double alpha_dq);

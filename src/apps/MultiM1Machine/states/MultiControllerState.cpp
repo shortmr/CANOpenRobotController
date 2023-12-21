@@ -45,7 +45,7 @@ void MultiControllerState::entry(void) {
     //robot_->applyCalibration();
     //robot_->calibrateForceSensors();
 
-    // Transparency vectors
+    // Interaction torque control vectors
     q = Eigen::VectorXd::Zero(1);
     dq = Eigen::VectorXd::Zero(1);
     tau = Eigen::VectorXd::Zero(1);
@@ -478,7 +478,7 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
             std::cout << std::setprecision(2) << "Center angle: " << rom_center << std::endl;
             robot_->setMaxAngleDF(rom_df);
             robot_->setMaxAnglePF(rom_pf);
-            robot_->setAngleOffset(rom_center);
+            robot_->setPositionOffset(rom_center);
         } else {
             std::cout << "Begin ROM measurement... " << std::endl;
             rom_df = 0;

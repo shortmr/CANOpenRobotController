@@ -28,8 +28,12 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     dq_filt_pre(0) = 0;
     tau_s_filt_pre(0) = 0;
 
+    q_lim_ = Eigen::VectorXd::Zero(2);
+    tau_lim_ = Eigen::VectorXd::Zero(2);
+
     // Initializing the yaml parameters to zero
     m1Params.configFlag = true;
+    m1Params.leftFlag = false;
     m1Params.wristFlag = false;
     m1Params.c0 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.c1 = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -153,6 +157,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
 
     // getting the parameters from the yaml file
     m1Params.configFlag = params["config_flag"].as<bool>();
+    m1Params.leftFlag = params[robotName]["left"].as<bool>();
     m1Params.wristFlag = params[robotName]["wrist"].as<bool>();
     for(int i = 0; i<M1_NUM_JOINTS; i++){
         m1Params.c0[i] = params[robotName]["c0"][i].as<double>();
@@ -185,6 +190,14 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     if (m1Params.wristFlag) {
         t_bias_offset_ = 90*d2r;
     }
+
+    if (m1Params.leftFlag) {
+        limb_sign_ = -1;
+    }
+    else {
+        limb_sign_ = 1;
+    }
+
     i_sin_ = m1Params.i_sin[0];
     i_cos_ = m1Params.i_cos[0];
     t_bias_ = m1Params.t_bias[0]+t_bias_offset_;
@@ -192,10 +205,10 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     f_d_ = m1Params.c1[0];
     c2_ = m1Params.c2[0];
     q_offset_ = m1Params.tracking_offset[0]*d2r; // radians
-    q_df_ = m1Params.tracking_df[0]*d2r; // radians
-    q_pf_ = m1Params.tracking_pf[0]*d2r; // radians
-    tau_df_ = m1Params.mvc_df[0]; // Nm
-    tau_pf_ = m1Params.mvc_pf[0]; // Nm
+    q_lim_[0] = m1Params.tracking_df[0]*d2r; // radians
+    q_lim_[1] = m1Params.tracking_pf[0]*d2r; // radians
+    tau_lim_[0] = m1Params.mvc_df[0]; // Nm
+    tau_lim_[1] = m1Params.mvc_pf[0]; // Nm
     if (!m1Params.configFlag) {
         velThresh_ = m1Params.vel_thresh[0] * d2r;
         torqueThresh_ = m1Params.tau_thresh[0];
@@ -203,10 +216,6 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     }
 
     tau_offset_ = 0; // Nm
-//    tau_df_ = 1; // Nm
-//    tau_pf_ = 1; // Nm
-//    q_df_ = 0; // radians
-//    q_pf_ = 0; // radians
     stim_df_ = 0;
     stim_pf_ = 0;
     stim_calib_ = false;
@@ -239,14 +248,6 @@ void RobotM1::applyCalibration() {
 }
 
 bool RobotM1::calibrateForceSensors() {
-    //if(m1ForceSensor->calibrate()){
-    //    spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing of force sensors are successfully completed.");
-    //    return true;
-    //} else{
-    //    spdlog::debug("[RobotM1::calibrateForceSensors]: Zeroing failed.");
-    //    return false;
-    //}
-
     if(m1ForceSensor->sendInternalCalibrateSDOMessage()){
         spdlog::info("[RobotM1::calibrateForceSensors]: Force sensor zeroing completed. Sensor value is {}", m1ForceSensor->getSensorValue());
         return true;
@@ -265,16 +266,15 @@ void RobotM1::updateRobot() {
     // down the status word into a vector of booleans and have descriptive indices to
     // be able to clearly access the bits in a meaningful and readable way. -TMH
 
+    // updateEstimatedAcceleration(); // based on velocity measurements
+
     for(uint i = 0; i < nJoints; i++) {
-        q(i) = ((JointM1 *)joints[i])->getPosition();
-        dq(i) = ((JointM1 *)joints[i])->getVelocity();
-        tau(i) = ((JointM1 *)joints[i])->getTorque();
-        tau_s(i) = m1ForceSensor[i].getForce();
-//        updateEstimatedAcceleration(); // based on velocity measurements
+        q(i) = limb_sign_*((JointM1 *)joints[i])->getPosition();
+        dq(i) = limb_sign_*((JointM1 *)joints[i])->getVelocity();
+        tau(i) = limb_sign_*((JointM1 *)joints[i])->getTorque();
+        tau_s(i) = limb_sign_*m1ForceSensor[i].getForce();
 
-//        std::cout << std::setprecision(4) << tau_s(i) << std::endl;
-
-        // compensate inertia for torque sensor measurement (comment this line when zeroing force sensor)
+        // compensate weight for torque sensor measurement
         tau_s(i) =  tau_s(i) + i_sin_*sin(q(i)+t_bias_) + i_cos_*cos(q(i)+t_bias_);
     }
     if (safetyCheck() != SUCCESS) {
@@ -515,6 +515,18 @@ JointVec RobotM1::getJointTor() {
     return tau;
 }
 
+JointVec & RobotM1::getPosition() {
+    return q;
+}
+
+JointVec & RobotM1::getVelocity() {
+    return dq;
+}
+
+JointVec & RobotM1::getTorque() {
+    return tau;
+}
+
 double RobotM1::filter_q(double alpha_q){
     q_filt(0) = alpha_q*q(0)+(1-alpha_q)*q_filt_pre(0);
     q_filt_pre(0) = q_filt(0);
@@ -562,15 +574,27 @@ JointVec& RobotM1::getJointTor_s_filt() {
 //}
 
 setMovementReturnCode_t RobotM1::setJointPos(JointVec pos_d) {
+    // flip sign and return if device is for left limb
+    for(int i = 0; i<M1_NUM_JOINTS; i++) {
+        pos_d(i) = limb_sign_*pos_d(i);
+    }
     return applyPosition(pos_d*d2r);
 }
 
 setMovementReturnCode_t RobotM1::setJointVel(JointVec vel_d) {
+    // flip sign and return if device is for left limb
+    for(int i = 0; i<M1_NUM_JOINTS; i++) {
+        vel_d(i) = limb_sign_*vel_d(i);
+    }
     return applyVelocity(vel_d*d2r);
 }
 
 setMovementReturnCode_t RobotM1::setJointTor(JointVec tor_d) {
-    tau_motor(0) = tor_d(0); //(tor_d(0)+tau_motor(0)*2.0)/3.0; // filter torque commands with previous command
+    // flip sign and return if device is for left limb
+    for(int i = 0; i<M1_NUM_JOINTS; i++) {
+        tor_d(i) = limb_sign_*tor_d(i);
+        tau_motor(i) = tor_d(i);
+    }
     return applyTorque(tor_d);
 }
 
@@ -688,11 +712,11 @@ void RobotM1::setMotorTorqueCutOff(double cutOff) {
 }
 
 void RobotM1::setMaxTorqueDF(double tau_filt) {
-    tau_df_ = tau_filt;
+    tau_lim_[0] = tau_filt;
 }
 
 void RobotM1::setMaxTorquePF(double tau_filt) {
-    tau_pf_ = tau_filt;
+    tau_lim_[1] = tau_filt;
 }
 
 void RobotM1::setStimDF(double stim_amp) {
@@ -711,16 +735,32 @@ void RobotM1::setTorqueOffset(double tau_filt) {
     tau_offset_ = tau_filt;
 }
 
-void RobotM1::setAngleOffset(double q_offset) {
+void RobotM1::setPositionOffset(double q_offset) {
     q_offset_ = q_offset*d2r; // center angle in radians
 }
 
 void RobotM1::setMaxAngleDF(double q_current) {
-    q_df_ = q_current*d2r; // maximum dorsiflexion angle in radians
+    q_lim_[0] = q_current*d2r; // maximum dorsiflexion angle in radians
 }
 
 void RobotM1::setMaxAnglePF(double q_current) {
-    q_pf_ = q_current*d2r; // maximum plantarflexion angle in radians
+    q_lim_[1] = q_current*d2r; // maximum plantarflexion angle in radians
+}
+
+double & RobotM1::getPositionOffset() {
+    return q_offset_;
+}
+
+double & RobotM1::getTorqueOffset() {
+    return tau_offset_;
+}
+
+Eigen::VectorXd & RobotM1::getPositionLimits() {
+    return q_lim_;
+}
+
+Eigen::VectorXd & RobotM1::getTorqueLimits() {
+    return tau_lim_;
 }
 
 short RobotM1::sign(double val) { return (val > 0) ? 1 : ((val < 0) ? -1 : 0); }

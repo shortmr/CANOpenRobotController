@@ -23,13 +23,15 @@ void MultiM1MachineROS::initialize() {
     interactionWrenchPublisher_ = nodeHandle_->advertise<geometry_msgs::WrenchStamped>("interaction_wrench", 10);
     interactionScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("interaction_mvc", 10);
     jointScaledPublisher_ = nodeHandle_->advertise<CORC::JointScaled32>("joint_scaled", 10);
-    jointTrackingPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("joint_tracking", 10);
 
     jointPositionCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointVelocityCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointTorqueCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     interactionTorqueCommand_ = Eigen::VectorXd(M1_NUM_INTERACTION);
     prbsPositionCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+
+    jointPositionScaled_ = Eigen::VectorXd::Zero(1);
+    jointTorqueScaled_ = Eigen::VectorXd::Zero(1);
 
     m1Params = robot_->sendRobotParams();
     muscleCount_ = m1Params.muscle_count[0];
@@ -42,15 +44,13 @@ void MultiM1MachineROS::initialize() {
 void MultiM1MachineROS::update() {
     publishJointStates();
     publishInteractionForces();
-    publishJointScaled(); // sPES-stroke validation
-//    publishJointTracking(); // HRCEML validation (m1_cloud_game)
+    publishJointScaled();
 }
 
 void MultiM1MachineROS::publishJointStates() {
     Eigen::VectorXd jointPositions = robot_->getPosition();
     Eigen::VectorXd jointVelocities = robot_->getVelocity();
     Eigen::VectorXd jointTorques = robot_->getTorque();
-    double q_offset = robot_->q_offset_;
 
     jointStateMsg_.header.stamp = ros::Time::now()-ros::Duration(5);
     jointStateMsg_.name.resize(M1_NUM_JOINTS);
@@ -58,7 +58,7 @@ void MultiM1MachineROS::publishJointStates() {
     jointStateMsg_.velocity.resize(M1_NUM_JOINTS);
     jointStateMsg_.effort.resize(M1_NUM_JOINTS);
     jointStateMsg_.name[0] = "M1_joint";
-    jointStateMsg_.position[0] = jointPositions[0]-q_offset; // remove bias (center of ROM from position)
+    jointStateMsg_.position[0] = jointPositions[0]-robot_->getPositionOffset(); // remove bias (center of ROM from position)
     jointStateMsg_.velocity[0] = jointVelocities[0];
     jointStateMsg_.effort[0] = jointTorques[0]; /// BE CAREFUL CHANGED FROM JOINT TORQUE TO DESIRED INTERACTION TORQUE FOR SINGLE ROBOT FORCE CONTROL TEST
 
@@ -80,15 +80,18 @@ void MultiM1MachineROS::publishInteractionForces() {
 
 void MultiM1MachineROS::publishInteractionScaled() {
     Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_s_filt(); // filtered with weight compensation
+    Eigen::VectorXd torqueLimits = robot_->getTorqueLimits(); // torque limits in Nm
+    double torqueOffset = robot_->getTorqueOffset(); // torque offset in Nm
     double torqueScaled;
 
     if (robot_->stim_calib_) {
         torqueScaled = 1;
     } else {
-        if ((interactionTorqueFiltered[0]-robot_->tau_offset_) > 0) {
-            torqueScaled = (interactionTorqueFiltered[0]-robot_->tau_offset_)/(robot_->tau_df_);
+        // scale torque
+        if ((interactionTorqueFiltered[0]-torqueOffset) > 0) {
+            torqueScaled = (interactionTorqueFiltered[0]-torqueOffset)/torqueLimits[0]; // DF
         } else {
-            torqueScaled = (interactionTorqueFiltered[0]-robot_->tau_offset_)/(robot_->tau_pf_);
+            torqueScaled = (interactionTorqueFiltered[0]-torqueOffset)/torqueLimits[1]; // PF
         }
     }
 
@@ -101,45 +104,31 @@ void MultiM1MachineROS::publishInteractionScaled() {
 void MultiM1MachineROS::publishJointScaled() {
     Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_s_filt(); // filtered with weight compensation
     Eigen::VectorXd jointPositions = robot_->getPosition(); // angular position in radians
-    double torqueScaled;
-    double angleScaled;
-    double tau_df = robot_->tau_df_;
-    double tau_pf = robot_->tau_pf_;
-    double q_df = robot_->q_df_;
-    double q_pf = robot_->q_pf_;
-    double tau_offset = robot_->tau_offset_;
+    Eigen::VectorXd torqueLimits = robot_->getTorqueLimits(); // torque limits in Nm
+    Eigen::VectorXd positionLimits = robot_->getPositionLimits(); // angular position limits in radians
+    double torqueOffset = robot_->getTorqueOffset(); // torque offset in Nm
 
     // scale torque
-    if ((interactionTorqueFiltered[0]-tau_offset) > 0) {
-        torqueScaled = (interactionTorqueFiltered[0]-tau_offset)/tau_df;
+    if ((interactionTorqueFiltered[0]-torqueOffset) > 0) {
+        jointTorqueScaled_[0] = (interactionTorqueFiltered[0]-torqueOffset)/torqueLimits[0]; // DF
     } else {
-        torqueScaled = (interactionTorqueFiltered[0]-tau_offset)/tau_pf;
+        jointTorqueScaled_[0] = (interactionTorqueFiltered[0]-torqueOffset)/torqueLimits[1]; // PF
     }
 
     // scale angle
-    if (q_df==0*d2r && q_pf==90*d2r) {
-        angleScaled = jointPositions[0]; // unscaled
+    if (positionLimits[0]==positionLimits[1]) {
+        jointPositionScaled_[0] = jointPositions[0]; // unscaled
     } else {
-        angleScaled = 2*(jointPositions[0] - 0.5*(q_df + q_pf))/(q_df - q_pf);
+        jointPositionScaled_[0] = 2*(jointPositions[0] - 0.5*(positionLimits[0] + positionLimits[1]))/(positionLimits[0] - positionLimits[1]);
     }
 
-    jointScaledMsg_.tau_s = torqueScaled; // scaled torque (fraction of MVC different for DF and PF; -1 to 1)
-    jointScaledMsg_.q = angleScaled; // scaled angular position (fraction of ROM; -1 to 1)
-    jointScaledMsg_.tau_df = tau_df; // maximum torque in dorsiflexion (Nm)
-    jointScaledMsg_.tau_pf = tau_pf; // maximum torque in plantarflexion (Nm)
-    jointScaledMsg_.q_df = q_df; // maximum angle in dorsiflexion (rad)
-    jointScaledMsg_.q_pf = q_pf; // maximum angle in plantarflexion (rad)
+    jointScaledMsg_.tau_s = jointTorqueScaled_[0]; // scaled torque (fraction of MVC different for DF and PF; -1 to 1)
+    jointScaledMsg_.q = jointPositionScaled_[0]; // scaled angular position (fraction of ROM; -1 to 1)
+    jointScaledMsg_.tau_df = torqueLimits[0]; // maximum torque in dorsiflexion (Nm)
+    jointScaledMsg_.tau_pf = torqueLimits[1]; // maximum torque in plantarflexion (Nm)
+    jointScaledMsg_.q_df = positionLimits[0]; // maximum angle in dorsiflexion (rad)
+    jointScaledMsg_.q_pf = positionLimits[1]; // maximum angle in plantarflexion (rad)
     jointScaledPublisher_.publish(jointScaledMsg_);
-}
-
-void MultiM1MachineROS::publishJointTracking() {
-    Eigen::VectorXd jointPositions = robot_->getPosition(); // angular position in radians
-    double q_offset = robot_->q_offset_;
-
-    jointTrackingMsg_.x = jointPositions[0] - q_offset; // angular position (bias removed)
-    jointTrackingMsg_.y = jointPositionCommand_[0]; // desired angle
-    jointTrackingMsg_.z = jointVelocityCommand_[0]; // starting position of target
-    jointTrackingPublisher_.publish(jointTrackingMsg_);
 }
 
 void MultiM1MachineROS::setNodeHandle(ros::NodeHandle &nodeHandle) {
@@ -182,7 +171,7 @@ bool MultiM1MachineROS::calibrateForceSensorsCallback(std_srvs::Trigger::Request
 }
 
 bool MultiM1MachineROS::setTrackingOffsetCallback(CORC::SetOffset::Request &req, CORC::SetOffset::Response &res) {
-    robot_->setAngleOffset(req.q);
-    res.q_new = r2d*(robot_->q_offset_);
+    robot_->setPositionOffset(req.q);
+    res.q_new = r2d*(robot_->getPositionOffset());
     return res.q_new;
 }

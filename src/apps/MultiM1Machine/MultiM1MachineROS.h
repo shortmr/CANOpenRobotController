@@ -35,7 +35,6 @@ public:
     void publishInteractionForces(void);
     void publishInteractionScaled(void);
     void publishJointScaled(void);
-    void publishJointTracking(void);
     void initialize();
     void setNodeHandle(ros::NodeHandle& nodeHandle);
 
@@ -45,6 +44,10 @@ public:
     Eigen::VectorXd interactionTorqueCommand_;
     Eigen::VectorXd prbsPositionCommand_;
     Eigen::VectorXd emgData_;
+
+    Eigen::VectorXd jointPositionScaled_;
+    Eigen::VectorXd jointTorqueScaled_;
+
 private:
     // Subscriber and callback func for joint command subscription
     ros::Subscriber jointCommandSubscriber_;
@@ -78,10 +81,6 @@ private:
     ros::Publisher jointScaledPublisher_;
     CORC::JointScaled32 jointScaledMsg_;
 
-    // Publisher and message for actual and desired joint angles (bias removed)
-    ros::Publisher jointTrackingPublisher_;
-    geometry_msgs::Point32 jointTrackingMsg_;
-
     RobotM1 *robot_;
 
     ros::ServiceServer calibrateForceSensorsService_;
@@ -92,12 +91,12 @@ private:
     bool setTrackingOffsetCallback(CORC::SetOffset::Request& req,
                                    CORC::SetOffset::Response& res);
 
-    // Conversion factors between degrees and radians
-    double d2r, r2d;
-
     // Parameters for robot name and muscle count
     RobotParameters m1Params;
     int muscleCount_;
+
+    // Conversion factors between degrees and radians
+    double d2r, r2d;
 };
 
 #endif  //SRC_MultiM1MachineROS_H

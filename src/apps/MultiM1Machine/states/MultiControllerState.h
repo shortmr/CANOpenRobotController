@@ -78,6 +78,8 @@ public:
     bool start; // flag for initial cycle of system identification
     double v_bias; // vertical bias of robot
 
+    double step_angle_;
+
     double r2d;
     double d2r;
 
@@ -87,8 +89,8 @@ public:
     double kd_;
     double tick_max_;
     double ffRatio_;
-    double cut_off_;
     int controller_mode_;
+    double vel_thresh_;
 
     double control_freq;
     int current_mode;
@@ -104,20 +106,9 @@ public:
     Eigen::VectorXd q; //positive dorsi-flexion
     Eigen::VectorXd dq;
     Eigen::VectorXd tau;
-    Eigen::VectorXd tau_s;
+    Eigen::VectorXd tau_s; //positive dorsi-flexion
+    Eigen::VectorXd tau_s_filtered;
     Eigen::VectorXd tau_cmd;
-
-    double alpha_q;
-    double alpha_dq;
-    double alpha_tau_s;
-    double q_pre;
-    double tau_pre;
-    double tau_raw;
-    double tau_filtered;
-    double q_raw;
-    double q_filtered;
-    double dq_raw;
-    double dq_filtered;
 
     // External trigger
     int digitalInValue_;

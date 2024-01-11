@@ -22,6 +22,9 @@ void MultiControllerState::entry(void) {
     f = boost::bind(&MultiControllerState::dynReconfCallback, this, _1, _2);
     server_.setCallback(f);
 
+    control_freq = 1/0.003; //400 Hz
+    robot_->setControlFreq(control_freq);
+
     // Initialize static parameters (if configFlag is not set, bypass dynamic reconfigure for parameters)
     m1Params = robot_->sendRobotParams();
     v_bias = -1 * m1Params.t_bias[0] * 180. / M_PI;
@@ -35,9 +38,11 @@ void MultiControllerState::entry(void) {
         kp_ = m1Params.kp[0];
         ki_ = m1Params.ki[0];
         kd_ = m1Params.kd[0];
-        cut_off_ = m1Params.lowpass_cutoff_freq[0];
+        robot_->setMotorTorqueCutOff(m1Params.motor_torque_cutoff_freq[0]);
+        robot_->setSensorCutOff(m1Params.sensor_cutoff_freq[0]);
         ffRatio_ = m1Params.ff_ratio[0];
         tick_max_ = m1Params.tick_max[0];
+        vel_thresh_ = m1Params.vel_thresh[0];
     }
     robot_->initTorqueControl();
     robot_->tau_spring[0] = 0;   // for ROS publish only
@@ -53,7 +58,6 @@ void MultiControllerState::entry(void) {
     tau_cmd = Eigen::VectorXd::Zero(1);
 
     // Initialize parameters
-    control_freq = 1/0.003; //400 Hz
     error = 0;
     delta_error = 0;
     integral_error = 0;
@@ -63,7 +67,6 @@ void MultiControllerState::entry(void) {
     cali_vel_thresh = 2;
 
     controller_mode_ = -1;
-//    cut_off_ = 6.0;
 
     // System identification
     cycle = 0;
@@ -81,7 +84,6 @@ void MultiControllerState::entry(void) {
     digitalInValue_ = 0;
     digitalOutValue_ = 0;
     robot_->setDigitalOut(digitalOutValue_);
-    robot_->setControlFreq(control_freq);
 }
 void MultiControllerState::during(void) {
 
@@ -161,21 +163,20 @@ void MultiControllerState::during(void) {
         if(robot_->setJointPos(q_cmd) != SUCCESS){
             std::cout << "Error: " << std::endl;
         }
-        //filter interaction torque for subject-specific torque measures
-        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
-        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
+        //get filtered interaction torque for subject-specific torque measures
+        tau_s_filtered = robot_->getJointTor_s_filt();
 
         if (set_offset_) {
             n_offset += 1;
-            mvc_offset = (mvc_offset+tau_filtered);
+            mvc_offset = (mvc_offset+tau_s_filtered(0));
         }
 
         if (set_mvc_) {
-            if (tau_filtered > mvc_df) {
-                mvc_df = tau_filtered;
+            if (tau_s_filtered(0) > mvc_df) {
+                mvc_df = tau_s_filtered(0);
             }
-            if (tau_filtered < mvc_pf) {
-                mvc_pf = tau_filtered;
+            if (tau_s_filtered(0) < mvc_pf) {
+                mvc_pf = tau_s_filtered(0);
             }
         }
     }
@@ -185,46 +186,47 @@ void MultiControllerState::during(void) {
     else if (controller_mode_ == 4 || controller_mode_ == 5) { // virtual spring or transparency - torque mode
         tau = robot_->getJointTor();
 
-        // filter position and check for ROM update
-        q = robot_->getJointPos();
-        q_raw = q(0); //degrees
-        alpha_q = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
-        q_filtered = robot_->filter_q(alpha_q);
+        // get position and check for ROM update
+        q = robot_->getJointPos(); //degrees
         if (set_rom_) {
-            if (q_raw > rom_df) {
-                rom_df = q_raw;
+            if (q(0) > rom_df) {
+                rom_df = q(0);
             }
-            if (q_raw < rom_pf) {
-                rom_pf = q_raw;
+            if (q(0) < rom_pf) {
+                rom_pf = q(0);
             }
         }
 
-        // filter velocity
-        dq = robot_->getJointVel();
-        dq_raw = dq(0);
-        alpha_dq = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
-        dq_filtered = robot_->filter_dq(alpha_dq);
+        // get velocity
+        dq = robot_->getJointVel(); //degrees per second
 
-        // filter interaction torque
-        tau_s = robot_->getJointTor_s();
-        tau_raw = tau_s(0);
-        alpha_tau_s = (2*M_PI*dt*cut_off_)/(2*M_PI*dt*cut_off_+1);
-        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
+        // get filtered interaction torque
+        tau_s_filtered = robot_->getJointTor_s_filt();
 
-        // get interaction torque from virtual spring
+        // get desired interaction torque from virtual spring
         spring_tor = multiM1MachineRos_->interactionTorqueCommand_(0);
         robot_->tau_spring[0] = spring_tor; // for ROS publish only
 
         // apply PID for feedback control
         if (controller_mode_ == 4) {
-            error = tau_filtered + spring_tor;  // interaction torque error (desired interaction torque is spring_tor)
+            error = tau_s_filtered(0) + spring_tor;  // interaction torque error (desired interaction torque is spring_tor)
         }
         else if (controller_mode_ == 5) {
-            error = tau_filtered;  // interaction torque error (desired interaction torque is 0)
+            error = tau_s_filtered(0);  // interaction torque error (desired interaction torque is 0)
         }
         delta_error = (error-torque_error_last_time_step)*control_freq;  // derivative of interaction torque error
         integral_error = integral_error + error/control_freq; // integral of interaction torque error
-        tau_cmd(0) = error*kp_ + delta_error*kd_ + integral_error*ki_;
+
+        // Vary proportional gain based on velocity
+        double kp;
+        if (abs(dq(0)) < vel_thresh_) {
+            kp = kp_*(1+6*(1 - abs(dq(0))/vel_thresh_));
+        }
+        else {
+            kp = kp_;
+        }
+
+        tau_cmd(0) = error*kp + delta_error*kd_ + integral_error*ki_;
         torque_error_last_time_step = error;
         robot_->setJointTor_comp(tau_cmd, ffRatio_);
 
@@ -234,47 +236,36 @@ void MultiControllerState::during(void) {
             tick_count = 0;
         }
     }
-    else if (controller_mode_ == 6) {  // fixed angle - zero velocity mode
-        if (fixed_stage == 1) {
-            // set calibration velocity
-            JointVec dq_t;
-            dq_t(0) = cali_velocity;
-            if (robot_->setJointVel(dq_t) != SUCCESS) {
-                std::cout << "Error: " << std::endl;
-            }
-
-            // monitor velocity and joint torque
-            dq = robot_->getJointVel();
-            tau = robot_->getJointTor();
-            if ((dq(0) <= cali_vel_thresh) & (tau(0) <= cali_tau_thresh)) {
-                cali_velocity = 0;
-                robot_->initPositionControl();
-                fixed_stage = 2;
-            } else {
-                robot_->printJointStatus();
-            }
-        }
+    else if (controller_mode_ == 6) {  // step angle - zero torque mode
+        double time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time0).count()/1000.0;
         if (fixed_stage == 2) {
-            // set fixed angular position
+            // set step angle
             JointVec q_t;
-            q_t(0) = fixed_q;
+            q_t(0) = step_angle_;
             if(robot_->setJointPos(q_t) != SUCCESS){
                 std::cout << "Error: " << std::endl;
             }
 
             // monitor position
             q = robot_->getJointPos();
-            if (abs(q(0)-fixed_q)<0.001){
-                robot_->initVelocityControl();
-                std::cout << "Holding fixed position with zero velocity" << std::endl;
+            if (abs(q(0)-step_angle_)<0.001){
+                robot_->initTorqueControl();
+                std::cout << "Holding user position with zero torque" << std::endl;
                 fixed_stage = 3;
+                time0 = std::chrono::steady_clock::now();
             }
             else {
                 robot_->printJointStatus();
             }
         } else if (fixed_stage == 3) {
-            // apply zero velocity mode
-            robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+            if (time > 4.0 && step_angle_ <= 110.0 && step_angle_ >= 10.0) {
+                robot_->initPositionControl();
+                fixed_stage = 2;
+                step_angle_ = step_angle_ + 5.0;
+            }
+            else {
+                robot_->setJointTor(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+            }
         }
     }
     else if (controller_mode_ == 7) {  // center angle (ROM) - zero velocity mode
@@ -301,21 +292,20 @@ void MultiControllerState::during(void) {
             robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
         }
 
-        //filter interaction torque for subject-specific torque measures (20 Hz lowpass)
-        alpha_tau_s = (2*M_PI*dt*20)/(2*M_PI*dt*20+1);
-        tau_filtered = robot_->filter_tau_s(alpha_tau_s);
+        //filter interaction torque for subject-specific torque measures
+        tau_s_filtered = robot_->getJointTor_s_filt();
 
         if (set_offset_) {
             n_offset += 1;
-            mvc_offset = (mvc_offset+tau_filtered);
+            mvc_offset = (mvc_offset+tau_s_filtered(0));
         }
 
         if (set_mvc_) {
-            if (tau_filtered > mvc_df) {
-                mvc_df = tau_filtered;
+            if (tau_s_filtered(0) > mvc_df) {
+                mvc_df = tau_s_filtered(0);
             }
-            if (tau_filtered < mvc_pf) {
-                mvc_pf = tau_filtered;
+            if (tau_s_filtered(0) < mvc_pf) {
+                mvc_pf = tau_s_filtered(0);
             }
         }
     }
@@ -440,11 +430,12 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         kp_ = config.kp;
         kd_ = config.kd;
         ki_ = config.ki;
+        vel_thresh_ = config.vel_thresh;
         robot_->setVelThresh(config.vel_thresh);
         robot_->setTorqueThresh(config.tau_thresh);
         robot_->setMotorTorqueCutOff(config.motor_torque_cutoff_freq);
+        robot_->setSensorCutOff(config.sensor_cutoff_freq);
 
-        cut_off_ = config.lowpass_cutoff_freq;
         ffRatio_ = config.ff_ratio;
 
         // Hysteresis friction
@@ -533,15 +524,10 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         if (controller_mode_ == 4) robot_->initTorqueControl();
         if (controller_mode_ == 5) robot_->initTorqueControl();
 
-        if (controller_mode_ == 6) {
-            robot_->initVelocityControl();
-            fixed_stage = 1;
-            fixed_q = 45; // trajectory bias = 45
-            cali_velocity = -30;
-        }
-        if (controller_mode_ == 7) {
+        if (controller_mode_ == 6 || controller_mode_ == 7) {
             robot_->initPositionControl();
             fixed_stage = 2;
+            step_angle_ = 10.0;
         }
         if (controller_mode_ == 8) {
             robot_->initTorqueControl();

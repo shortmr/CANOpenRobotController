@@ -62,7 +62,7 @@ struct RobotParameters {
     Eigen::VectorXd kd; // derivative term of PID controller
     Eigen::VectorXd vel_thresh; // velocity threshold for implementing dynamic friction [deg/s]
     Eigen::VectorXd tau_thresh; // torque threshold for implementing dynamic friction [deg/s]
-    Eigen::VectorXd lowpass_cutoff_freq; // cutoff frequency for interaction torque, position and velocity filter [Hz]
+    Eigen::VectorXd sensor_cutoff_freq; // cutoff frequency for interaction torque, position and velocity filter [Hz]
     Eigen::VectorXd motor_torque_cutoff_freq; // cutoff frequency for motor torque command filter [Hz]
     Eigen::VectorXd tick_max; // counter for integral term reset [s]
     Eigen::VectorXd tracking_offset; // center of range of motion [deg]
@@ -113,7 +113,7 @@ class RobotM1 : public Robot {
     double d2r, r2d;
 
     // Storage variables for real-time updated values from CANopen
-    JointVec q, dq, tau, tau_s, tau_sc, tau_cmd;
+    JointVec q, dq, tau, tau_s;
     JointVec q_filt, dq_filt, tau_s_filt;
     JointVec q_filt_pre, dq_filt_pre, tau_s_filt_pre;
 
@@ -127,15 +127,19 @@ class RobotM1 : public Robot {
 
     double velThresh_, torqueThresh_;
 
+    double alpha_sensor_, alpha_motor_torque_;
+
     double f_s_upper_, f_s_lower_, f_d_up_, f_d_down_, f_s_theta1_, f_s_theta2_;
 
     double filteredMotorTorqueCommand_, previousFilteredTorqueCommand_;
 
-    double motorTorqueCutOff_;
+    double motorTorqueCutOff_, sensorCutOff_;
 
     double controlFreq_;
 
-    double i_sin_, i_cos_, t_bias_, t_bias_offset_;
+    double i_sin_, i_cos_, t_bias_;
+
+    bool hysteresisFlag_;
 
     double f_s_, f_d_, c2_;
 
@@ -309,6 +313,7 @@ public:
     void setFrictionParams(double f_s, double f_d);
     void setTorqueThresh(double torqueThresh);
     void setMotorTorqueCutOff(double cutOff);
+    void setSensorCutOff(double cutOff);
     void setMaxTorqueDF(double tau_filt);
     void setMaxTorquePF(double tau_filt);
     void setMaxAngleDF(double q_current);
@@ -343,9 +348,9 @@ public:
     Eigen::VectorXd& getPositionLimits();
     Eigen::VectorXd& getTorqueLimits();
 
-    double filter_q(double alpha_q);
-    double filter_dq(double alpha_dq);
-    double filter_tau_s(double alpha_tau_s);
+    void filter_q(double alpha_q);
+    void filter_dq(double alpha_dq);
+    void filter_tau_s(double alpha_tau_s);
 //    EndEffVec getEndEffPos();
 //    EndEffVec getEndEffVel();
 //    EndEffVec getEndEffFor();

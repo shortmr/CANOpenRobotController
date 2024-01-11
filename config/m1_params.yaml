@@ -1,4 +1,4 @@
-config_flag: false # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
+config_flag: true # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
 
 #m1_x:
 #  id: ['ankleHRCEML: A']
@@ -97,12 +97,12 @@ m1_x:
   force_sensor_scale_factor: [0.07] # scale factor for force calibration
   force_sensor_offset: [ 1500 ] # calibration offset for force sensor
   ff_ratio: [0.25] # scale factor for feedforward compensation
-  kp: [9.0] # proportional term of PID controller
+  kp: [9.0] # proportional term of PID controller (alt: 5.5)
   ki: [0.17] # integral term of PID controller
-  kd: [0.0] # derivative term of PID controller
+  kd: [0.0] # derivative term of PID controller (alt: 0.05)
   vel_thresh: [4.0] # velocity threshold for using dynamic friction compensation [deg/s]
   tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
-  sensor_cutoff_freq: [30.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
+  sensor_cutoff_freq: [30.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz] (alt: 20)
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
   tracking_offset: [72.48] # center of range of motion [deg]

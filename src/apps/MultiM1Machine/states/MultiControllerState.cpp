@@ -17,13 +17,13 @@ void MultiControllerState::entry(void) {
     clock_gettime(CLOCK_MONOTONIC, &initTime);
     lastTime = timeval_to_sec_t(&initTime);
 
+    control_freq = 1/0.003; //400 Hz
+    robot_->setControlFreq(control_freq);
+
     // Set up dynamic parameter server
     dynamic_reconfigure::Server<CORC::dynamic_paramsConfig>::CallbackType f;
     f = boost::bind(&MultiControllerState::dynReconfCallback, this, _1, _2);
     server_.setCallback(f);
-
-    control_freq = 1/0.003; //400 Hz
-    robot_->setControlFreq(control_freq);
 
     // Initialize static parameters (if configFlag is not set, bypass dynamic reconfigure for parameters)
     m1Params = robot_->sendRobotParams();

@@ -133,6 +133,7 @@ if(USE_ROS)
 				DIRECTORY msg
 				FILES
 				JointScaled32.msg
+				InteractionMode.msg
 		)
 
 		add_service_files(

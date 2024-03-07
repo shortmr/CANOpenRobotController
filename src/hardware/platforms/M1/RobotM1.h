@@ -17,6 +17,10 @@
 #include <map>
 #include <Eigen/Dense>
 
+#include <iostream>
+#include <vector>
+#include <cmath>
+
 #include "JointM1.h"
 #include "Keyboard.h"
 #include "Joystick.h"
@@ -57,7 +61,10 @@ struct RobotParameters {
     Eigen::VectorXd force_sensor_scale_factor; // scale factor for force calibration
     Eigen::VectorXd force_sensor_offset; // offset for torque sensor
     Eigen::VectorXd ff_ratio; // scale factor for feedforward compensation
+    Eigen::VectorXd friction_ratio; // scale factor for feedforward compensation
+    Eigen::VectorXd weight_ratio; // scale factor for feedforward compensation
     Eigen::VectorXd kp; // proportional term of PID controller
+    Eigen::VectorXd kp_mod; // multiplier for proportional term of PID controller
     Eigen::VectorXd ki; // integral term of PID controller
     Eigen::VectorXd kd; // derivative term of PID controller
     Eigen::VectorXd vel_thresh; // velocity threshold for implementing dynamic friction [deg/s]
@@ -137,7 +144,7 @@ class RobotM1 : public Robot {
 
     double controlFreq_;
 
-    double i_sin_, i_cos_, t_bias_;
+    double i_sin_, i_cos_;
 
     bool hysteresisFlag_;
 
@@ -169,6 +176,8 @@ public:
     int mode;
     double stim_df_, stim_pf_;
     bool stim_calib_;
+
+    double t_bias_;
 
     JointVec tau_spring;
 
@@ -307,6 +316,13 @@ public:
     RobotParameters sendRobotParams();
 
     double limb_sign_; // left or right limb
+    bool staticFrictionFlag_;
+
+    // check for error resulting in constant torque readings
+    bool tauCheck_;
+    int checkNum_;
+    double tauDiff_;
+    double tau_prev_;
 
     void setControlFreq(double controlFreq);
     void setVelThresh(double velThresh);
@@ -318,6 +334,7 @@ public:
     void setMaxTorquePF(double tau_filt);
     void setMaxAngleDF(double q_current);
     void setMaxAnglePF(double q_current);
+    void setStaticFrictionFlag(double multiplier);
     void setStimDF(double stim_amp);
     void setStimPF(double stim_amp);
     void setStimCalibrate(bool stim_calib);
@@ -358,6 +375,6 @@ public:
     setMovementReturnCode_t setJointPos(JointVec pos);
     setMovementReturnCode_t setJointVel(JointVec vel);
     setMovementReturnCode_t setJointTor(JointVec tor);
-    setMovementReturnCode_t setJointTor_comp(JointVec tor, double ffRatio);
+    setMovementReturnCode_t setJointTor_comp(JointVec tor, double frictionRatio, double weightRatio);
 };
 #endif /*RobotM1_H*/

@@ -44,7 +44,10 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     m1Params.force_sensor_scale_factor = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.force_sensor_offset = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.ff_ratio = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.friction_ratio = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.weight_ratio = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.kp = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.kp_mod = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.ki = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.kd = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.vel_thresh = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -68,6 +71,10 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
 
     initialiseJoints();
     initialiseInputs();
+
+    tauCheck_ = true;
+    checkNum_ = 0;
+    tauDiff_ = 0.0;
 
     mode = 0;
 
@@ -139,6 +146,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
        params[robotName]["i_cos"].size() != M1_NUM_JOINTS || params[robotName]["t_bias"].size() != M1_NUM_JOINTS ||
        params[robotName]["force_sensor_scale_factor"].size() != M1_NUM_JOINTS ||
        params[robotName]["force_sensor_offset"].size() != M1_NUM_JOINTS ||
+       params[robotName]["friction_ratio"].size() != M1_NUM_JOINTS || params[robotName]["weight_ratio"].size() != M1_NUM_JOINTS ||
        params[robotName]["ff_ratio"].size() != M1_NUM_JOINTS || params[robotName]["kp"].size() != M1_NUM_JOINTS ||
        params[robotName]["ki"].size() != M1_NUM_JOINTS || params[robotName]["kd"].size() != M1_NUM_JOINTS ||
        params[robotName]["vel_thresh"].size() != M1_NUM_JOINTS || params[robotName]["tau_thresh"].size() != M1_NUM_JOINTS ||
@@ -147,7 +155,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
        params[robotName]["tick_max"].size() != M1_NUM_JOINTS || params[robotName]["tracking_offset"].size() != M1_NUM_JOINTS ||
        params[robotName]["tracking_df"].size() != M1_NUM_JOINTS || params[robotName]["tracking_pf"].size() != M1_NUM_JOINTS ||
        params[robotName]["mvc_df"].size() != M1_NUM_JOINTS || params[robotName]["mvc_pf"].size() != M1_NUM_JOINTS ||
-       params[robotName]["muscle_count"].size() != M1_NUM_JOINTS) {
+       params[robotName]["muscle_count"].size() != M1_NUM_JOINTS || params[robotName]["kp_mod"].size() != M1_NUM_JOINTS) {
 
         spdlog::error("Parameter sizes are not consistent");
         spdlog::error("All parameters are zero !");
@@ -169,7 +177,10 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         m1Params.force_sensor_scale_factor[i] = params[robotName]["force_sensor_scale_factor"][i].as<double>();
         m1Params.force_sensor_offset[i] = params[robotName]["force_sensor_offset"][i].as<double>();
         m1Params.ff_ratio[i] = params[robotName]["ff_ratio"][i].as<double>();
+        m1Params.friction_ratio[i] = params[robotName]["friction_ratio"][i].as<double>();
+        m1Params.weight_ratio[i] = params[robotName]["weight_ratio"][i].as<double>();
         m1Params.kp[i] = params[robotName]["kp"][i].as<double>();
+        m1Params.kp_mod[i] = params[robotName]["kp_mod"][i].as<double>();
         m1Params.ki[i] = params[robotName]["ki"][i].as<double>();
         m1Params.kd[i] = params[robotName]["kd"][i].as<double>();
         m1Params.vel_thresh[i] = params[robotName]["vel_thresh"][i].as<double>();
@@ -209,6 +220,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     if (!m1Params.configFlag) {
         velThresh_ = m1Params.vel_thresh[0] * d2r;
         torqueThresh_ = m1Params.tau_thresh[0];
+        setStaticFrictionFlag(0.0);
     }
 
     tau_offset_ = 0;
@@ -274,6 +286,27 @@ void RobotM1::updateRobot() {
 
     // filter interaction torque measurements
     filter_tau_s(alpha_sensor_);
+
+    // check for error in torque/position/velocity measurements
+    if (tauCheck_) {
+        if (checkNum_ == 0) {
+            tau_prev_ = tau(0);
+        }
+        else {
+            tauDiff_ = (tauDiff_+abs(tau(0)-tau_prev_));
+
+            if (checkNum_ == 333) {
+                tauCheck_ = false;
+                if (tauDiff_/333 <= 0.001) {
+                    std::cout << "M1: Joint " << 0 << " ERROR (sensor readings with mean diff: " << tauDiff_/333 << ")" << std::endl;
+                }
+                else {
+                    std::cout << "M1: Joint " << 0 << " PASS (sensor readings with mean diff: " << tauDiff_/333 << ")" << std::endl;
+                }
+            }
+        }
+        checkNum_ += 1;
+    }
 
     if (safetyCheck() != SUCCESS) {
         status = R_OUTSIDE_LIMITS;
@@ -579,7 +612,7 @@ setMovementReturnCode_t RobotM1::setJointTor(JointVec tor_d) {
     return applyTorque(tor_d);
 }
 
-setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double ffRatio) {
+setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double fRatio, double wRatio) {
     double tor_ff;
     double tor_friction;
     double vel = dq(0);
@@ -587,23 +620,22 @@ setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double ffRatio) 
 
     if (!hysteresisFlag_) {
         // original implementation
-        if (m1Params.wristFlag) {
+        if (!staticFrictionFlag_) {
             // Feedforward wrist compensation (viscous friction only)
-            if(abs(vel)<velThresh_)
-            {
-                tor_ff = 0.0;
-            } else {
-                tor_ff = f_d_*vel;
-            }
+//            tor_ff = f_d_*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
+            tor_ff = fRatio*(f_d_*vel) +
+                     wRatio*(i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_));
         }
         else {
             // Feedforward ankle compensation (linearized static friction, weight and viscous friction)
             if(abs(vel)<velThresh_)
             {
                 double slowCoef = f_s_/velThresh_; // linear region for static friction
-                tor_ff = slowCoef*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
+                tor_ff = fRatio*(slowCoef*vel) +
+                         wRatio*(i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_));
             } else {
-                tor_ff = f_s_*sign(vel) + f_d_*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_) + c2_*sqrt(abs(vel))*sign(vel);
+                tor_ff = fRatio*(f_s_*sign(vel) + f_d_*vel + c2_*sqrt(abs(vel))*sign(vel)) +
+                         wRatio*(i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_));
             }
         }
     }
@@ -621,18 +653,16 @@ setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double ffRatio) 
             double f_s_up = f_s_upper_ * f_s_theta2_ + f_s_neg * (1 - f_s_theta2_);
             double f_s_down = f_s_pos * f_s_theta2_ + f_s_lower_ * (1 - f_s_theta2_);
             tor_friction = f_s_up * (1 - f_s_theta1_) + f_s_down * f_s_theta1_;
-
-            tor_ff = tor_friction + i_sin_ * sin(pos + t_bias_) + i_cos_ * cos(pos + t_bias_);
         } else {
             f_s_theta1_ = f_s_theta2_;
             double f_d_up = f_d_up_ * (vel - velThresh_) + f_s_upper_;
             double f_d_down = f_d_down_ * (vel + velThresh_) + f_s_lower_;
             tor_friction = f_d_up * f_s_theta2_ + f_d_down * (1 - f_s_theta2_);
         }
-        tor_ff = tor_friction + i_sin_ * sin(pos + t_bias_) + i_cos_ * cos(pos + t_bias_);
+        tor_ff = fRatio*tor_friction + wRatio*(i_sin_ * sin(pos + t_bias_) + i_cos_ * cos(pos + t_bias_));
     }
 
-    tor(0) = tor(0) + tor_ff*ffRatio;
+    tor(0) = tor(0) + tor_ff;
 
     // filter command signal
     filteredMotorTorqueCommand_ = alpha_motor_torque_*tor(0)+(1-alpha_motor_torque_)*previousFilteredTorqueCommand_;
@@ -741,6 +771,23 @@ Eigen::VectorXd & RobotM1::getPositionLimits() {
 
 Eigen::VectorXd & RobotM1::getTorqueLimits() {
     return tau_lim_;
+}
+
+void RobotM1::setStaticFrictionFlag(double multiplier) {
+    double m;
+    if (m1Params.configFlag) {
+        m = multiplier;
+    }
+    else {
+        m = m1Params.kp_mod[0];
+    }
+
+    // Add static friction compensation if proportional multiplier is disabled
+    if (m == 0.0) {
+        staticFrictionFlag_ = true;
+    } else {
+        staticFrictionFlag_ = false;
+    }
 }
 
 short RobotM1::sign(double val) { return (val > 0) ? 1 : ((val < 0) ? -1 : 0); }

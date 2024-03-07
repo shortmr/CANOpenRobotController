@@ -19,6 +19,7 @@ void MultiM1MachineROS::initialize() {
     interactionTorqueCommandSubscriber_ = nodeHandle_->subscribe("interaction_effort_commands", 1, &MultiM1MachineROS::interactionTorqueCommandCallback, this);
     prbsCommandSubscriber_ = nodeHandle_->subscribe("prbs_commands", 1, &MultiM1MachineROS::prbsCommandCallback, this);
     emgDataSubscriber_ = nodeHandle_->subscribe("emg_data", 1, &MultiM1MachineROS::emgDataCallback, this);
+    interactionModeSubscriber_ = nodeHandle_->subscribe("interaction_mode", 1, &MultiM1MachineROS::interactionModeCallback, this);
     jointStatePublisher_ = nodeHandle_->advertise<sensor_msgs::JointState>("joint_states", 10);
     interactionWrenchPublisher_ = nodeHandle_->advertise<geometry_msgs::WrenchStamped>("interaction_wrench", 10);
     interactionScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("interaction_mvc", 10);
@@ -67,12 +68,13 @@ void MultiM1MachineROS::publishJointStates() {
 
 void MultiM1MachineROS::publishInteractionForces() {
     Eigen::VectorXd interactionTorque = robot_->getJointTor_s(); // with weight compensation
+    Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_s_filt(); // filtered with weight compensation
     ros::Time time = ros::Time::now();
 
     interactionWrenchMsg_.header.stamp = time;
     interactionWrenchMsg_.header.frame_id = "interaction_torque_sensor";
     interactionWrenchMsg_.wrench.torque.y = robot_->tau_spring[0];
-    interactionWrenchMsg_.wrench.torque.z = -interactionTorque[0];
+    interactionWrenchMsg_.wrench.torque.z = -interactionTorqueFiltered[0]; // -interactionTorque[0]
     interactionWrenchMsg_.wrench.torque.x = interactionTorque[0];
 
     interactionWrenchPublisher_.publish(interactionWrenchMsg_);
@@ -106,7 +108,9 @@ void MultiM1MachineROS::publishJointScaled() {
     Eigen::VectorXd jointPositions = robot_->getPosition(); // angular position in radians
     Eigen::VectorXd torqueLimits = robot_->getTorqueLimits(); // torque limits in Nm
     Eigen::VectorXd positionLimits = robot_->getPositionLimits(); // angular position limits in radians
+    Eigen::VectorXd jointVelocities = robot_->getVelocity(); // angular position in radians
     double torqueOffset = robot_->getTorqueOffset(); // torque offset in Nm
+    double q_bias = robot_->t_bias_; // angle between lower joint limit and zero_calibration angle
 
     // scale torque
     if ((interactionTorqueFiltered[0]-torqueOffset) > 0) {
@@ -128,6 +132,8 @@ void MultiM1MachineROS::publishJointScaled() {
     jointScaledMsg_.tau_pf = torqueLimits[1]; // maximum torque in plantarflexion (Nm)
     jointScaledMsg_.q_df = positionLimits[0]; // maximum angle in dorsiflexion (rad)
     jointScaledMsg_.q_pf = positionLimits[1]; // maximum angle in plantarflexion (rad)
+    jointScaledMsg_.q_bias = q_bias; // bias angle (rad)
+    jointScaledMsg_.dq = jointVelocities[0]; // velocity (rad/s)
     jointScaledPublisher_.publish(jointScaledMsg_);
 }
 
@@ -162,6 +168,11 @@ void MultiM1MachineROS::emgDataCallback(const std_msgs::Float64MultiArray &msg) 
     for(int i=0; i<muscleCount_; i++){
         emgData_[i] = msg.data[i];
     }
+}
+
+void MultiM1MachineROS::interactionModeCallback(const CORC::InteractionMode &msg) {
+    interactionMode_ = msg.mode;
+    referenceLimb_ = msg.reference;
 }
 
 bool MultiM1MachineROS::calibrateForceSensorsCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {

@@ -40,9 +40,12 @@ void MultiControllerState::entry(void) {
         kd_ = m1Params.kd[0];
         robot_->setMotorTorqueCutOff(m1Params.motor_torque_cutoff_freq[0]);
         robot_->setSensorCutOff(m1Params.sensor_cutoff_freq[0]);
-        ffRatio_ = m1Params.ff_ratio[0];
+//        ffRatio_ = m1Params.ff_ratio[0];
+        fRatio_ = m1Params.friction_ratio[0];
+        wRatio_ = m1Params.weight_ratio[0];
         tick_max_ = m1Params.tick_max[0];
         vel_thresh_ = m1Params.vel_thresh[0];
+        kp_mod_ = m1Params.kp_mod[0];
     }
     robot_->initTorqueControl();
     robot_->tau_spring[0] = 0;   // for ROS publish only
@@ -217,10 +220,10 @@ void MultiControllerState::during(void) {
         delta_error = (error-torque_error_last_time_step)*control_freq;  // derivative of interaction torque error
         integral_error = integral_error + error/control_freq; // integral of interaction torque error
 
-        // Vary proportional gain based on velocity
         double kp;
+        // Vary proportional gain based on velocity (if kp_mod_ == 0, constant proportional gain)
         if (abs(dq(0)) < vel_thresh_) {
-            kp = kp_*(1+6*(1 - abs(dq(0))/vel_thresh_));
+            kp = kp_*(1+kp_mod_*(1 - abs(dq(0))/vel_thresh_));
         }
         else {
             kp = kp_;
@@ -228,7 +231,7 @@ void MultiControllerState::during(void) {
 
         tau_cmd(0) = error*kp + delta_error*kd_ + integral_error*ki_;
         torque_error_last_time_step = error;
-        robot_->setJointTor_comp(tau_cmd, ffRatio_);
+        robot_->setJointTor_comp(tau_cmd, fRatio_,wRatio_);
 
         // reset integral_error every n seconds (tick_max_)
         if(tick_count >= control_freq*tick_max_){
@@ -236,9 +239,9 @@ void MultiControllerState::during(void) {
             tick_count = 0;
         }
     }
-    else if (controller_mode_ == 6) {  // step angle - zero torque mode
+    else if (controller_mode_ == 6) {  // step angle - zero velocity mode
         double time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time0).count()/1000.0;
-        if (fixed_stage == 2) {
+        if (fixed_stage_ == 2) {
             // set step angle
             JointVec q_t;
             q_t(0) = step_angle_;
@@ -249,27 +252,27 @@ void MultiControllerState::during(void) {
             // monitor position
             q = robot_->getJointPos();
             if (abs(q(0)-step_angle_)<0.001){
-                robot_->initTorqueControl();
-                std::cout << "Holding user position with zero torque" << std::endl;
-                fixed_stage = 3;
+                robot_->initVelocityControl();
+                std::cout << "Holding user position with zero velocity" << std::endl;
+                fixed_stage_ = 3;
                 time0 = std::chrono::steady_clock::now();
             }
             else {
                 robot_->printJointStatus();
             }
-        } else if (fixed_stage == 3) {
-            if (time > 4.0 && step_angle_ <= 110.0 && step_angle_ >= 10.0) {
+        } else if (fixed_stage_ == 3) {
+            if (time > 4.0 && step_angle_ <= 100.0 && step_angle_ >= 10.0) {
                 robot_->initPositionControl();
-                fixed_stage = 2;
-                step_angle_ = step_angle_ + 5.0;
+                fixed_stage_ = 2;
+                step_angle_ = step_angle_ + 10.0;
             }
             else {
-                robot_->setJointTor(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+                robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
             }
         }
     }
     else if (controller_mode_ == 7) {  // center angle (ROM) - zero velocity mode
-        if (fixed_stage == 2) {
+        if (fixed_stage_ == 2) {
             // set fixed center angle
             JointVec q_t;
             q_t(0) = rom_center;
@@ -282,12 +285,12 @@ void MultiControllerState::during(void) {
             if (abs(q(0)-rom_center)<0.001){
                 robot_->initVelocityControl();
                 std::cout << "Holding user position with zero velocity" << std::endl;
-                fixed_stage = 3;
+                fixed_stage_ = 3;
             }
             else {
                 robot_->printJointStatus();
             }
-        } else if (fixed_stage == 3) {
+        } else if (fixed_stage_ == 3) {
             // apply zero velocity mode
             robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
         }
@@ -309,7 +312,34 @@ void MultiControllerState::during(void) {
             }
         }
     }
-    else if(controller_mode_ == 8) {  // system identification - torque mode
+    else if (controller_mode_ == 8) { // passive rom - velocity mode
+        JointVec dq_t = multiM1MachineRos_->jointVelocityCommand_;
+        // monitor joint angle
+        q = robot_->getJointPos();
+        if (set_rom_) {
+            robot_->printJointStatus();
+            if (q(0) > rom_df) {
+                rom_df = q(0);
+            }
+            if (q(0) < rom_pf) {
+                rom_pf = q(0);
+            }
+        }
+        else {
+            dq_t(0) = 0.0; // set zero velocity
+        }
+
+        // safety feature: restrict absolute velocity to under 2 deg/s, between joint limits
+        if ((abs(dq_t(0)) > 2.0) || (dq_t(0) < 0.0 && q(0) < 0.0) || (dq_t(0) > 0.0 && q(0) > 115.0)) {
+            dq_t(0) = 0.0;
+        }
+
+        // set velocity for joint
+        if (robot_->setJointVel(dq_t) != SUCCESS) {
+            std::cout << "Error " << std::endl;
+        }
+    }
+    else if(controller_mode_ == 10) {  // system identification - torque mode
         counter = counter + 1;
         if(counter%100==1) {
             robot_->printJointStatus();
@@ -414,6 +444,21 @@ void MultiControllerState::during(void) {
             }
         }
     }
+    else if (controller_mode_ == 12) {  // proprioception: monitor velocity commands
+        JointVec dq_t = multiM1MachineRos_->jointVelocityCommand_;
+        // monitor joint angle (only move within ROM limits)
+        q = robot_->getJointPos();
+        if (abs(dq_t(0)) > 0.0) {
+            robot_->printJointStatus();
+            if ((dq_t(0) < 0.0 && q(0) < rom_pf) || (dq_t(0) > 0.0 && q(0) > rom_df)) {
+                dq_t(0) = 0.0;
+            }
+        }
+        // set velocity for joint
+        if (robot_->setJointVel(dq_t) != SUCCESS) {
+            std::cout << "Error " << std::endl;
+        }
+    }
     // Read setDigitalOut signal
     // digitalInValue_ = robot_->getDigitalIn();
 }
@@ -436,7 +481,11 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         robot_->setMotorTorqueCutOff(config.motor_torque_cutoff_freq);
         robot_->setSensorCutOff(config.sensor_cutoff_freq);
 
-        ffRatio_ = config.ff_ratio;
+//        ffRatio_ = config.ff_ratio;
+        fRatio_ = config.friction_ratio;
+        wRatio_ = config.weight_ratio;
+        kp_mod_ = config.kp_mod;
+        robot_->setStaticFrictionFlag(kp_mod_);
 
         // Hysteresis friction
         robot_->setFrictionParams(config.f_s_hys, config.f_d_hys);
@@ -512,7 +561,7 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         if(controller_mode_ == 0) {
             robot_->initVelocityControl();
             cali_stage = 1;
-            cali_velocity = -30;
+            cali_velocity = -20;
         }
 
         cycle = 0;
@@ -526,10 +575,11 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
 
         if (controller_mode_ == 6 || controller_mode_ == 7) {
             robot_->initPositionControl();
-            fixed_stage = 2;
+            fixed_stage_ = 2;
             step_angle_ = 10.0;
         }
-        if (controller_mode_ == 8) {
+        if (controller_mode_ == 8) robot_->initVelocityControl();
+        if (controller_mode_ == 10) {
             robot_->initTorqueControl();
             freq = 0.1;
             mag = 2.6;   // magnitude for sine wave (without compensation = 3, with compensation = 0.6)
@@ -541,6 +591,7 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         }
         if (controller_mode_ == 11) time0 = std::chrono::steady_clock::now();
         if (controller_mode_ == 11) robot_->setDigitalOut(0);
+        if (controller_mode_ == 12) robot_->initVelocityControl();
     }
 
     return;

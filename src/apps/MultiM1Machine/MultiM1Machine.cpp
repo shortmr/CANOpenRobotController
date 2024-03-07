@@ -77,13 +77,13 @@ void MultiM1Machine::init() {
     logHelper.add(robot_->getPosition(), "JointPositions");
     logHelper.add(robot_->getPositionOffset(), "JointPositionOffset"); // center of range of motion in radians
     logHelper.add(robot_->getVelocity(), "JointVelocities");
-    logHelper.add(robot_->getTorque(), "JointTorques"); //use for position control system identification
+    logHelper.add(robot_->getTorque(), "JointTorques"); // motor torque reading
     logHelper.add(robot_->getJointTor_s(), "SensorTorques");
     logHelper.add(robot_->getJointTor_s_filt(), "SensorTorquesFiltered");
-    logHelper.add(robot_->getTorqueOffset(), "SensorTorquesOffset"); // center of range of motion in radians
+    logHelper.add(robot_->getTorqueOffset(), "SensorTorquesOffset"); // torque offset Nm
 
     logHelper.add(multiControllerState_->tau_cmd, "CommandTorque"); // motor_torque = command_torque + compensation_torque
-    logHelper.add(robot_->tau_motor, "MotorTorque"); // use this for torque control system identification
+    logHelper.add(robot_->tau_motor, "MotorTorque"); // motor torque command (use this for torque control system id)
 
     logHelper.add(multiM1MachineRos_->jointTorqueCommand_, "MM1_DesiredJointTorques");
     logHelper.add(multiM1MachineRos_->jointPositionCommand_, "MM1_DesiredJointPositions");
@@ -96,8 +96,10 @@ void MultiM1Machine::init() {
     logHelper.add(multiM1MachineRos_->jointPositionScaled_, "JointPositionScaled");
     logHelper.add(multiM1MachineRos_->jointTorqueScaled_, "JointTorqueScaled");
 
-    logHelper.add(multiControllerState_->digitalInValue_, "digitalIn");
     logHelper.add(multiControllerState_->digitalOutValue_, "digitalOut");
+
+    logHelper.add(multiM1MachineRos_->interactionMode_, "MM1_InteractionMode");
+    logHelper.add(multiM1MachineRos_->referenceLimb_, "MM1_ReferenceLimb");
 
     logHelper.startLogger();
 }

@@ -22,6 +22,11 @@
 // string
 #include <string>
 
+// random
+#include <iostream>
+#include <vector>
+#include <random>
+
 /**
  * \brief A multi purpose state with different controllers implemented
  *
@@ -46,7 +51,7 @@ public:
     double cali_tau_safety;
 
     // Fixed angle terms
-    int fixed_stage;
+    int fixed_stage_;
     double fixed_q; //fixed angular position in degrees
 
     // Subject-specific settings
@@ -89,8 +94,11 @@ public:
     double kd_;
     double tick_max_;
     double ffRatio_;
+    double wRatio_;
+    double fRatio_;
     int controller_mode_;
     double vel_thresh_;
+    double kp_mod_;
 
     double control_freq;
     int current_mode;

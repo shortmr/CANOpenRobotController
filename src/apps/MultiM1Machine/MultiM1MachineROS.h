@@ -23,6 +23,7 @@
 #include "RobotM1.h"
 #include "ros/ros.h"  // This state machine requires ROS
 #include <CORC/JointScaled32.h>
+#include <CORC/InteractionMode.h>
 #include <CORC/SetOffset.h>
 
 class MultiM1MachineROS {
@@ -48,6 +49,9 @@ public:
     Eigen::VectorXd jointPositionScaled_;
     Eigen::VectorXd jointTorqueScaled_;
 
+    int interactionMode_;
+    int referenceLimb_;
+
 private:
     // Subscriber and callback func for joint command subscription
     ros::Subscriber jointCommandSubscriber_;
@@ -64,6 +68,10 @@ private:
     // Subscriber and callback func emg data
     ros::Subscriber emgDataSubscriber_;
     void emgDataCallback(const std_msgs::Float64MultiArray &msg);
+
+    // Subscriber and callback func emg data
+    ros::Subscriber interactionModeSubscriber_;
+    void interactionModeCallback(const CORC::InteractionMode &msg);
 
     // Publisher and message for joint state publication
     ros::Publisher jointStatePublisher_;

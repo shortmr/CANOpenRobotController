@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="robot_name" default="m1_x"/>
+
+    <!-- CORC M1_X -->
+    <node name="$(arg robot_name)" pkg="CORC" type="MultiM1Machine_APP" output="screen" args="-can can0"/>
+</launch>

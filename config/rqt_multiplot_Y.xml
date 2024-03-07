@@ -39,7 +39,7 @@
                                     <type>geometry_msgs/WrenchStamped</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>wrench/torque/z</field>
+                                    <field>wrench/torque/x</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1.3</absolute_maximum>
@@ -64,7 +64,7 @@
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
                                 <pen_style>1</pen_style>
-                                <pen_width>7</pen_width>
+                                <pen_width>2</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
                                 <sticks_baseline>0</sticks_baseline>
@@ -72,7 +72,7 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Interaction torque</title>
+                            <title>Interaction torque filtered</title>
                         </curve_0>
                     </curves>
                     <legend>

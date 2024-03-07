@@ -213,6 +213,7 @@ void MultiControllerState::during(void) {
         // apply PID for feedback control
         if (controller_mode_ == 4) {
             error = tau_s_filtered(0) + spring_tor;  // interaction torque error (desired interaction torque is spring_tor)
+//            std::cout << error << std::endl;
         }
         else if (controller_mode_ == 5) {
             error = tau_s_filtered(0);  // interaction torque error (desired interaction torque is 0)
@@ -460,7 +461,7 @@ void MultiControllerState::during(void) {
         }
     }
     // Read setDigitalOut signal
-    // digitalInValue_ = robot_->getDigitalIn();
+//     digitalInValue_ = robot_->getDigitalIn();
 }
 
 void MultiControllerState::exit(void) {
@@ -470,6 +471,7 @@ void MultiControllerState::exit(void) {
 }
 
 void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config, uint32_t level) {
+
     // Update PID and feedforward gains from RQT GUI
     if (m1Params.configFlag) {
         kp_ = config.kp;

@@ -182,6 +182,14 @@ int JointM1::getDigitalIn() {
     return drive->getDigitalIn();
 }
 
+bool JointM1::checkCalibrationApplied() {
+    calibrated = ((KincoDrive *)drive)->checkCalibrationApplied();
+    if (calibrated) {
+        q0 = 0.0;
+    }
+    return calibrated;
+}
+
 void JointM1::setPositionOffset(double offset) {
     ((KincoDrive *)drive)->setPositionOffset(jointPositionToDriveUnit(offset));
 //    q0 = driveUnitToJointPosition(drive->getPos());

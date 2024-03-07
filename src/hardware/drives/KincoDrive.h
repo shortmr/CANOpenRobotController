@@ -15,6 +15,12 @@
 #define KINCODRIVE_H_INCLUDED
 #include "Drive.h"
 
+/* Maximum size of Object Dictionary variable transmitted via SDO. */
+#ifndef CO_COMMAND_SDO_BUFFER_SIZE
+#define CO_COMMAND_SDO_BUFFER_SIZE 100000
+#define STRING_BUFFER_SIZE (CO_COMMAND_SDO_BUFFER_SIZE * 4 + 100)
+#endif
+
 /**
  * \brief An implementation of the Drive Object, specifically for Kinco-branded devices (currently used on the X2 Exoskeleton)
  *
@@ -142,6 +148,8 @@ class KincoDrive : public Drive {
          * \return false if not
          */
     bool setPositionOffset(int offset);
+
+    bool checkCalibrationApplied();
 };
 
 #endif

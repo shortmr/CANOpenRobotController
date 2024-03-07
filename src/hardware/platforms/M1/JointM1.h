@@ -88,6 +88,12 @@ class JointM1 : public Joint {
     virtual int getDigitalIn();
 
     /**
+           * Returns whether position calibration has been applied
+           * \return Bool
+           */
+    bool checkCalibrationApplied();
+
+    /**
           * \brief Set the current position as offset
           *
           * /param offset, joint position value to be at the homing position [rad]

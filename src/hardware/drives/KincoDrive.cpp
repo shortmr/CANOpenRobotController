@@ -242,6 +242,12 @@ std::vector<std::string> KincoDrive::generateTorqueControlConfigSDO() {
     sstream << "[1] " << NodeID << " start";
     CANCommands.push_back(sstream.str());
     sstream.str(std::string());
+
+    //Set control word to power up (enable)
+    sstream << "[1] " << NodeID << " write 0x6040 0 u16 0x0f";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+
     //enable Torque Control mode
     sstream << "[1] " << NodeID << " write 0x6060 0 i8 4";
     CANCommands.push_back(sstream.str());
@@ -330,7 +336,7 @@ std::vector<std::string> KincoDrive::generatePositionOffsetSDO(int offset) {
     std::stringstream sstream;
 
     // set mode of operation
-    sstream << "[1] " << NodeID << " write 0x6060 0 i8 6";
+    sstream << "[1] " << NodeID << " write 0x6060 0 i8 6"; //0x6060 0 i8 4";
     CANCommands.push_back(sstream.str());
     sstream.str(std::string());
     // set the home offset
@@ -345,14 +351,38 @@ std::vector<std::string> KincoDrive::generatePositionOffsetSDO(int offset) {
     sstream << "[1] " << NodeID << " write 0x6040 0 u16 0x1f";
     CANCommands.push_back(sstream.str());
     sstream.str(std::string());
+    // set homing acceleration from 2000 to 2001 (unused) to indicate system is calibrated
+    sstream << "[1] " << NodeID << " write 0X609A 0 u32 0x2001";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
 
     return CANCommands;
 }
 
 bool KincoDrive::setPositionOffset(int offset) {
     spdlog::debug("NodeID {} Setting Position Offset", NodeID);
-
     sendSDOMessages(generatePositionOffsetSDO(offset));
 
     return true;
+}
+
+bool KincoDrive::checkCalibrationApplied() {
+    // Define Vector to be returned as part of this method
+    std::vector<std::string> CANCommands;
+    // Define stringstream for ease of constructing hex strings
+    std::stringstream sstream;
+    // Get the home offset
+    sstream << "[1] " << NodeID << " read 0X609A 0 u32 ";
+    CANCommands.push_back(sstream.str());
+    sstream.str(std::string());
+    std::string strCommand = CANCommands[0];
+    spdlog::trace(strCommand);
+
+    // Explicitly cast c++ string to from const char* to char* for use by cancomm function
+    char *SDO_Message = (char *)(strCommand.c_str());
+    char *returnMessage;
+    cancomm_socketFree(SDO_Message, &returnMessage);
+    std::string retMsg = returnMessage;
+
+    return ("[1] 0x00002001" == retMsg);
 }

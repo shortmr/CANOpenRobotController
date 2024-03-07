@@ -9,7 +9,9 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
 
     //Define the robot structure: each joint with limits and drive - TMH
     // JOINT 0 - the only joint in the case of M1
-    max_speed(0) = 360; // {radians}
+    max_pos(0) = 130 * d2r;
+    min_pos(0) =  10 * d2r;
+    max_speed(0) = 360; // {radians/s}
     tau_max(0) = 1.9 * 23;  // {Nm}
     LinkLengths(0) = 0.1;   // Link lengths used for kinematic models (in m)
     LinkMasses(0) = 0.5;    // Link masses used for gravity compensation (in kg)
@@ -95,7 +97,7 @@ RobotM1::~RobotM1() {
 }
 
 bool RobotM1::initialiseJoints() {
-    joints.push_back(new JointM1(0, -100, 100, 1, -max_speed(0), max_speed(0), -tau_max(0), tau_max(0), new KincoDrive(1), "q1"));
+    joints.push_back(new JointM1(0, min_pos(0), max_pos(0), 1, -max_speed(0), max_speed(0), -tau_max(0), tau_max(0), new KincoDrive(1), "q1"));
     return true;
 }
 
@@ -287,7 +289,7 @@ void RobotM1::updateRobot() {
     // filter interaction torque measurements
     filter_tau_s(alpha_sensor_);
 
-    // check for error in torque/position/velocity measurements
+    // check for error in torque/position/velocity measurements and calibration
     if (tauCheck_) {
         if (checkNum_ == 0) {
             tau_prev_ = tau(0);
@@ -302,6 +304,13 @@ void RobotM1::updateRobot() {
                 }
                 else {
                     std::cout << "M1: Joint " << 0 << " PASS (sensor readings with mean diff: " << tauDiff_/333 << ")" << std::endl;
+                }
+
+                if (checkCalibrationApplied()){
+                    std::cout << "M1: Joint " << 0 << " is calibrated" << std::endl;
+                }
+                else {
+                    std::cout << "M1: Joint " << 0 << " is NOT calibrated" << std::endl;
                 }
             }
         }
@@ -321,6 +330,11 @@ bool RobotM1::setDigitalOut(int digital_out) {
 
 int RobotM1::getDigitalIn() {
     return ((JointM1 *)joints[0])->getDigitalIn();
+}
+
+bool RobotM1::checkCalibrationApplied() {
+    calibrated = ((JointM1 *)joints[0])->checkCalibrationApplied();
+    return calibrated;
 }
 
 setMovementReturnCode_t RobotM1::safetyCheck() {
@@ -622,7 +636,6 @@ setMovementReturnCode_t RobotM1::setJointTor_comp(JointVec tor, double fRatio, d
         // original implementation
         if (!staticFrictionFlag_) {
             // Feedforward wrist compensation (viscous friction only)
-//            tor_ff = f_d_*vel + i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_);
             tor_ff = fRatio*(f_d_*vel) +
                      wRatio*(i_sin_*sin(pos+t_bias_) + i_cos_*cos(pos+t_bias_));
         }

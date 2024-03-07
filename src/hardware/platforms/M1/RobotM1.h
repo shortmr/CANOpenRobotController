@@ -116,6 +116,8 @@ class RobotM1 : public Robot {
     JointVec g;  //Gravitational constant: remember to change it if using the robot on the Moon or another planet
     JointVec max_speed; // {radians}
     JointVec tau_max;  // {Nm}
+    JointVec min_pos; // {radians}
+    JointVec max_pos; // {radians}
     /*!< Conversion factors between degrees and radians */
     double d2r, r2d;
 
@@ -290,6 +292,8 @@ public:
            * \return Digital in state from the motor drive
            */
     virtual int getDigitalIn();
+
+    bool checkCalibrationApplied();
 
     /**
        * Returns the value of vertical bias from parameter list

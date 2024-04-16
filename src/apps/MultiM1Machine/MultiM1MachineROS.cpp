@@ -39,7 +39,6 @@ void MultiM1MachineROS::initialize() {
     emgData_ = Eigen::VectorXd::Zero(muscleCount_);
 
     calibrateForceSensorsService_ = nodeHandle_->advertiseService("calibrate_force_sensors", &MultiM1MachineROS::calibrateForceSensorsCallback, this);
-    setTrackingOffsetService_ = nodeHandle_->advertiseService("set_tracking_offset", &MultiM1MachineROS::setTrackingOffsetCallback, this);
 }
 
 void MultiM1MachineROS::update() {
@@ -69,12 +68,13 @@ void MultiM1MachineROS::publishJointStates() {
 void MultiM1MachineROS::publishInteractionForces() {
     Eigen::VectorXd interactionTorque = robot_->getJointTor_s(); // with weight compensation
     Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_s_filt(); // filtered with weight compensation
+    double torqueOffset = robot_->getTorqueOffset(); // torque offset in Nm
     ros::Time time = ros::Time::now();
 
     interactionWrenchMsg_.header.stamp = time;
     interactionWrenchMsg_.header.frame_id = "interaction_torque_sensor";
     interactionWrenchMsg_.wrench.torque.y = robot_->tau_spring[0];
-    interactionWrenchMsg_.wrench.torque.z = -interactionTorqueFiltered[0]; // -interactionTorque[0]
+    interactionWrenchMsg_.wrench.torque.z = interactionTorqueFiltered[0]-torqueOffset; // -interactionTorqueFiltered[0]
     interactionWrenchMsg_.wrench.torque.x = interactionTorque[0];
 
     interactionWrenchPublisher_.publish(interactionWrenchMsg_);
@@ -179,10 +179,4 @@ bool MultiM1MachineROS::calibrateForceSensorsCallback(std_srvs::Trigger::Request
     // only use when shaft is not bearing load (pedal)
     res.success = robot_->calibrateForceSensors();
     return true;
-}
-
-bool MultiM1MachineROS::setTrackingOffsetCallback(CORC::SetOffset::Request &req, CORC::SetOffset::Response &res) {
-    robot_->setPositionOffset(req.q);
-    res.q_new = r2d*(robot_->getPositionOffset());
-    return res.q_new;
 }

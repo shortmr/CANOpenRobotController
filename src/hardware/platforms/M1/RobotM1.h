@@ -334,16 +334,15 @@ public:
     void setTorqueThresh(double torqueThresh);
     void setMotorTorqueCutOff(double cutOff);
     void setSensorCutOff(double cutOff);
-    void setMaxTorqueDF(double tau_filt);
-    void setMaxTorquePF(double tau_filt);
-    void setMaxAngleDF(double q_current);
-    void setMaxAnglePF(double q_current);
+    void setMaxTorques(double tau_df, double tau_pf);
+    void setMaxAngles(double q_df, double q_pf, double q_center);
     void setStaticFrictionFlag(double multiplier);
-    void setStimDF(double stim_amp);
-    void setStimPF(double stim_amp);
+    void setStimAmplitude(double stim_df, double stim_pf);
     void setStimCalibrate(bool stim_calib);
     void setTorqueOffset(double tau_filt);
-    void setPositionOffset(double q_offset);
+
+    void disableJointPositionSafety();
+    void enableJointPositionSafety();
 
     void printStatus();
     void printJointStatus();

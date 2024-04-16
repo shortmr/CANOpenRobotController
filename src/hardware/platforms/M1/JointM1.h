@@ -102,6 +102,14 @@ class JointM1 : public Joint {
          * \return false if not
          */
     void setPositionOffset(double offset);
+
+    /**
+      * \brief Set the position safety limits
+      *
+      * /param lower and upper limits, joint position values [rad]
+      *
+     */
+    void setSafetyPositionLimits(double min, double max);
 };
 
 #endif

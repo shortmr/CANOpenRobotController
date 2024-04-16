@@ -21,16 +21,16 @@ JointM1::JointM1(int jointID, double q_min, double q_max, short int sign_, doubl
     double correctionFactor = 1875./512;   //magic number
     encoderCounts = 10000;          //Encoder counts per turn
     reductionRatio = 69;            // Reduction ratio due to gear head, seems right, but not sure yet
-    d2j_Pos = round2radian * sign / (double)encoderCounts / reductionRatio;   // Drive to Joint unit conversion for position, in radian
-    j2d_Pos = sign * (double)encoderCounts * reductionRatio / round2radian;   // Joint to Drive unit conversion for position, in encoder count
+    d2j_Pos = round2radian * 1 / (double)encoderCounts / reductionRatio;   // Drive to Joint unit conversion for position, in radian
+    j2d_Pos = 1 * (double)encoderCounts * reductionRatio / round2radian;   // Joint to Drive unit conversion for position, in encoder count
 
-    d2j_Vel = round2radian * sign / 60. / (double)encoderCounts / reductionRatio * correctionFactor;   // Drive to Joint unit conversion for velocity, reading is encoder count per minutes
-    j2d_Vel = sign * 60. * (double)encoderCounts * reductionRatio/round2radian / correctionFactor;   // Joint to Drive unit conversion for velocity, command input is round per second
+    d2j_Vel = round2radian * 1 / 60. / (double)encoderCounts / reductionRatio * correctionFactor;   // Drive to Joint unit conversion for velocity, reading is encoder count per minutes
+    j2d_Vel = 1 * 60. * (double)encoderCounts * reductionRatio/round2radian / correctionFactor;   // Joint to Drive unit conversion for velocity, command input is round per second
 
     Ipeak = 45.0;                   //Kinco FD123 peak current
     motorTorqueConstant = 0.132;    //SMC60S-0020 motor torque constant
-    d2j_Trq = sign / Ipeak / 1.414 * motorTorqueConstant * reductionRatio;   // Drive to Joint unit conversion for torque
-    j2d_Trq = sign * Ipeak * 1.414 / motorTorqueConstant / reductionRatio;   // Joint to Drive unit conversion for torque
+    d2j_Trq = 1 / Ipeak / 1.414 * motorTorqueConstant * reductionRatio;   // Drive to Joint unit conversion for torque
+    j2d_Trq = 1 * Ipeak * 1.414 / motorTorqueConstant / reductionRatio;   // Joint to Drive unit conversion for torque
 
     spdlog::debug("Joint ID {} Created", this->id);
 }
@@ -100,11 +100,11 @@ setMovementReturnCode_t JointM1::safetyCheck() {
 // including position command, velocity command, torque command
 setMovementReturnCode_t JointM1::setPosition(double qd) {
     if(calibrated) {
-        if(qd >= qMin  &&  qd <= qMax) {
+        if(sign*qd >= qMin  &&  sign*qd <= qMax) {
             return Joint::setPosition(qd);
         }
         else {
-            spdlog::debug("Position out of bound: {}", qd);
+            spdlog::debug("Position out of bound: {}", r2d*sign*qd);
             return OUTSIDE_LIMITS;
         }
     }
@@ -116,21 +116,22 @@ setMovementReturnCode_t JointM1::setPosition(double qd) {
 setMovementReturnCode_t JointM1::setVelocity(double dqd) {
     //Position protection first only if calibrated
     if(calibrated) {
-        if(position <= qMin  &&  dqd < 0) {
+        if(sign*position <= qMin  &&  sign*dqd < 0) {
             dqd = 0;
         }
-        if(position >= qMax  &&  dqd > 0) {
+        if(sign*position >= qMax  &&  sign*dqd > 0) {
             dqd = 0;
         }
     }
 
     //Capped velocity
-    if(dqd>=dqMin && dqd<=dqMax) {
+    if(sign*dqd>=dqMin && sign*dqd<=dqMax) {
         return Joint::setVelocity(dqd);
         return SUCCESS;
 
     }
     else {
+        spdlog::debug("Velocity out of bound: {}", r2d*sign*dqd);
         return OUTSIDE_LIMITS;
     }
 }
@@ -138,18 +139,19 @@ setMovementReturnCode_t JointM1::setVelocity(double dqd) {
 setMovementReturnCode_t JointM1::setTorque(double taud) {
     //Position protection first only if calibrated
     if(calibrated) {
-        if(position <= qMin  &&  taud < 0) {
+        if(sign*position <= qMin  &&  sign*taud < 0) {
             taud = 0;
         }
-        if(position >= qMax  &&  taud > 0) {
+        if(sign*position >= qMax  &&  sign*taud > 0) {
             taud = 0;
         }
     }
     //Capped torque
-    if(taud >= tauMin  &&  taud <= tauMax) {
+    if(sign*taud >= tauMin  &&  sign*taud <= tauMax) {
         return Joint::setTorque(taud);
     }
     else {
+        spdlog::debug("Torque out of bound: {}", sign*taud);
         return OUTSIDE_LIMITS;
     }
 }
@@ -195,4 +197,9 @@ void JointM1::setPositionOffset(double offset) {
 //    q0 = driveUnitToJointPosition(drive->getPos());
     q0 = 0.0;
     calibrated = true;
+}
+
+void JointM1::setSafetyPositionLimits(double min, double max) {
+    qMin = min;
+    qMax = max;
 }

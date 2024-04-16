@@ -26,6 +26,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <cmath>
 
 /**
  * \brief A multi purpose state with different controllers implemented

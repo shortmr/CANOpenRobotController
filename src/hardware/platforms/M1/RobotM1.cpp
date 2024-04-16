@@ -97,7 +97,7 @@ RobotM1::~RobotM1() {
 }
 
 bool RobotM1::initialiseJoints() {
-    joints.push_back(new JointM1(0, min_pos(0), max_pos(0), 1, -max_speed(0), max_speed(0), -tau_max(0), tau_max(0), new KincoDrive(1), "q1"));
+    joints.push_back(new JointM1(0, min_pos(0), max_pos(0), limb_sign_, -max_speed(0), max_speed(0), -tau_max(0), tau_max(0), new KincoDrive(1), "q1"));
     return true;
 }
 
@@ -734,20 +734,9 @@ void RobotM1::setSensorCutOff(double cutOff) {
     alpha_sensor_ = (2*M_PI*sensorCutOff_/controlFreq_)/(2*M_PI*sensorCutOff_/controlFreq_+1);
 }
 
-void RobotM1::setMaxTorqueDF(double tau_filt) {
-    tau_lim_[0] = tau_filt;
-}
-
-void RobotM1::setMaxTorquePF(double tau_filt) {
-    tau_lim_[1] = tau_filt;
-}
-
-void RobotM1::setStimDF(double stim_amp) {
-    stim_df_ = stim_amp;
-}
-
-void RobotM1::setStimPF(double stim_amp) {
-    stim_pf_ = stim_amp;
+void RobotM1::setStimAmplitude(double stim_df, double stim_pf) {
+    stim_df_ = stim_df;
+    stim_pf_ = stim_pf;
 }
 
 void RobotM1::setStimCalibrate(bool stim_calib) {
@@ -758,16 +747,15 @@ void RobotM1::setTorqueOffset(double tau_filt) {
     tau_offset_ = tau_filt;
 }
 
-void RobotM1::setPositionOffset(double q_offset) {
-    q_offset_ = q_offset*d2r; // center angle in radians
+void RobotM1::setMaxTorques(double tau_df, double tau_pf) {
+    tau_lim_[0] = tau_df;
+    tau_lim_[1] = tau_pf;
 }
 
-void RobotM1::setMaxAngleDF(double q_current) {
-    q_lim_[0] = q_current*d2r; // maximum dorsiflexion angle in radians
-}
-
-void RobotM1::setMaxAnglePF(double q_current) {
-    q_lim_[1] = q_current*d2r; // maximum plantarflexion angle in radians
+void RobotM1::setMaxAngles(double q_df, double q_pf, double q_center) {
+    q_lim_[0] = q_df*d2r;
+    q_lim_[1] = q_pf*d2r;
+    q_offset_ = q_center*d2r;
 }
 
 double & RobotM1::getPositionOffset() {
@@ -801,6 +789,14 @@ void RobotM1::setStaticFrictionFlag(double multiplier) {
     } else {
         staticFrictionFlag_ = false;
     }
+}
+
+void RobotM1::disableJointPositionSafety() {
+    ((JointM1 *)joints[0])->setSafetyPositionLimits(-100, 100);
+}
+
+void RobotM1::enableJointPositionSafety() {
+    ((JointM1 *)joints[0])->setSafetyPositionLimits(min_pos(0), max_pos(0));
 }
 
 short RobotM1::sign(double val) { return (val > 0) ? 1 : ((val < 0) ? -1 : 0); }

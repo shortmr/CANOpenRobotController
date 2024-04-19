@@ -1,20 +1,20 @@
-config_flag: true # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
+config_flag: false # flag for manual setting of rqt gui parameters (dynamic_reconfigure)
 
 m1_x:
   id: ['ankleHRCEML: E']
   left: false # flag for left or right limb
   wrist: false # flag for wrist device
-  c0: [1.9] # coulomb friction constant of joint [Nm]
-  c1: [2.6] # viscous friction constant of joint [Nm/s]
+  c0: [1.8] # coulomb friction constant of joint [Nm]
+  c1: [2.5] # viscous friction constant of joint [Nm/s]
   c2: [0] # friction square root term
-  i_sin: [0.0] # inertia for sine term # 0.84
-  i_cos: [0.0] # inertia for cosine term # 0.41
+  i_sin: [0.94] # inertia for sine term
+  i_cos: [0.31] # inertia for cosine term
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad] -0.349, -0.707 -58
   force_sensor_scale_factor: [0.07] # scale factor for force calibration
   force_sensor_offset: [1500] # calibration offset for force sensor
   ff_ratio: [0.74] # scale factor for feedforward compensation
-  friction_ratio: [0.75] # scale factor for feedforward compensation
-  weight_ratio: [0.65] # scale factor for feedforward compensation
+  friction_ratio: [0.9] # scale factor for feedforward compensation
+  weight_ratio: [0.75] # scale factor for feedforward compensation
   kp: [1.5] # proportional term of PID controller
   kp_mod: [1.0] # multiplier for proportional term in the static region
   ki: [0.17] # integral term of PID controller
@@ -24,13 +24,12 @@ m1_x:
   sensor_cutoff_freq: [15.0] # cutoff frequency for lowpass filter for interaction torque, angle and velocity [Hz]
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
-  tracking_offset: [74]
-  tracking_df: [99]
-  tracking_pf: [48]
+  tracking_offset: [57.757] # center of range of motion [deg]
+  tracking_df: [93.909] # max range of motion angle [deg]
+  tracking_pf: [21.604] # min range of motion angle [deg]
   mvc_df: [20] # MVCT in dorsiflexion [Nm]
   mvc_pf: [30] # MVCT in plantarflexion [Nm]
   muscle_count: [4] # number of muscles for EMG recordings
-
 
 #m1_x:
 #  id: ['ankleHRCEML: A']

@@ -24,6 +24,7 @@
 #include "ros/ros.h"  // This state machine requires ROS
 #include <CORC/JointScaled32.h>
 #include <CORC/InteractionMode.h>
+#include <CORC/SetMVC.h>
 
 class MultiM1MachineROS {
 public:
@@ -93,6 +94,10 @@ private:
     ros::ServiceServer calibrateForceSensorsService_;
     bool calibrateForceSensorsCallback(std_srvs::Trigger::Request& req,
                                        std_srvs::Trigger::Response& res);
+
+    ros::ServiceServer setMVCService_;
+    bool setMVCCallback(CORC::SetMVC::Request& req,
+                        CORC::SetMVC::Response& res);
 
     // Parameters for robot name and muscle count
     RobotParameters m1Params;

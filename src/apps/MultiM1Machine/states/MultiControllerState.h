@@ -56,10 +56,15 @@ public:
     double fixed_q; //fixed angular position in degrees
 
     // Subject-specific settings
-    bool set_rom_ = false;
-    double rom_df = 0;
-    double rom_pf = 0;
-    double rom_center = 45;
+    bool set_arom_ = false;
+    bool set_prom_ = false;
+    double arom_df = 0;
+    double arom_pf = 0;
+    double arom_center = 45;
+
+    double prom_df = 0;
+    double prom_pf = 0;
+    double prom_center = 45;
 
     bool set_mvc_ = false;
     double mvc_df = 1;
@@ -94,7 +99,6 @@ public:
     double ki_;
     double kd_;
     double tick_max_;
-    double ffRatio_;
     double wRatio_;
     double fRatio_;
     int controller_mode_;

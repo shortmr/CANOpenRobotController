@@ -179,9 +179,9 @@ m1_y:
   sensor_cutoff_freq: [15.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz] (alt: 20)
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
-  tracking_offset: [76.2] # center of range of motion [deg]
-  tracking_df: [113.1] # max range of motion angle [deg]
-  tracking_pf: [39.29] # min range of motion angle [deg]
+  tracking_offset: [74]
+  tracking_df: [99]
+  tracking_pf: [48]
   mvc_df: [1] # MVCT in dorsiflexion [Nm]
   mvc_pf: [1] # MVCT in plantarflexion [Nm]
   muscle_count: [4] # number of muscles for EMG recordings
@@ -193,16 +193,16 @@ m1_y:
 #  c0: [1.6808] # coulomb friction constant of joint [Nm]
 #  c1: [2.2137] # viscous friction constant of joint [Nm/s]
 #  c2: [0] # friction square root term
-#  i_sin: [0.0] # inertia for sine term
-#  i_cos: [0.2] # inertia for cosine term # 0.07
-#  t_bias: [-1.5] # theta bias term and angle from vertical position to lower joint limit [rad]
+#  i_sin: [0.12] # inertia for sine term
+#  i_cos: [0.59] # inertia for cosine term # 0.07
+#  t_bias: [-1.25] # theta bias term and angle from vertical position to lower joint limit [rad]
 #  force_sensor_scale_factor: [0.07] # scale factor for force calibration
 #  force_sensor_offset: [ 1500 ] # calibration offset for force sensor
 #  ff_ratio: [0.25] # scale factor for feedforward compensation
-#  friction_ratio: [0.25] # scale factor for feedforward compensation
-#  weight_ratio: [0.0] # scale factor for feedforward compensation
-#  kp: [9.0] # proportional term of PID controller (alt: 5.5)
-#  kp_mod: [2.0] # multiplier for proportional term in the static region
+#  friction_ratio: [0.5] # scale factor for feedforward compensation
+#  weight_ratio: [1.0] # scale factor for feedforward compensation
+#  kp: [4.0] # proportional term of PID controller (alt: 5.5)
+#  kp_mod: [0.0] # multiplier for proportional term in the static region
 #  ki: [0.17] # integral term of PID controller
 #  kd: [0.0] # derivative term of PID controller (alt: 0.05)
 #  vel_thresh: [4.0] # velocity threshold for using dynamic friction compensation [deg/s]

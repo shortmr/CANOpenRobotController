@@ -12,7 +12,7 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     max_pos(0) = 130 * d2r;
     min_pos(0) =  10 * d2r;
     max_speed(0) = 360; // {radians/s}
-    tau_max(0) = 1.9 * 23;  // {Nm}
+    tau_max(0) = 4.0 * 23;  // {Nm}
     LinkLengths(0) = 0.1;   // Link lengths used for kinematic models (in m)
     LinkMasses(0) = 0.5;    // Link masses used for gravity compensation (in kg)
     CoGLengths(0) = 0.08;    // Length along link(s) to the Center og Gravity
@@ -31,6 +31,7 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     tau_s_filt_pre(0) = 0;
 
     q_lim_ = Eigen::VectorXd::Zero(2);
+    qp_lim_ = Eigen::VectorXd::Zero(2);
     tau_lim_ = Eigen::VectorXd::Zero(2);
 
     // Initializing the yaml parameters to zero
@@ -45,7 +46,6 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     m1Params.t_bias = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.force_sensor_scale_factor = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.force_sensor_offset = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
-    m1Params.ff_ratio = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.friction_ratio = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.weight_ratio = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.kp = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -57,9 +57,10 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     m1Params.sensor_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.motor_torque_cutoff_freq = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.tick_max = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
-    m1Params.tracking_offset = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.tracking_df = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.tracking_pf = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.passive_df = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
+    m1Params.passive_pf = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.mvc_df = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.mvc_pf = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     m1Params.muscle_count = Eigen::VectorXi::Zero(M1_NUM_JOINTS);
@@ -149,15 +150,16 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
        params[robotName]["force_sensor_scale_factor"].size() != M1_NUM_JOINTS ||
        params[robotName]["force_sensor_offset"].size() != M1_NUM_JOINTS ||
        params[robotName]["friction_ratio"].size() != M1_NUM_JOINTS || params[robotName]["weight_ratio"].size() != M1_NUM_JOINTS ||
-       params[robotName]["ff_ratio"].size() != M1_NUM_JOINTS || params[robotName]["kp"].size() != M1_NUM_JOINTS ||
+       params[robotName]["kp"].size() != M1_NUM_JOINTS || params[robotName]["kp_mod"].size() != M1_NUM_JOINTS ||
        params[robotName]["ki"].size() != M1_NUM_JOINTS || params[robotName]["kd"].size() != M1_NUM_JOINTS ||
        params[robotName]["vel_thresh"].size() != M1_NUM_JOINTS || params[robotName]["tau_thresh"].size() != M1_NUM_JOINTS ||
        params[robotName]["sensor_cutoff_freq"].size() != M1_NUM_JOINTS ||
        params[robotName]["motor_torque_cutoff_freq"].size() != M1_NUM_JOINTS ||
-       params[robotName]["tick_max"].size() != M1_NUM_JOINTS || params[robotName]["tracking_offset"].size() != M1_NUM_JOINTS ||
+       params[robotName]["tick_max"].size() != M1_NUM_JOINTS ||
        params[robotName]["tracking_df"].size() != M1_NUM_JOINTS || params[robotName]["tracking_pf"].size() != M1_NUM_JOINTS ||
+       params[robotName]["passive_df"].size() != M1_NUM_JOINTS || params[robotName]["passive_pf"].size() != M1_NUM_JOINTS ||
        params[robotName]["mvc_df"].size() != M1_NUM_JOINTS || params[robotName]["mvc_pf"].size() != M1_NUM_JOINTS ||
-       params[robotName]["muscle_count"].size() != M1_NUM_JOINTS || params[robotName]["kp_mod"].size() != M1_NUM_JOINTS) {
+       params[robotName]["muscle_count"].size() != M1_NUM_JOINTS) {
 
         spdlog::error("Parameter sizes are not consistent");
         spdlog::error("All parameters are zero !");
@@ -178,7 +180,6 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         m1Params.t_bias[i] = params[robotName]["t_bias"][i].as<double>();
         m1Params.force_sensor_scale_factor[i] = params[robotName]["force_sensor_scale_factor"][i].as<double>();
         m1Params.force_sensor_offset[i] = params[robotName]["force_sensor_offset"][i].as<double>();
-        m1Params.ff_ratio[i] = params[robotName]["ff_ratio"][i].as<double>();
         m1Params.friction_ratio[i] = params[robotName]["friction_ratio"][i].as<double>();
         m1Params.weight_ratio[i] = params[robotName]["weight_ratio"][i].as<double>();
         m1Params.kp[i] = params[robotName]["kp"][i].as<double>();
@@ -190,9 +191,10 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         m1Params.sensor_cutoff_freq[i] = params[robotName]["sensor_cutoff_freq"][i].as<double>();
         m1Params.motor_torque_cutoff_freq[i] = params[robotName]["motor_torque_cutoff_freq"][i].as<double>();
         m1Params.tick_max[i] = params[robotName]["tick_max"][i].as<double>();
-        m1Params.tracking_offset[i] = params[robotName]["tracking_offset"][i].as<double>();
         m1Params.tracking_df[i] = params[robotName]["tracking_df"][i].as<double>();
         m1Params.tracking_pf[i] = params[robotName]["tracking_pf"][i].as<double>();
+        m1Params.passive_df[i] = params[robotName]["passive_df"][i].as<double>();
+        m1Params.passive_pf[i] = params[robotName]["passive_pf"][i].as<double>();
         m1Params.mvc_df[i] = params[robotName]["mvc_df"][i].as<double>();
         m1Params.mvc_pf[i] = params[robotName]["mvc_pf"][i].as<double>();
         m1Params.muscle_count[i] = params[robotName]["muscle_count"][i].as<int>();
@@ -214,9 +216,11 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     f_s_ = m1Params.c0[0];
     f_d_ = m1Params.c1[0];
     c2_ = m1Params.c2[0];
-    q_offset_ = m1Params.tracking_offset[0]*d2r; // radians
     q_lim_[0] = m1Params.tracking_df[0]*d2r; // radians
     q_lim_[1] = m1Params.tracking_pf[0]*d2r; // radians
+    q_offset_ = 0.5*(q_lim_[0]+q_lim_[1]); // radians
+    qp_lim_[0] = m1Params.passive_df[0]*d2r; // radians
+    qp_lim_[1] = m1Params.passive_pf[0]*d2r; // radians
     tau_lim_[0] = m1Params.mvc_df[0]; // Nm
     tau_lim_[1] = m1Params.mvc_pf[0]; // Nm
     if (!m1Params.configFlag) {
@@ -701,7 +705,7 @@ void RobotM1::setVelThresh(double velThresh) {
     }
 }
 
-void RobotM1::setFrictionParams(double f_s, double f_d) {
+void RobotM1::setHysteresisFrictionParams(double f_s, double f_d) {
     f_s_upper_ = f_s;
     f_s_lower_ = -1*f_s; // flip sign of lower static friction
     f_d_up_ = f_d;
@@ -745,17 +749,40 @@ void RobotM1::setStimCalibrate(bool stim_calib) {
 
 void RobotM1::setTorqueOffset(double tau_filt) {
     tau_offset_ = tau_filt;
+    std::cout << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "torque_offset: [" << tau_filt << "]" << std::endl;
+    std::cout << std::endl;
 }
 
 void RobotM1::setMaxTorques(double tau_df, double tau_pf) {
-    tau_lim_[0] = tau_df;
-    tau_lim_[1] = tau_pf;
+    tau_lim_[0] = abs(tau_df);
+    tau_lim_[1] = abs(tau_pf);
+
+    std::cout << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "mvc_df: [" << tau_df << "] # MVCT in dorsiflexion [Nm]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "mvc_pf: [" << tau_pf << "] # MVCT in plantarflexion [Nm]" << std::endl;
+    std::cout << std::endl;
 }
 
-void RobotM1::setMaxAngles(double q_df, double q_pf, double q_center) {
+void RobotM1::setMaxActiveAngles(double q_df, double q_pf) {
     q_lim_[0] = q_df*d2r;
     q_lim_[1] = q_pf*d2r;
-    q_offset_ = q_center*d2r;
+    q_offset_ = 0.5*(q_df+q_pf)*d2r;
+
+    std::cout << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "tracking_df: [" << q_df  << "] # max range of motion angle [deg]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "tracking_pf: [" << q_pf  << "] # min range of motion angle [deg]" << std::endl;
+    std::cout << std::endl;
+}
+
+void RobotM1::setMaxPassiveAngles(double q_df, double q_pf) {
+    qp_lim_[0] = q_df*d2r;
+    qp_lim_[1] = q_pf*d2r;
+
+    std::cout << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "passive_df: [" << q_df  << "] # max passive range of motion angle [deg]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "passive_pf: [" << q_pf  << "] # min passive range of motion angle [deg]" << std::endl;
+    std::cout << std::endl;
 }
 
 double & RobotM1::getPositionOffset() {
@@ -766,8 +793,14 @@ double & RobotM1::getTorqueOffset() {
     return tau_offset_;
 }
 
-Eigen::VectorXd & RobotM1::getPositionLimits() {
-    return q_lim_;
+Eigen::VectorXd & RobotM1::getPositionLimits(int type) {
+    //active (0) or passive (1)
+    if (type == 0) {
+        return q_lim_;
+    }
+    else if (type == 1) {
+        return qp_lim_;
+    }
 }
 
 Eigen::VectorXd & RobotM1::getTorqueLimits() {

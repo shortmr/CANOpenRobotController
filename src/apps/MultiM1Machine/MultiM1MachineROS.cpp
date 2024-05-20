@@ -39,6 +39,7 @@ void MultiM1MachineROS::initialize() {
     emgData_ = Eigen::VectorXd::Zero(muscleCount_);
 
     calibrateForceSensorsService_ = nodeHandle_->advertiseService("calibrate_force_sensors", &MultiM1MachineROS::calibrateForceSensorsCallback, this);
+    setMVCService_ = nodeHandle_->advertiseService("set_mvcs", &MultiM1MachineROS::setMVCCallback, this);
 }
 
 void MultiM1MachineROS::update() {
@@ -107,7 +108,7 @@ void MultiM1MachineROS::publishJointScaled() {
     Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_s_filt(); // filtered with weight compensation
     Eigen::VectorXd jointPositions = robot_->getPosition(); // angular position in radians
     Eigen::VectorXd torqueLimits = robot_->getTorqueLimits(); // torque limits in Nm
-    Eigen::VectorXd positionLimits = robot_->getPositionLimits(); // angular position limits in radians
+    Eigen::VectorXd positionLimits = robot_->getPositionLimits(0); // angular position limits in radians
     Eigen::VectorXd jointVelocities = robot_->getVelocity(); // angular position in radians
     double torqueOffset = robot_->getTorqueOffset(); // torque offset in Nm
     double q_bias = robot_->t_bias_; // angle between lower joint limit and zero_calibration angle
@@ -179,4 +180,15 @@ bool MultiM1MachineROS::calibrateForceSensorsCallback(std_srvs::Trigger::Request
     // only use when shaft is not bearing load (pedal)
     res.success = robot_->calibrateForceSensors();
     return true;
+}
+
+bool MultiM1MachineROS::setMVCCallback(CORC::SetMVC::Request &req, CORC::SetMVC::Response &res) {
+    res.success = (req.tau_df != 0.0 && req.tau_pf != 0.0);
+    if (res.success) {
+        robot_->setMaxTorques(req.tau_df, req.tau_pf);
+    }
+    else {
+        std::cout << "MVC input error" << std::endl;
+    }
+    return res.success;
 }

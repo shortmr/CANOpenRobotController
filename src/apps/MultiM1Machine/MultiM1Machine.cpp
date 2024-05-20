@@ -91,7 +91,7 @@ void MultiM1Machine::init() {
     logHelper.add(multiM1MachineRos_->prbsPositionCommand_, "MM1_PRBS");
     logHelper.add(multiM1MachineRos_->emgData_, "MM1_EMG");
 
-    logHelper.add(robot_->getPositionLimits(), "PositionLimits");
+    logHelper.add(robot_->getPositionLimits(0), "PositionLimits");
     logHelper.add(robot_->getTorqueLimits(), "TorqueLimits");
     logHelper.add(multiM1MachineRos_->jointPositionScaled_, "JointPositionScaled");
     logHelper.add(multiM1MachineRos_->jointTorqueScaled_, "JointTorqueScaled");

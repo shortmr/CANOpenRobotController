@@ -60,7 +60,6 @@ struct RobotParameters {
     Eigen::VectorXd t_bias; // theta bias from vertical axis [rad]
     Eigen::VectorXd force_sensor_scale_factor; // scale factor for force calibration
     Eigen::VectorXd force_sensor_offset; // offset for torque sensor
-    Eigen::VectorXd ff_ratio; // scale factor for feedforward compensation
     Eigen::VectorXd friction_ratio; // scale factor for feedforward compensation
     Eigen::VectorXd weight_ratio; // scale factor for feedforward compensation
     Eigen::VectorXd kp; // proportional term of PID controller
@@ -72,9 +71,10 @@ struct RobotParameters {
     Eigen::VectorXd sensor_cutoff_freq; // cutoff frequency for interaction torque, position and velocity filter [Hz]
     Eigen::VectorXd motor_torque_cutoff_freq; // cutoff frequency for motor torque command filter [Hz]
     Eigen::VectorXd tick_max; // counter for integral term reset [s]
-    Eigen::VectorXd tracking_offset; // center of range of motion [deg]
     Eigen::VectorXd tracking_df; // range of motion [deg]
     Eigen::VectorXd tracking_pf; // range of motion [deg]
+    Eigen::VectorXd passive_df; // passive range of motion [deg]
+    Eigen::VectorXd passive_pf; // passive range of motion [deg]
     Eigen::VectorXd mvc_df; // maximum dorsiflexion torque [Nm]
     Eigen::VectorXd mvc_pf; // maximum plantarflexion torque [Nm]
     Eigen::VectorXi muscle_count; // number of EMG channels
@@ -160,6 +160,7 @@ class RobotM1 : public Robot {
     double q_offset_, q_df_, q_pf_;
 
     Eigen::VectorXd q_lim_;
+    Eigen::VectorXd qp_lim_;
     Eigen::VectorXd tau_lim_;
 
 public:
@@ -330,12 +331,13 @@ public:
 
     void setControlFreq(double controlFreq);
     void setVelThresh(double velThresh);
-    void setFrictionParams(double f_s, double f_d);
+    void setHysteresisFrictionParams(double f_s, double f_d);
     void setTorqueThresh(double torqueThresh);
     void setMotorTorqueCutOff(double cutOff);
     void setSensorCutOff(double cutOff);
     void setMaxTorques(double tau_df, double tau_pf);
-    void setMaxAngles(double q_df, double q_pf, double q_center);
+    void setMaxActiveAngles(double q_df, double q_pf);
+    void setMaxPassiveAngles(double q_df, double q_pf);
     void setStaticFrictionFlag(double multiplier);
     void setStimAmplitude(double stim_df, double stim_pf);
     void setStimCalibrate(bool stim_calib);
@@ -365,7 +367,7 @@ public:
 
     double& getPositionOffset();
     double& getTorqueOffset();
-    Eigen::VectorXd& getPositionLimits();
+    Eigen::VectorXd& getPositionLimits(int type);
     Eigen::VectorXd& getTorqueLimits();
 
     void filter_q(double alpha_q);

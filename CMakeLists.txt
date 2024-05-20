@@ -140,6 +140,7 @@ if(USE_ROS)
 				DIRECTORY srv
 				FILES
 				SetOffset.srv
+				SetMVC.srv
 		)
 
 		generate_messages(

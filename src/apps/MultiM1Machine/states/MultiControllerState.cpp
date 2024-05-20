@@ -28,9 +28,11 @@ void MultiControllerState::entry(void) {
     // Initialize static parameters (if configFlag is not set, bypass dynamic reconfigure for parameters)
     m1Params = robot_->sendRobotParams();
     v_bias = -1 * m1Params.t_bias[0] * 180. / M_PI;
-    rom_center = m1Params.tracking_offset[0];
-    rom_df = m1Params.tracking_df[0];
-    rom_pf = m1Params.tracking_pf[0];
+    arom_df = m1Params.tracking_df[0];
+    arom_pf = m1Params.tracking_pf[0];
+    arom_center = 0.5*(arom_df+arom_pf);
+    prom_df = m1Params.passive_df[0];
+    prom_pf = m1Params.passive_pf[0];
     mvc_df = m1Params.mvc_df[0];
     mvc_pf = m1Params.mvc_pf[0];
     if (!m1Params.configFlag) {
@@ -40,7 +42,6 @@ void MultiControllerState::entry(void) {
         kd_ = m1Params.kd[0];
         robot_->setMotorTorqueCutOff(m1Params.motor_torque_cutoff_freq[0]);
         robot_->setSensorCutOff(m1Params.sensor_cutoff_freq[0]);
-//        ffRatio_ = m1Params.ff_ratio[0];
         fRatio_ = m1Params.friction_ratio[0];
         wRatio_ = m1Params.weight_ratio[0];
         tick_max_ = m1Params.tick_max[0];
@@ -49,9 +50,6 @@ void MultiControllerState::entry(void) {
     }
     robot_->initTorqueControl();
     robot_->tau_spring[0] = 0;   // for ROS publish only
-
-    //robot_->applyCalibration();
-    //robot_->calibrateForceSensors();
 
     // Interaction torque control vectors
     q = Eigen::VectorXd::Zero(1);
@@ -158,10 +156,10 @@ void MultiControllerState::during(void) {
         JointVec q_cmd;
         q_cmd = multiM1MachineRos_->jointPositionCommand_;
         if (q_cmd(0) > -0.75 && q_cmd(0) < 0.75) {
-            q_cmd(0) = r2d*q_cmd(0) + rom_center;
+            q_cmd(0) = r2d*q_cmd(0) + arom_center;
         }
         else {
-            q_cmd(0) = rom_center;
+            q_cmd(0) = arom_center;
             std::cout << "Position command out of range" << std::endl;
         }
         if(robot_->setJointPos(q_cmd) != SUCCESS){
@@ -195,12 +193,12 @@ void MultiControllerState::during(void) {
 
         // get position and check for ROM update
         q = robot_->getJointPos(); //degrees
-        if (set_rom_) {
-            if (q(0) > rom_df) {
-                rom_df = q(0);
+        if (set_arom_) {
+            if (q(0) > arom_df) {
+                arom_df = q(0);
             }
-            if (q(0) < rom_pf) {
-                rom_pf = q(0);
+            if (q(0) < arom_pf) {
+                arom_pf = q(0);
             }
         }
 
@@ -280,16 +278,16 @@ void MultiControllerState::during(void) {
         if (fixed_stage_ == 2) {
             // set fixed center angle
             JointVec q_t;
-            q_t(0) = rom_center;
+            q_t(0) = arom_center;
             if(robot_->setJointPos(q_t) != SUCCESS){
                 std::cout << "Error: " << std::endl;
             }
 
             // monitor position
             q = robot_->getJointPos();
-            if (abs(q(0)-rom_center)<0.001){
+            if (abs(q(0)-arom_center)<0.001){
                 robot_->initVelocityControl();
-                std::cout << "Holding user position (" << rom_center << " deg) with zero velocity" << std::endl;
+                std::cout << "Holding user position (" << arom_center << " deg) with zero velocity" << std::endl;
                 fixed_stage_ = 3;
             }
             else {
@@ -302,7 +300,7 @@ void MultiControllerState::during(void) {
             // monitor position and velocity
             q = robot_->getJointPos();
             dq = robot_->getJointVel();
-            if ((dq(0) < 0.0 && q(0) < rom_pf) || (dq(0) > 0.0 && q(0) > rom_df)) {
+            if ((dq(0) < 0.0 && q(0) < arom_pf) || (dq(0) > 0.0 && q(0) > arom_df)) {
                 robot_->initTorqueControl();
                 std::cout << "Error: outside of ROM limits" << std::endl;
                 fixed_stage_ = 4;
@@ -335,13 +333,13 @@ void MultiControllerState::during(void) {
         JointVec dq_t = multiM1MachineRos_->jointVelocityCommand_;
         // monitor joint angle
         q = robot_->getJointPos();
-        if (set_rom_) {
+        if (set_prom_) {
             robot_->printJointStatus();
-            if (q(0) > rom_df) {
-                rom_df = q(0);
+            if (q(0) > prom_df) {
+                prom_df = q(0);
             }
-            if (q(0) < rom_pf) {
-                rom_pf = q(0);
+            if (q(0) < prom_pf) {
+                prom_pf = q(0);
             }
         }
         else {
@@ -469,7 +467,7 @@ void MultiControllerState::during(void) {
         q = robot_->getJointPos();
         if (abs(dq_t(0)) > 0.0) {
             robot_->printJointStatus();
-            if ((dq_t(0) < 0.0 && q(0) < rom_pf) || (dq_t(0) > 0.0 && q(0) > rom_df)) {
+            if ((dq_t(0) < 0.0 && q(0) < prom_pf) || (dq_t(0) > 0.0 && q(0) > prom_df)) {
                 dq_t(0) = 0.0;
             }
         }
@@ -501,14 +499,13 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         robot_->setMotorTorqueCutOff(config.motor_torque_cutoff_freq);
         robot_->setSensorCutOff(config.sensor_cutoff_freq);
 
-//        ffRatio_ = config.ff_ratio;
         fRatio_ = config.friction_ratio;
         wRatio_ = config.weight_ratio;
         kp_mod_ = config.kp_mod;
         robot_->setStaticFrictionFlag(kp_mod_);
 
         // Hysteresis friction
-        robot_->setFrictionParams(config.f_s_hys, config.f_d_hys);
+        robot_->setHysteresisFrictionParams(config.f_s_hys, config.f_d_hys);
 
         if(tick_max_ != config.tick_max)
         {
@@ -523,28 +520,39 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
     robot_->setStimAmplitude(config.stim_amp_df, config.stim_amp_pf);
     robot_->setStimCalibrate(config.stim_calibrate);
 
-    // Switch between ROM measurement
-    if(set_rom_!=config.set_rom) {
-        set_rom_ = config.set_rom;
-        if (!set_rom_) {
+    // Switch between AROM measurement
+    if(set_arom_!=config.set_arom) {
+        set_arom_ = config.set_arom;
+        if (!set_arom_) {
             // End measurement
-            if (rom_df == 0 && rom_pf == 90) {
-                std::cout << "ROM measurement error " << std::endl;
+            if (arom_df == 0 && arom_pf == 90) {
+                std::cout << "AROM measurement error " << std::endl;
+            } else {
+                arom_center = 0.5*(arom_df+arom_pf);
+                robot_->setMaxActiveAngles(arom_df, arom_pf);
             }
-            rom_center = 0.5*(rom_df+rom_pf);
-
-            std::cout << std::endl;
-            std::cout << std::setprecision(3) << std::fixed << "tracking_offset: [" << rom_center  << "] # center of range of motion [deg]" << std::endl;
-            std::cout << std::setprecision(3) << std::fixed << "tracking_df: [" << rom_df  << "] # max range of motion angle [deg]" << std::endl;
-            std::cout << std::setprecision(3) << std::fixed << "tracking_pf: [" << rom_pf  << "] # min range of motion angle [deg]" << std::endl;
-            std::cout << std::endl;
-
-            robot_->setMaxAngles(rom_df, rom_pf, rom_center);
         } else {
             std::cout << "Begin ROM measurement... " << std::endl;
-            rom_df = 0;
-            rom_pf = 90;
-            rom_center = 45;
+            arom_df = 0;
+            arom_pf = 90;
+            arom_center = 45;
+        }
+    }
+    // Switch between PROM measurement
+    if(set_prom_!=config.set_prom) {
+        set_prom_ = config.set_prom;
+        if (!set_prom_) {
+            // End measurement
+            if (prom_df == 0 && prom_pf == 90) {
+                std::cout << "ROM measurement error " << std::endl;
+            } else {
+                robot_->setMaxPassiveAngles(prom_df, prom_pf);
+            }
+        } else {
+            std::cout << "Begin ROM measurement... " << std::endl;
+            prom_df = 0;
+            prom_pf = 90;
+            prom_center = 45;
         }
     }
     // Switch between MVC measurement
@@ -552,10 +560,6 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         set_mvc_ = config.set_mvc;
         if (!set_mvc_) {
             // End measurement
-            std::cout << std::endl;
-            std::cout << std::setprecision(3) << std::fixed << "mvc_df: [" << mvc_df << "] # MVCT in dorsiflexion [Nm]" << std::endl;
-            std::cout << std::setprecision(3) << std::fixed << "mvc_pf: [" << abs(mvc_pf) << "] # MVCT in plantarflexion [Nm]" << std::endl;
-
             robot_->setMaxTorques(mvc_df,abs(mvc_pf));
         } else {
             std::cout << "Begin MVC measurement... " << std::endl;
@@ -568,9 +572,6 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         set_offset_ = config.set_offset;
         if (!set_offset_) {
             // End measurement
-            std::cout << std::endl;
-            std::cout << std::setprecision(3) << std::fixed << "torque_offset: " << (mvc_offset/n_offset) << std::endl;
-
             robot_->setTorqueOffset((mvc_offset/n_offset));
         } else {
             std::cout << "Begin offset measurement... " << std::endl;

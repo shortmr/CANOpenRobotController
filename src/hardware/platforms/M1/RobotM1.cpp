@@ -9,8 +9,6 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
 
     //Define the robot structure: each joint with limits and drive - TMH
     // JOINT 0 - the only joint in the case of M1
-    max_pos(0) = 130 * d2r;
-    min_pos(0) =  10 * d2r;
     max_speed(0) = 360; // {radians/s}
     tau_max(0) = 4.0 * 23;  // {Nm}
     LinkLengths(0) = 0.1;   // Link lengths used for kinematic models (in m)
@@ -203,11 +201,22 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     // Set type of friction compensation
     hysteresisFlag_ = false;
 
+    // Set whether device is for left or right side
     if (m1Params.leftFlag) {
         limb_sign_ = -1;
     }
     else {
         limb_sign_ = 1;
+    }
+
+    // Set whether device is for wrist or ankle
+    if (m1Params.wristFlag) {
+        max_pos(0) = 155 * d2r;
+        min_pos(0) =  5 * d2r;
+    }
+    else {
+        max_pos(0) = 130 * d2r;
+        min_pos(0) =  10 * d2r;
     }
 
     i_sin_ = m1Params.i_sin[0];

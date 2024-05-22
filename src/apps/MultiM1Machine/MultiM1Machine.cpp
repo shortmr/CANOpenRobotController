@@ -15,8 +15,12 @@ MultiM1Machine::MultiM1Machine(int argc, char *argv[]){
     // create robot
     robot_ = new RobotM1(robotName_);
 
+    // create new emg-imu storing data instances
+    trignoMultiEMG_ = new TrignoMultiEMG(N_EMG);
+    trignoMultiIMU_ = new TrignoMultiIMU(N_IMU);
+
     // Create ros object
-    multiM1MachineRos_ = new MultiM1MachineROS(robot_);
+    multiM1MachineRos_ = new MultiM1MachineROS(robot_, trignoMultiEMG_, trignoMultiIMU_);
 
     // Pass nodeHandle to the classes that use ROS features
     multiM1MachineRos_->setNodeHandle(nodeHandle);
@@ -89,7 +93,6 @@ void MultiM1Machine::init() {
     logHelper.add(multiM1MachineRos_->jointPositionCommand_, "MM1_DesiredJointPositions");
     logHelper.add(multiM1MachineRos_->interactionTorqueCommand_, "MM1_DesiredInteractionTorques");
     logHelper.add(multiM1MachineRos_->prbsPositionCommand_, "MM1_PRBS");
-    logHelper.add(multiM1MachineRos_->emgData_, "MM1_EMG");
 
     logHelper.add(robot_->getPositionLimits(0), "PositionLimits");
     logHelper.add(robot_->getTorqueLimits(), "TorqueLimits");
@@ -125,9 +128,9 @@ bool MultiM1Machine::configureMasterPDOs() {
  *
  */
 void MultiM1Machine::hwStateUpdate(void) {
-    robot_->updateRobot();
-    multiM1MachineRos_->update();
     time_ = (std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::steady_clock::now() - time0_).count()) / 1e6;
+    robot_->updateRobot();
+    multiM1MachineRos_->update(time_);
     ros::spinOnce();
 }

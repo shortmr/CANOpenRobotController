@@ -1,7 +1,9 @@
 #include "MultiM1MachineROS.h"
 
-MultiM1MachineROS::MultiM1MachineROS(RobotM1 *robot) {
+MultiM1MachineROS::MultiM1MachineROS(RobotM1 *robot, TrignoMultiEMG *trignoMultiEMG, TrignoMultiIMU *trignoMultiIMU) {
     robot_ = robot;
+    trignoMultiEMG_ = trignoMultiEMG;
+    trignoMultiIMU_ = trignoMultiIMU;
 }
 
 MultiM1MachineROS::~MultiM1MachineROS() {
@@ -18,12 +20,16 @@ void MultiM1MachineROS::initialize() {
     jointCommandSubscriber_ = nodeHandle_->subscribe("joint_commands", 1, &MultiM1MachineROS::jointCommandCallback, this);
     interactionTorqueCommandSubscriber_ = nodeHandle_->subscribe("interaction_effort_commands", 1, &MultiM1MachineROS::interactionTorqueCommandCallback, this);
     prbsCommandSubscriber_ = nodeHandle_->subscribe("prbs_commands", 1, &MultiM1MachineROS::prbsCommandCallback, this);
-    emgDataSubscriber_ = nodeHandle_->subscribe("emg_data", 1, &MultiM1MachineROS::emgDataCallback, this);
     interactionModeSubscriber_ = nodeHandle_->subscribe("interaction_mode", 1, &MultiM1MachineROS::interactionModeCallback, this);
     jointStatePublisher_ = nodeHandle_->advertise<sensor_msgs::JointState>("joint_states", 10);
     interactionWrenchPublisher_ = nodeHandle_->advertise<geometry_msgs::WrenchStamped>("interaction_wrench", 10);
     interactionScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("interaction_mvc", 10);
     jointScaledPublisher_ = nodeHandle_->advertise<CORC::JointScaled32>("joint_scaled", 10);
+
+    if(robot_->getRobotName() == "m1_x") {
+        trignoEMGPublisher_ = nodeHandle_->advertise<std_msgs::Float64MultiArray>("trigno_filtered_emgs", 1);
+        trignoEMGSubscriber_ = nodeHandle_->subscribe("trigno_emg", 1, &MultiM1MachineROS::trignoEMGCallback, this);
+    }
 
     jointPositionCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointVelocityCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -36,16 +42,19 @@ void MultiM1MachineROS::initialize() {
 
     m1Params = robot_->sendRobotParams();
     muscleCount_ = m1Params.muscle_count[0];
-    emgData_ = Eigen::VectorXd::Zero(muscleCount_);
 
     calibrateForceSensorsService_ = nodeHandle_->advertiseService("calibrate_force_sensors", &MultiM1MachineROS::calibrateForceSensorsCallback, this);
     setMVCService_ = nodeHandle_->advertiseService("set_mvcs", &MultiM1MachineROS::setMVCCallback, this);
 }
 
-void MultiM1MachineROS::update() {
+void MultiM1MachineROS::update(double time) {
+    time_ = time;
     publishJointStates();
     publishInteractionForces();
     publishJointScaled();
+    if(robot_->getRobotName() == "m1_x") {
+        publishTrignoFilteredEMGs();
+    }
 }
 
 void MultiM1MachineROS::publishJointStates() {
@@ -138,6 +147,19 @@ void MultiM1MachineROS::publishJointScaled() {
     jointScaledPublisher_.publish(jointScaledMsg_);
 }
 
+void MultiM1MachineROS::publishTrignoFilteredEMGs() {
+    std_msgs::Float64MultiArray emgMsg;
+    emgMsg.data.resize(N_EMG);
+
+    std::vector<double> meanEMGVector = trignoMultiEMG_->getDownSampledMultiEMG();
+
+    for(int i = 0; i< N_EMG; i++){
+        emgMsg.data[i] = meanEMGVector[i];
+    }
+
+    trignoEMGPublisher_.publish(emgMsg);
+}
+
 void MultiM1MachineROS::setNodeHandle(ros::NodeHandle &nodeHandle) {
     nodeHandle_ = &nodeHandle;
 }
@@ -165,10 +187,25 @@ void MultiM1MachineROS::prbsCommandCallback(const geometry_msgs::Vector3 &msg) {
     }
 }
 
-void MultiM1MachineROS::emgDataCallback(const std_msgs::Float64MultiArray &msg) {
-    for(int i=0; i<muscleCount_; i++){
-        emgData_[i] = msg.data[i];
+void MultiM1MachineROS::trignoEMGCallback(const trigno_msgs::trignoMultiEMG &msg) {
+
+    trignoMultiEMG_->clearMultiEMGInstances();
+    // msg include data from all sensors, loop each one of them
+    for(auto indivSensorMsg : msg.trigno_emg){
+        double start_time = indivSensorMsg.start_time;
+        std::string emg_pos = indivSensorMsg.emg_pos;
+        int emg_id= indivSensorMsg.emg_id;
+
+        std::vector<double> emg;
+        for(const float& dataPoint : indivSensorMsg.emg){
+            emg.push_back(dataPoint);
+        }
+
+        trignoMultiEMG_->addEMGSensor(start_time, emg_pos, emg_id, emg);
     }
+
+    trignoMultiEMG_->log(time_);
+
 }
 
 void MultiM1MachineROS::interactionModeCallback(const CORC::InteractionMode &msg) {

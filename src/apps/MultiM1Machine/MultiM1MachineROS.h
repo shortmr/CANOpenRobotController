@@ -26,19 +26,9 @@
 #include <CORC/InteractionMode.h>
 #include <CORC/SetMVC.h>
 
-#include "trigno/TrignoMultiEMG.h"
-#include "trigno/TrignoMultiIMU.h"
-#include <trigno_msgs/trignoMultiIMU.h>
-#include <trigno_msgs/trignoMultiEMG.h>
-#include <trigno_msgs/trignoIMU.h>
-#include <trigno_msgs/trignoEMG.h>
-
-constexpr int N_EMG = 4;
-constexpr int N_IMU = 4;
-
 class MultiM1MachineROS {
 public:
-    MultiM1MachineROS(RobotM1 *robot, TrignoMultiEMG *trignoMultiEMG, TrignoMultiIMU *trignoMultiIMU);
+    MultiM1MachineROS(RobotM1 *robot);
     ~MultiM1MachineROS();
 
     void update(double time);
@@ -46,7 +36,6 @@ public:
     void publishInteractionForces(void);
     void publishInteractionScaled(void);
     void publishJointScaled(void);
-    void publishTrignoFilteredEMGs();
     void initialize();
     void setNodeHandle(ros::NodeHandle& nodeHandle);
 
@@ -79,13 +68,6 @@ private:
     ros::Subscriber interactionModeSubscriber_;
     void interactionModeCallback(const CORC::InteractionMode &msg);
 
-    // Subscriber and callback func emg data
-    // it receive messages in composite by array of multiple (variable lenght) trignoEMG messages
-    // each trignoEMG message brings:  start_time [float64], emg_pos [string], emg_id [int16], emg [float64[]]
-    // emg is an array the emg values containing the last N (TODO) emg reading (collected at 2000Hz)
-    ros::Subscriber trignoEMGSubscriber_; // trigno EMG subscriber
-    void trignoEMGCallback(const trigno_msgs::trignoMultiEMG &msg);
-
     // Publisher and message for joint state publication
     ros::Publisher jointStatePublisher_;
     sensor_msgs::JointState jointStateMsg_;
@@ -102,13 +84,7 @@ private:
     ros::Publisher jointScaledPublisher_;
     CORC::JointScaled32 jointScaledMsg_;
 
-    // Publisher and message for EMG data
-    ros::Publisher trignoEMGPublisher_;
-    trigno_msgs::trignoMultiEMG trignoMultiEMGMsg_;
-
     RobotM1 *robot_;
-    TrignoMultiEMG *trignoMultiEMG_;
-    TrignoMultiIMU *trignoMultiIMU_;
 
     ros::ServiceServer calibrateForceSensorsService_;
     bool calibrateForceSensorsCallback(std_srvs::Trigger::Request& req,

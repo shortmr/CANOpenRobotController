@@ -1,9 +1,7 @@
 #include "MultiM1MachineROS.h"
 
-MultiM1MachineROS::MultiM1MachineROS(RobotM1 *robot, TrignoMultiEMG *trignoMultiEMG, TrignoMultiIMU *trignoMultiIMU) {
+MultiM1MachineROS::MultiM1MachineROS(RobotM1 *robot) {
     robot_ = robot;
-    trignoMultiEMG_ = trignoMultiEMG;
-    trignoMultiIMU_ = trignoMultiIMU;
 }
 
 MultiM1MachineROS::~MultiM1MachineROS() {
@@ -26,11 +24,6 @@ void MultiM1MachineROS::initialize() {
     interactionScaledPublisher_ = nodeHandle_->advertise<geometry_msgs::Point32>("interaction_mvc", 10);
     jointScaledPublisher_ = nodeHandle_->advertise<CORC::JointScaled32>("joint_scaled", 10);
 
-    if(robot_->getRobotName() == "m1_x") {
-        trignoEMGPublisher_ = nodeHandle_->advertise<std_msgs::Float64MultiArray>("trigno_filtered_emgs", 1);
-        trignoEMGSubscriber_ = nodeHandle_->subscribe("trigno_emg", 1, &MultiM1MachineROS::trignoEMGCallback, this);
-    }
-
     jointPositionCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointVelocityCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
     jointTorqueCommand_ = Eigen::VectorXd::Zero(M1_NUM_JOINTS);
@@ -52,9 +45,6 @@ void MultiM1MachineROS::update(double time) {
     publishJointStates();
     publishInteractionForces();
     publishJointScaled();
-    if(robot_->getRobotName() == "m1_x") {
-        publishTrignoFilteredEMGs();
-    }
 }
 
 void MultiM1MachineROS::publishJointStates() {
@@ -150,19 +140,6 @@ void MultiM1MachineROS::publishJointScaled() {
     jointScaledPublisher_.publish(jointScaledMsg_);
 }
 
-void MultiM1MachineROS::publishTrignoFilteredEMGs() {
-    std_msgs::Float64MultiArray emgMsg;
-    emgMsg.data.resize(N_EMG);
-
-    std::vector<double> meanEMGVector = trignoMultiEMG_->getDownSampledMultiEMG();
-
-    for(int i = 0; i< N_EMG; i++){
-        emgMsg.data[i] = meanEMGVector[i];
-    }
-
-    trignoEMGPublisher_.publish(emgMsg);
-}
-
 void MultiM1MachineROS::setNodeHandle(ros::NodeHandle &nodeHandle) {
     nodeHandle_ = &nodeHandle;
 }
@@ -188,27 +165,6 @@ void MultiM1MachineROS::prbsCommandCallback(const geometry_msgs::Vector3 &msg) {
     for(int i=0; i<M1_NUM_JOINTS; i++){
         prbsPositionCommand_[i] = msg.y;
     }
-}
-
-void MultiM1MachineROS::trignoEMGCallback(const trigno_msgs::trignoMultiEMG &msg) {
-
-    trignoMultiEMG_->clearMultiEMGInstances();
-    // msg include data from all sensors, loop each one of them
-    for(auto indivSensorMsg : msg.trigno_emg){
-        double start_time = indivSensorMsg.start_time;
-        std::string emg_pos = indivSensorMsg.emg_pos;
-        int emg_id= indivSensorMsg.emg_id;
-
-        std::vector<double> emg;
-        for(const float& dataPoint : indivSensorMsg.emg){
-            emg.push_back(dataPoint);
-        }
-
-        trignoMultiEMG_->addEMGSensor(start_time, emg_pos, emg_id, emg);
-    }
-
-    trignoMultiEMG_->log(time_);
-
 }
 
 void MultiM1MachineROS::interactionModeCallback(const CORC::InteractionMode &msg) {

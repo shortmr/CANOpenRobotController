@@ -115,7 +115,6 @@ if(USE_ROS)
 				dynamic_reconfigure
 				rosserial_python
 				message_generation
-				trigno_msgs
         )
 		if(SIM)
 			find_package(catkin REQUIRED COMPONENTS
@@ -149,7 +148,6 @@ if(USE_ROS)
 				std_msgs
 				sensor_msgs
 				geometry_msgs
-				trigno_msgs
 		)
 
 		catkin_package(
@@ -165,7 +163,6 @@ if(USE_ROS)
 					dynamic_reconfigure
 					rosserial_python
 					message_runtime
-					trigno_msgs
 				#  DEPENDS system_lib
 		)
 
@@ -177,7 +174,6 @@ if(USE_ROS)
 		# Required ROS packages
 		find_package(roscpp REQUIRED CONFIG ONLY_CMAKE_FIND_ROOT_PATH)
 		find_package(std_msgs REQUIRED CONFIG ONLY_CMAKE_FIND_ROOT_PATH)
-		find_package(trigno_msgs REQUIRED CONFIG ONLY_CMAKE_FIND_ROOT_PATH)
 		find_package(sensor_msgs REQUIRED CONFIG ONLY_CMAKE_FIND_ROOT_PATH)
 		find_package(geometry_msgs REQUIRED CONFIG ONLY_CMAKE_FIND_ROOT_PATH)
 		# If cross-compiling force search in sysroot

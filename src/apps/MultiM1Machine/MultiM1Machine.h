@@ -30,9 +30,6 @@
 
 #include "MultiM1MachineROS.h"
 
-#include "trigno/TrignoMultiEMG.h"
-#include "trigno/TrignoMultiIMU.h"
-
 /**
  * @brief Example implementation of a StateMachine for the M1Robot class. States should implemented M1DemoState
  *
@@ -60,12 +57,6 @@ class MultiM1Machine : public StateMachine {
      *
      */
     MultiControllerState *multiControllerState_;
-    /**
-     * Pointers to emg and imu
-     *
-     */
-    TrignoMultiEMG *trignoMultiEMG_;
-    TrignoMultiIMU *trignoMultiIMU_;
 
    protected:
     RobotM1 *robot_; /*<!Pointer to the Robot*/

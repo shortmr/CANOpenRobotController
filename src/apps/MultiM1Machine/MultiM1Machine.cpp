@@ -15,12 +15,8 @@ MultiM1Machine::MultiM1Machine(int argc, char *argv[]){
     // create robot
     robot_ = new RobotM1(robotName_);
 
-    // create new emg-imu storing data instances
-    trignoMultiEMG_ = new TrignoMultiEMG(N_EMG);
-    trignoMultiIMU_ = new TrignoMultiIMU(N_IMU);
-
     // Create ros object
-    multiM1MachineRos_ = new MultiM1MachineROS(robot_, trignoMultiEMG_, trignoMultiIMU_);
+    multiM1MachineRos_ = new MultiM1MachineROS(robot_);
 
     // Pass nodeHandle to the classes that use ROS features
     multiM1MachineRos_->setNodeHandle(nodeHandle);

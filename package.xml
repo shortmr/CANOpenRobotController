@@ -54,7 +54,6 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>trigno_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>controller_manager_msgs</build_depend>
   <build_depend>cob_gazebo_ros_control</build_depend>
@@ -67,7 +66,6 @@
   <build_export_depend>std_msgs</build_export_depend>
   <build_export_depend>std_srvs</build_export_depend>
   <build_export_depend>sensor_msgs</build_export_depend>
-  <build_export_depend>trigno_msgs</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>controller_manager_msgs</build_export_depend>
   <build_export_depend>cob_gazebo_ros_control</build_export_depend>
@@ -79,7 +77,6 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>trigno_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>controller_manager_msgs</exec_depend>
   <exec_depend>cob_gazebo_ros_control</exec_depend>

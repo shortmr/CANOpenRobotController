@@ -117,7 +117,8 @@ void MultiM1MachineROS::publishJointScaled() {
     Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_s_filt(); // filtered with weight compensation
     Eigen::VectorXd jointPositions = robot_->getPosition(); // angular position in radians
     Eigen::VectorXd torqueLimits = robot_->getTorqueLimits(); // torque limits in Nm
-    Eigen::VectorXd positionLimits = robot_->getPositionLimits(0); // angular position limits in radians
+    Eigen::VectorXd positionLimits = robot_->getPositionLimits(0); // angular active position limits in radians
+    Eigen::VectorXd passiveLimits = robot_->getPositionLimits(1); // angular passive position limits in radians
     Eigen::VectorXd jointVelocities = robot_->getVelocity(); // angular position in radians
     double torqueOffset = robot_->getTorqueOffset(); // torque offset in Nm
     double q_bias = robot_->t_bias_; // angle between lower joint limit and zero_calibration angle
@@ -142,6 +143,8 @@ void MultiM1MachineROS::publishJointScaled() {
     jointScaledMsg_.tau_pf = torqueLimits[1]; // maximum torque in plantarflexion (Nm)
     jointScaledMsg_.q_df = positionLimits[0]; // maximum angle in dorsiflexion (rad)
     jointScaledMsg_.q_pf = positionLimits[1]; // maximum angle in plantarflexion (rad)
+    jointScaledMsg_.qp_df = passiveLimits[0]; // maximum passive angle in dorsiflexion (rad)
+    jointScaledMsg_.qp_pf = passiveLimits[1]; // maximum passive angle in plantarflexion (rad)
     jointScaledMsg_.q_bias = q_bias; // bias angle (rad)
     jointScaledMsg_.dq = jointVelocities[0]; // velocity (rad/s)
     jointScaledPublisher_.publish(jointScaledMsg_);

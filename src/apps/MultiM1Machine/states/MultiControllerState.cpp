@@ -346,8 +346,8 @@ void MultiControllerState::during(void) {
             dq_t(0) = 0.0; // set zero velocity
         }
 
-        // safety feature: restrict absolute velocity to under 2 deg/s, between joint limits
-        if ((abs(dq_t(0)) > 2.0) || (dq_t(0) < 0.0 && q(0) < 0.0) || (dq_t(0) > 0.0 && q(0) > 115.0)) {
+        // safety feature: restrict absolute velocity to under 8 deg/s, between joint limits
+        if (abs(dq_t(0)) > 8.0) {
             dq_t(0) = 0.0;
         }
 
@@ -469,6 +469,7 @@ void MultiControllerState::during(void) {
             robot_->printJointStatus();
             if ((dq_t(0) < 0.0 && q(0) < prom_pf) || (dq_t(0) > 0.0 && q(0) > prom_df)) {
                 dq_t(0) = 0.0;
+                std::cout << "Outside passive limits " << std::endl;
             }
         }
         // set velocity for joint

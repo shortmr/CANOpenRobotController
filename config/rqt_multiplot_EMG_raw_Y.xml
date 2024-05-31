@@ -35,20 +35,20 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/emg_data</topic>
+                                    <topic>/m1_y/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>data/4</field>
+                                    <field>data/0</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>0.5</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
+                                        <absolute_minimum>-0.5</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/emg_data</topic>
+                                    <topic>/m1_y/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </y_axis>
                             </axes>
@@ -86,20 +86,20 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/emg_data</topic>
+                                    <topic>/m1_y/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>data/5</field>
+                                    <field>data/1</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>0.5</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
+                                        <absolute_minimum>-0.5</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/emg_data</topic>
+                                    <topic>/m1_y/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </y_axis>
                             </axes>
@@ -137,20 +137,20 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/emg_data</topic>
+                                    <topic>/m1_y/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>data/6</field>
+                                    <field>data/2</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>0.5</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
+                                        <absolute_minimum>-0.5</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/emg_data</topic>
+                                    <topic>/m1_y/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </y_axis>
                             </axes>
@@ -188,20 +188,20 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/emg_data</topic>
+                                    <topic>/m1_y/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>data/7</field>
+                                    <field>data/3</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>0.5</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
+                                        <absolute_minimum>-0.5</absolute_minimum>
                                         <relative_maximum>0</relative_maximum>
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/emg_data</topic>
+                                    <topic>/m1_y/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </y_axis>
                             </axes>
@@ -232,7 +232,7 @@
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>EMG filtered</title>
+                    <title>EMG raw</title>
                 </column_0>
             </row_0>
         </plots>

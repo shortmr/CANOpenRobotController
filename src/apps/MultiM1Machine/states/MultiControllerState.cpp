@@ -215,7 +215,6 @@ void MultiControllerState::during(void) {
         // apply PID for feedback control
         if (controller_mode_ == 4) {
             error = tau_s_filtered(0) + spring_tor;  // interaction torque error (desired interaction torque is spring_tor)
-//            std::cout << error << std::endl;
         }
         else if (controller_mode_ == 5) {
             error = tau_s_filtered(0);  // interaction torque error (desired interaction torque is 0)
@@ -234,7 +233,7 @@ void MultiControllerState::during(void) {
 
         tau_cmd(0) = error*kp + delta_error*kd_ + integral_error*ki_;
         torque_error_last_time_step = error;
-        robot_->setJointTor_comp(tau_cmd, fRatio_,wRatio_);
+        robot_->setJointTor_comp(tau_cmd, fRatio_, wRatio_);
 
         // reset integral_error every n seconds (tick_max_)
         if(tick_count >= control_freq*tick_max_){
@@ -346,8 +345,8 @@ void MultiControllerState::during(void) {
             dq_t(0) = 0.0; // set zero velocity
         }
 
-        // safety feature: restrict absolute velocity to under 2 deg/s, between joint limits
-        if ((abs(dq_t(0)) > 2.0) || (dq_t(0) < 0.0 && q(0) < 0.0) || (dq_t(0) > 0.0 && q(0) > 115.0)) {
+        // safety feature: restrict absolute velocity to under 8 deg/s, between joint limits
+        if (abs(dq_t(0)) > 8.0) {
             dq_t(0) = 0.0;
         }
 
@@ -469,6 +468,7 @@ void MultiControllerState::during(void) {
             robot_->printJointStatus();
             if ((dq_t(0) < 0.0 && q(0) < prom_pf) || (dq_t(0) > 0.0 && q(0) > prom_df)) {
                 dq_t(0) = 0.0;
+                std::cout << "Outside passive limits " << std::endl;
             }
         }
         // set velocity for joint
@@ -515,10 +515,6 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
     } else {
         std::cout << "Dynamic reconfigure parameter setting is disabled (set configFlag to true to enable)" << std::endl;
     }
-
-    // Arduino stimulation parameters
-    robot_->setStimAmplitude(config.stim_amp_df, config.stim_amp_pf);
-    robot_->setStimCalibrate(config.stim_calibrate);
 
     // Switch between AROM measurement
     if(set_arom_!=config.set_arom) {

@@ -177,8 +177,6 @@ public:
     FourierForceSensor *m1ForceSensor;
     RobotState status;
     int mode;
-    double stim_df_, stim_pf_;
-    bool stim_calib_;
 
     double t_bias_;
 
@@ -339,8 +337,6 @@ public:
     void setMaxActiveAngles(double q_df, double q_pf);
     void setMaxPassiveAngles(double q_df, double q_pf);
     void setStaticFrictionFlag(double multiplier);
-    void setStimAmplitude(double stim_df, double stim_pf);
-    void setStimCalibrate(bool stim_calib);
     void setTorqueOffset(double tau_filt);
 
     void disableJointPositionSafety();

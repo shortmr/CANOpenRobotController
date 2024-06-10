@@ -19,13 +19,13 @@ m1_x:
   kp_mod: [0.96] # multiplier for proportional term in the static region
   ki: [0.17] # integral term of PID controller
   kd: [0] # derivative term of PID controller
-  vel_thresh: [10.0] # velocity threshold for using dynamic friction compensation [deg/s]
+  vel_thresh: [15.0] # velocity threshold for using dynamic friction compensation [deg/s]
   tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
   sensor_cutoff_freq: [15.0] # cutoff frequency for lowpass filter for interaction torque, angle and velocity [Hz]
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
-  tracking_df: [108.072] # max range of motion angle [deg]
-  tracking_pf: [33.409] # min range of motion angle [deg]
+  tracking_df: [95.604] # max range of motion angle [deg]
+  tracking_pf: [25.305] # min range of motion angle [deg]
   passive_df: [120] # max passive range of motion angle [deg]
   passive_pf: [20] # min passive range of motion angle [deg]
   mvc_df: [20] # MVCT in dorsiflexion [Nm]
@@ -47,7 +47,7 @@ m1_y:
   friction_ratio: [0.7] # scale factor for feedforward compensation (m1 assess: 0.75)
   weight_ratio: [0.8] # scale factor for feedforward compensation (m1 assess: 0.75)
   kp: [1.5] # proportional term of PID con troller (m1 assess: 1.0)
-  kp_mod: [1.0] # multiplier for proportional term in the static region
+  kp_mod: [0.96] # multiplier for proportional term in the static region
   ki: [0.17] # integral term of PID controller
   kd: [0.0] # derivative term of PID controller (alt: 0.05)
   vel_thresh: [15.0] # velocity threshold for using dynamic friction compensation [deg/s] (m1 assess: 4.0)
@@ -55,8 +55,8 @@ m1_y:
   sensor_cutoff_freq: [15.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz] (alt: 20)
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [60.0] # counter for integral term reset [s]
-  tracking_df: [100.747] # max range of motion angle [deg]
-  tracking_pf: [42.700] # min range of motion angle [deg]
+  tracking_df: [99.226] # max range of motion angle [deg]
+  tracking_pf: [25.939] # min range of motion angle [deg]
   passive_df: [120] # max passive range of motion angle [deg]
   passive_pf: [20] # min passive range of motion angle [deg]
   mvc_df: [1] # MVCT in dorsiflexion [Nm]
@@ -87,10 +87,10 @@ m1_y:
 #  sensor_cutoff_freq: [15.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz] (alt: 20)
 #  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
 #  tick_max: [60.0] # counter for integral term reset [s]
-#  tracking_df: [155.503] # max range of motion angle [deg]
-#  tracking_pf: [9.421] # min range of motion angle [deg]
-#  passive_df: [154] # max passive range of motion angle [deg]
-#  passive_pf: [6] # min passive range of motion angle [deg]
+#  tracking_df: [156.604] # max range of motion angle [deg]
+#  tracking_pf: [23.325] # min range of motion angle [deg]
+#  passive_df: [165] # max passive range of motion angle [deg]
+#  passive_pf: [5] # min passive range of motion angle [deg]
 #  mvc_df: [1] # MVCT in dorsiflexion [Nm]
 #  mvc_pf: [1] # MVCT in plantarflexion [Nm]
 #  muscle_count: [2] # number of muscles for EMG recordings
@@ -118,10 +118,10 @@ m1_y:
 #  sensor_cutoff_freq: [15.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz] (alt: 20)
 #  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
 #  tick_max: [60.0] # counter for integral term reset [s]
-#  tracking_df: [155.925] # max range of motion angle [deg]
-#  tracking_pf: [21.030] # min range of motion angle [deg]
-#  passive_df: [154] # max passive range of motion angle [deg]
-#  passive_pf: [6] # min passive range of motion angle [deg]
+#  tracking_df: [164.040] # max range of motion angle [deg]
+#  tracking_pf: [12.649] # min range of motion angle [deg]
+#  passive_df: [168] # max passive range of motion angle [deg]
+#  passive_pf: [5] # min passive range of motion angle [deg]
 #  mvc_df: [1] # MVCT in dorsiflexion [Nm]
 #  mvc_pf: [1] # MVCT in plantarflexion [Nm]
 #  muscle_count: [2] # number of muscles for EMG recordings

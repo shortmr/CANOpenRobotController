@@ -34,7 +34,6 @@ public:
     void update(void);
     void publishJointStates(void);
     void publishInteractionForces(void);
-    void publishInteractionScaled(void);
     void publishJointScaled(void);
     void initialize();
     void setNodeHandle(ros::NodeHandle& nodeHandle);
@@ -80,10 +79,6 @@ private:
     // Publisher and message for interaction wrench publication
     ros::Publisher interactionWrenchPublisher_;
     geometry_msgs::WrenchStamped interactionWrenchMsg_;
-
-    // Publisher and message for arduino scaled force publication
-    ros::Publisher interactionScaledPublisher_;
-    geometry_msgs::Point32 interactionScaledMsg_;
 
     // Publisher and message for simple scaled joint messages
     ros::Publisher jointScaledPublisher_;

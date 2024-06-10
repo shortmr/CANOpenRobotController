@@ -239,9 +239,6 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
     }
 
     tau_offset_ = 0;
-    stim_df_ = 0;
-    stim_pf_ = 0;
-    stim_calib_ = false;
     f_s_upper_ = 0;
     f_s_lower_ = 0;
     f_d_up_ = 0;
@@ -747,19 +744,10 @@ void RobotM1::setSensorCutOff(double cutOff) {
     alpha_sensor_ = (2*M_PI*sensorCutOff_/controlFreq_)/(2*M_PI*sensorCutOff_/controlFreq_+1);
 }
 
-void RobotM1::setStimAmplitude(double stim_df, double stim_pf) {
-    stim_df_ = stim_df;
-    stim_pf_ = stim_pf;
-}
-
-void RobotM1::setStimCalibrate(bool stim_calib) {
-    stim_calib_ = stim_calib;
-}
-
 void RobotM1::setTorqueOffset(double tau_filt) {
     tau_offset_ = tau_filt;
     std::cout << std::endl;
-    std::cout << std::setprecision(3) << std::fixed << "torque_offset: [" << tau_filt << "]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "  torque_offset: [" << tau_filt << "]" << std::endl;
     std::cout << std::endl;
 }
 
@@ -768,8 +756,8 @@ void RobotM1::setMaxTorques(double tau_df, double tau_pf) {
     tau_lim_[1] = abs(tau_pf);
 
     std::cout << std::endl;
-    std::cout << std::setprecision(3) << std::fixed << "mvc_df: [" << tau_df << "] # MVCT in dorsiflexion [Nm]" << std::endl;
-    std::cout << std::setprecision(3) << std::fixed << "mvc_pf: [" << tau_pf << "] # MVCT in plantarflexion [Nm]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "  mvc_df: [" << tau_df << "] # MVCT in dorsiflexion [Nm]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "  mvc_pf: [" << tau_pf << "] # MVCT in plantarflexion [Nm]" << std::endl;
     std::cout << std::endl;
 }
 
@@ -779,8 +767,8 @@ void RobotM1::setMaxActiveAngles(double q_df, double q_pf) {
     q_offset_ = 0.5*(q_df+q_pf)*d2r;
 
     std::cout << std::endl;
-    std::cout << std::setprecision(3) << std::fixed << "tracking_df: [" << q_df  << "] # max range of motion angle [deg]" << std::endl;
-    std::cout << std::setprecision(3) << std::fixed << "tracking_pf: [" << q_pf  << "] # min range of motion angle [deg]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "  tracking_df: [" << q_df  << "] # max range of motion angle [deg]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "  tracking_pf: [" << q_pf  << "] # min range of motion angle [deg]" << std::endl;
     std::cout << std::endl;
 }
 
@@ -789,8 +777,8 @@ void RobotM1::setMaxPassiveAngles(double q_df, double q_pf) {
     qp_lim_[1] = q_pf*d2r;
 
     std::cout << std::endl;
-    std::cout << std::setprecision(3) << std::fixed << "passive_df: [" << q_df  << "] # max passive range of motion angle [deg]" << std::endl;
-    std::cout << std::setprecision(3) << std::fixed << "passive_pf: [" << q_pf  << "] # min passive range of motion angle [deg]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "  passive_df: [" << q_df  << "] # max passive range of motion angle [deg]" << std::endl;
+    std::cout << std::setprecision(3) << std::fixed << "  passive_pf: [" << q_pf  << "] # min passive range of motion angle [deg]" << std::endl;
     std::cout << std::endl;
 }
 

@@ -35,11 +35,11 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_y/emg_data</topic>
+                                    <topic>/m1_x/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>data/0</field>
+                                    <field>data/4</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>0.5</absolute_maximum>
@@ -48,7 +48,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_y/emg_data</topic>
+                                    <topic>/m1_x/emg_data</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </y_axis>
                             </axes>
@@ -72,14 +72,167 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>0</title>
+                            <title>1</title>
                         </curve_0>
+                        <curve_1>
+                            <axes>
+                                <x_axis>
+                                    <field></field>
+                                    <field_type>1</field_type>
+                                    <scale>
+                                        <absolute_maximum>1000</absolute_maximum>
+                                        <absolute_minimum>0</absolute_minimum>
+                                        <relative_maximum>7</relative_maximum>
+                                        <relative_minimum>-7</relative_minimum>
+                                        <type>2</type>
+                                    </scale>
+                                    <topic>/m1_x/emg_data</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
+                                </x_axis>
+                                <y_axis>
+                                    <field>data/5</field>
+                                    <field_type>0</field_type>
+                                    <scale>
+                                        <absolute_maximum>0.5</absolute_maximum>
+                                        <absolute_minimum>-0.5</absolute_minimum>
+                                        <relative_maximum>0</relative_maximum>
+                                        <relative_minimum>-1000</relative_minimum>
+                                        <type>1</type>
+                                    </scale>
+                                    <topic>/m1_x/emg_data</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
+                                </y_axis>
+                            </axes>
+                            <color>
+                                <custom_color>#000000</custom_color>
+                                <type>0</type>
+                            </color>
+                            <data>
+                                <circular_buffer_capacity>1000</circular_buffer_capacity>
+                                <time_frame_length>10</time_frame_length>
+                                <type>0</type>
+                            </data>
+                            <style>
+                                <lines_interpolate>false</lines_interpolate>
+                                <pen_style>1</pen_style>
+                                <pen_width>2</pen_width>
+                                <render_antialias>false</render_antialias>
+                                <steps_invert>false</steps_invert>
+                                <sticks_baseline>0</sticks_baseline>
+                                <sticks_orientation>2</sticks_orientation>
+                                <type>0</type>
+                            </style>
+                            <subscriber_queue_size>100</subscriber_queue_size>
+                            <title>2</title>
+                        </curve_1>
+                        <curve_2>
+                            <axes>
+                                <x_axis>
+                                    <field></field>
+                                    <field_type>1</field_type>
+                                    <scale>
+                                        <absolute_maximum>1000</absolute_maximum>
+                                        <absolute_minimum>0</absolute_minimum>
+                                        <relative_maximum>7</relative_maximum>
+                                        <relative_minimum>-7</relative_minimum>
+                                        <type>2</type>
+                                    </scale>
+                                    <topic>/m1_x/emg_data</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
+                                </x_axis>
+                                <y_axis>
+                                    <field>data/6</field>
+                                    <field_type>0</field_type>
+                                    <scale>
+                                        <absolute_maximum>0.5</absolute_maximum>
+                                        <absolute_minimum>-0.5</absolute_minimum>
+                                        <relative_maximum>0</relative_maximum>
+                                        <relative_minimum>-1000</relative_minimum>
+                                        <type>1</type>
+                                    </scale>
+                                    <topic>/m1_x/emg_data</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
+                                </y_axis>
+                            </axes>
+                            <color>
+                                <custom_color>#000000</custom_color>
+                                <type>0</type>
+                            </color>
+                            <data>
+                                <circular_buffer_capacity>1000</circular_buffer_capacity>
+                                <time_frame_length>10</time_frame_length>
+                                <type>0</type>
+                            </data>
+                            <style>
+                                <lines_interpolate>false</lines_interpolate>
+                                <pen_style>1</pen_style>
+                                <pen_width>2</pen_width>
+                                <render_antialias>false</render_antialias>
+                                <steps_invert>false</steps_invert>
+                                <sticks_baseline>0</sticks_baseline>
+                                <sticks_orientation>2</sticks_orientation>
+                                <type>0</type>
+                            </style>
+                            <subscriber_queue_size>100</subscriber_queue_size>
+                            <title>3</title>
+                        </curve_2>
+                        <curve_3>
+                            <axes>
+                                <x_axis>
+                                    <field></field>
+                                    <field_type>1</field_type>
+                                    <scale>
+                                        <absolute_maximum>1000</absolute_maximum>
+                                        <absolute_minimum>0</absolute_minimum>
+                                        <relative_maximum>7</relative_maximum>
+                                        <relative_minimum>-7</relative_minimum>
+                                        <type>2</type>
+                                    </scale>
+                                    <topic>/m1_x/emg_data</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
+                                </x_axis>
+                                <y_axis>
+                                    <field>data/7</field>
+                                    <field_type>0</field_type>
+                                    <scale>
+                                        <absolute_maximum>0.5</absolute_maximum>
+                                        <absolute_minimum>-0.5</absolute_minimum>
+                                        <relative_maximum>0</relative_maximum>
+                                        <relative_minimum>-1000</relative_minimum>
+                                        <type>1</type>
+                                    </scale>
+                                    <topic>/m1_x/emg_data</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
+                                </y_axis>
+                            </axes>
+                            <color>
+                                <custom_color>#000000</custom_color>
+                                <type>0</type>
+                            </color>
+                            <data>
+                                <circular_buffer_capacity>1000</circular_buffer_capacity>
+                                <time_frame_length>10</time_frame_length>
+                                <type>0</type>
+                            </data>
+                            <style>
+                                <lines_interpolate>false</lines_interpolate>
+                                <pen_style>1</pen_style>
+                                <pen_width>2</pen_width>
+                                <render_antialias>false</render_antialias>
+                                <steps_invert>false</steps_invert>
+                                <sticks_baseline>0</sticks_baseline>
+                                <sticks_orientation>2</sticks_orientation>
+                                <type>0</type>
+                            </style>
+                            <subscriber_queue_size>100</subscriber_queue_size>
+                            <title>4</title>
+                        </curve_3>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>TA/ECR</title>
+                    <title>M1_X</title>
                 </column_0>
                 <column_1>
                     <axes>
@@ -113,7 +266,7 @@
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>data/1</field>
+                                    <field>data/4</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>0.5</absolute_maximum>
@@ -148,32 +301,7 @@
                             <subscriber_queue_size>100</subscriber_queue_size>
                             <title>1</title>
                         </curve_0>
-                    </curves>
-                    <legend>
-                        <visible>true</visible>
-                    </legend>
-                    <plot_rate>30</plot_rate>
-                    <title>MG/FCR</title>
-                </column_1>
-            </row_0>
-            <row_1>
-                <column_0>
-                    <axes>
-                        <axes>
-                            <x_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
-                                <title_visible>true</title_visible>
-                            </x_axis>
-                            <y_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
-                                <title_visible>true</title_visible>
-                            </y_axis>
-                        </axes>
-                    </axes>
-                    <curves>
-                        <curve_0>
+                        <curve_1>
                             <axes>
                                 <x_axis>
                                     <field></field>
@@ -189,7 +317,7 @@
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>data/2</field>
+                                    <field>data/5</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>0.5</absolute_maximum>
@@ -223,31 +351,8 @@
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
                             <title>2</title>
-                        </curve_0>
-                    </curves>
-                    <legend>
-                        <visible>true</visible>
-                    </legend>
-                    <plot_rate>30</plot_rate>
-                    <title>SOL</title>
-                </column_0>
-                <column_1>
-                    <axes>
-                        <axes>
-                            <x_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
-                                <title_visible>true</title_visible>
-                            </x_axis>
-                            <y_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
-                                <title_visible>true</title_visible>
-                            </y_axis>
-                        </axes>
-                    </axes>
-                    <curves>
-                        <curve_0>
+                        </curve_1>
+                        <curve_2>
                             <axes>
                                 <x_axis>
                                     <field></field>
@@ -263,7 +368,7 @@
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>data/3</field>
+                                    <field>data/6</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>0.5</absolute_maximum>
@@ -297,15 +402,66 @@
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
                             <title>3</title>
-                        </curve_0>
+                        </curve_2>
+                        <curve_3>
+                            <axes>
+                                <x_axis>
+                                    <field></field>
+                                    <field_type>1</field_type>
+                                    <scale>
+                                        <absolute_maximum>1000</absolute_maximum>
+                                        <absolute_minimum>0</absolute_minimum>
+                                        <relative_maximum>7</relative_maximum>
+                                        <relative_minimum>-7</relative_minimum>
+                                        <type>2</type>
+                                    </scale>
+                                    <topic>/m1_y/emg_data</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
+                                </x_axis>
+                                <y_axis>
+                                    <field>data/7</field>
+                                    <field_type>0</field_type>
+                                    <scale>
+                                        <absolute_maximum>0.5</absolute_maximum>
+                                        <absolute_minimum>-0.5</absolute_minimum>
+                                        <relative_maximum>0</relative_maximum>
+                                        <relative_minimum>-1000</relative_minimum>
+                                        <type>1</type>
+                                    </scale>
+                                    <topic>/m1_y/emg_data</topic>
+                                    <type>std_msgs/Float64MultiArray</type>
+                                </y_axis>
+                            </axes>
+                            <color>
+                                <custom_color>#000000</custom_color>
+                                <type>0</type>
+                            </color>
+                            <data>
+                                <circular_buffer_capacity>1000</circular_buffer_capacity>
+                                <time_frame_length>10</time_frame_length>
+                                <type>0</type>
+                            </data>
+                            <style>
+                                <lines_interpolate>false</lines_interpolate>
+                                <pen_style>1</pen_style>
+                                <pen_width>2</pen_width>
+                                <render_antialias>false</render_antialias>
+                                <steps_invert>false</steps_invert>
+                                <sticks_baseline>0</sticks_baseline>
+                                <sticks_orientation>2</sticks_orientation>
+                                <type>0</type>
+                            </style>
+                            <subscriber_queue_size>100</subscriber_queue_size>
+                            <title>4</title>
+                        </curve_3>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>LG</title>
+                    <title>M1_Y</title>
                 </column_1>
-            </row_1>
+            </row_0>
         </plots>
         <track_points>false</track_points>
     </table>

@@ -10,3 +10,5 @@ CANopenSocket/canopend/X2_log.txt
 bbbxc
 EXO_APP_2020
 *.DS_Store
+.idea/
+cmake-build-debug/

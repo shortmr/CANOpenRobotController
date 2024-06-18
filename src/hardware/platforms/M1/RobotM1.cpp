@@ -215,7 +215,7 @@ bool RobotM1::initializeRobotParams(std::string robotName) {
         min_pos(0) =  5 * d2r;
     }
     else {
-        max_pos(0) = 130 * d2r;
+        max_pos(0) = 110 * d2r;
         min_pos(0) =  10 * d2r;
     }
 

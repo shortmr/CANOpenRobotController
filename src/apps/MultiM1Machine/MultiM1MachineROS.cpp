@@ -81,7 +81,7 @@ void MultiM1MachineROS::publishInteractionForces() {
 }
 
 void MultiM1MachineROS::publishJointScaled() {
-    Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_s_filt(); // filtered with weight compensation
+    Eigen::VectorXd interactionTorqueFiltered = robot_->getJointTor_viz_filt(); // filtered with weight compensation
     Eigen::VectorXd jointPositions = robot_->getPosition(); // angular position in radians
     Eigen::VectorXd torqueLimits = robot_->getTorqueLimits(); // torque limits in Nm
     Eigen::VectorXd positionLimits = robot_->getPositionLimits(0); // angular active position limits in radians

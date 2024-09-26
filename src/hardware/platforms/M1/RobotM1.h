@@ -123,8 +123,8 @@ class RobotM1 : public Robot {
 
     // Storage variables for real-time updated values from CANopen
     JointVec q, dq, tau, tau_s;
-    JointVec q_filt, dq_filt, tau_s_filt;
-    JointVec q_filt_pre, dq_filt_pre, tau_s_filt_pre;
+    JointVec q_filt, dq_filt, tau_s_filt, tau_viz_filt;
+    JointVec q_filt_pre, dq_filt_pre, tau_s_filt_pre, tau_viz_filt_pre;
 
     JointVec qCalibration;  // Calibration configuration: posture in which the robot is when using the calibration procedure
 
@@ -136,7 +136,7 @@ class RobotM1 : public Robot {
 
     double velThresh_, torqueThresh_;
 
-    double alpha_sensor_, alpha_motor_torque_;
+    double alpha_sensor_, alpha_motor_torque_, alpha_sensor_viz_;
 
     double f_s_upper_, f_s_lower_, f_d_up_, f_d_down_, f_s_theta1_, f_s_theta2_;
 
@@ -356,6 +356,7 @@ public:
 
     JointVec& getJointTor_s();
     JointVec& getJointTor_s_filt();
+    JointVec& getJointTor_viz_filt();
     JointVec& getJointTor_cmd();
     JointVec& getPosition();
     JointVec& getVelocity();
@@ -369,6 +370,8 @@ public:
     void filter_q(double alpha_q);
     void filter_dq(double alpha_dq);
     void filter_tau_s(double alpha_tau_s);
+    void filter_tau_viz(double alpha_tau_s);
+
 //    EndEffVec getEndEffPos();
 //    EndEffVec getEndEffVel();
 //    EndEffVec getEndEffFor();

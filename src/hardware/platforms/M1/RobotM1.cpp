@@ -24,9 +24,10 @@ RobotM1::RobotM1(std::string robotName) : Robot(), calibrated(false), maxEndEffV
     q_filt(0) = 0;
     dq_filt(0) = 0;
     tau_s_filt(0) = 0;
+    tau_viz_filt(0) = 0;
     q_filt_pre(0) = 0;
     dq_filt_pre(0) = 0;
-    tau_s_filt_pre(0) = 0;
+    tau_viz_filt_pre(0) = 0;
 
     q_lim_ = Eigen::VectorXd::Zero(2);
     qp_lim_ = Eigen::VectorXd::Zero(2);
@@ -298,6 +299,7 @@ void RobotM1::updateRobot() {
 
     // filter interaction torque measurements
     filter_tau_s(alpha_sensor_);
+    filter_tau_viz(alpha_sensor_viz_);
 
     // check for error in torque/position/velocity measurements and calibration
     if (tauCheck_) {
@@ -603,12 +605,23 @@ void RobotM1::filter_tau_s(double alpha_tau_s){
     }
 }
 
+void RobotM1::filter_tau_viz(double alpha_tau_s){
+    for(int i = 0; i<M1_NUM_JOINTS; i++) {
+        tau_viz_filt(i) = alpha_tau_s*tau_s(i)+(1-alpha_tau_s)*tau_viz_filt_pre(i);
+        tau_viz_filt_pre(i) = tau_viz_filt(i);
+    }
+}
+
 JointVec& RobotM1::getJointTor_s() {
     return tau_s;
 }
 
 JointVec& RobotM1::getJointTor_s_filt() {
     return tau_s_filt;
+}
+
+JointVec& RobotM1::getJointTor_viz_filt() {
+    return tau_viz_filt;
 }
 
 setMovementReturnCode_t RobotM1::setJointPos(JointVec pos_d) {
@@ -742,6 +755,7 @@ void RobotM1::setSensorCutOff(double cutOff) {
         sensorCutOff_ = m1Params.sensor_cutoff_freq[0];
     }
     alpha_sensor_ = (2*M_PI*sensorCutOff_/controlFreq_)/(2*M_PI*sensorCutOff_/controlFreq_+1);
+    alpha_sensor_viz_ = (2*M_PI*5.0/controlFreq_)/(2*M_PI*5.0/controlFreq_+1); // hardcode visualizeation alpha
 }
 
 void RobotM1::setTorqueOffset(double tau_filt) {

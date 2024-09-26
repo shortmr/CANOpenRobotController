@@ -460,7 +460,7 @@ void MultiControllerState::during(void) {
             }
         }
     }
-    else if (controller_mode_ == 12) {  // proprioception: monitor velocity commands
+    else if (controller_mode_ == 12) {  // monitor velocity commands
         JointVec dq_t = multiM1MachineRos_->jointVelocityCommand_;
         // monitor joint angle (only move within ROM limits)
         q = robot_->getJointPos();
@@ -475,6 +475,26 @@ void MultiControllerState::during(void) {
         if (robot_->setJointVel(dq_t) != SUCCESS) {
             std::cout << "Error " << std::endl;
         }
+
+        //filter interaction torque (for visualization)
+        tau_s_filtered = robot_->getJointTor_viz_filt();
+        double tau_offset = robot_->getTorqueOffset();
+
+        if (set_offset_) {
+            n_offset += 1;
+            mvc_offset = (mvc_offset+tau_s_filtered(0));
+        }
+
+        if (set_mvc_) {
+            // torque
+            if ((tau_s_filtered(0) - tau_offset) > mvc_df) {
+                mvc_df = tau_s_filtered(0)-tau_offset;
+            }
+            if ((tau_s_filtered(0) - tau_offset) < mvc_pf) {
+                mvc_pf = tau_s_filtered(0)-tau_offset;
+            }
+        }
+
     }
     // Read setDigitalOut signal
 //     digitalInValue_ = robot_->getDigitalIn();

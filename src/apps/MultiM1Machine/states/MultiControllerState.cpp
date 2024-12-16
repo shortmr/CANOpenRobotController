@@ -243,34 +243,52 @@ void MultiControllerState::during(void) {
     }
     else if (controller_mode_ == 6) {  // step angle - zero velocity mode
         double time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time0).count()/1000.0;
+        JointVec dq_t;
+        q = robot_->getJointPos();
         if (fixed_stage_ == 2) {
             // set step angle
-            JointVec q_t;
-            q_t(0) = step_angle_;
-            if(robot_->setJointPos(q_t) != SUCCESS){
-                std::cout << "Error: " << std::endl;
-            }
-
-            // monitor position
-            q = robot_->getJointPos();
-            if (abs(q(0)-step_angle_)<0.001){
-                robot_->initVelocityControl();
+            if (abs(q(0)-step_angle_)<0.001) {
                 std::cout << "Holding user position with zero velocity" << std::endl;
+                dq_t(0) = 0.0;
                 fixed_stage_ = 3;
                 time0 = std::chrono::steady_clock::now();
             }
             else {
                 robot_->printJointStatus();
+                if ((q(0)-step_angle_) > 0.0) {
+                    dq_t(0) = -2.0;
+                }
+                else {
+                    dq_t(0) = 2.0;
+                }
             }
         } else if (fixed_stage_ == 3) {
-            if (time > 4.0 && step_angle_ <= 110.0 && step_angle_ >= 10.0) {
-                robot_->initPositionControl();
-                fixed_stage_ = 2;
-                step_angle_ = step_angle_ + 10.0;
+            if (time > 4.0) {
+                if (step_angle_ < prom_df+10.0 && step_angle_ >= prom_pf) {
+                    fixed_stage_ = 2;
+                    step_angle_ = step_angle_ + 10.0;
+                }
+                else {
+                    fixed_stage_ = 4;
+                    std::cout << "Finished" << std::endl;
+                }
             }
             else {
-                robot_->setJointVel(Eigen::VectorXd::Zero(M1_NUM_JOINTS));
+                dq_t(0) = 0.0;
             }
+        } else if (fixed_stage_ == 4) {
+            dq_t(0) = 0.0;
+        }
+
+        if ((dq_t(0) < 0.0 && q(0) < prom_pf) || (dq_t(0) > 0.0 && q(0) > prom_df)) {
+            dq_t(0) = 0.0;
+            fixed_stage_ = 4;
+            std::cout << "Outside passive limits" << std::endl;
+        }
+
+        // set velocity for joint
+        if (robot_->setJointVel(dq_t) != SUCCESS) {
+            std::cout << "Error " << std::endl;
         }
     }
     else if (controller_mode_ == 7) {  // center angle (ROM) - zero velocity mode
@@ -615,10 +633,14 @@ void MultiControllerState::dynReconfCallback(CORC::dynamic_paramsConfig &config,
         if (controller_mode_ == 4) robot_->initTorqueControl();
         if (controller_mode_ == 5) robot_->initTorqueControl();
 
-        if (controller_mode_ == 6 || controller_mode_ == 7) {
-            robot_->initPositionControl();
+        if (controller_mode_ == 6) {
+            robot_->initVelocityControl();
             fixed_stage_ = 2;
             step_angle_ = 15.0;
+        }
+        if (controller_mode_ == 7) {
+            robot_->initPositionControl();
+            fixed_stage_ = 2;
         }
         if (controller_mode_ == 8) robot_->initVelocityControl();
         if (controller_mode_ == 10) {

@@ -293,21 +293,21 @@ m1_x:
   id: ['ankleHRCEML: F']
   left: false # flag for left or right limb
   wrist: false # flag for wrist device
-  c0: [0.0] # coulomb friction constant of joint [Nm]
-  c1: [0.0] # viscous friction constant of joint [Nm/s]
+  c0: [1.9] # coulomb friction constant of joint [Nm]
+  c1: [3.2] # viscous friction constant of joint [Nm/s]
   c2: [0] # friction square root term
-  i_sin: [0.0] # inertia for sine term
-  i_cos: [0.0] # inertia for cosine term
+  i_sin: [1.06] # inertia for sine term
+  i_cos: [0.05] # inertia for cosine term
   t_bias: [-0.349] # theta bias term and angle from vertical position to lower joint limit [rad]
   force_sensor_scale_factor: [0.07] # scale factor for force calibration
   force_sensor_offset: [1500] # calibration offset for force sensor
-  friction_ratio: [0.0] # scale factor for feedforward compensation
-  weight_ratio: [0.0] # scale factor for feedforward compensation
-  kp: [0.0] # proportional term of PID controller
-  kp_mod: [0.0] # multiplier for proportional term in the static region
-  ki: [0.0] # integral term of PID controller
+  friction_ratio: [0.7] # scale factor for feedforward compensation
+  weight_ratio: [0.9] # scale factor for feedforward compensation
+  kp: [2.0] # proportional term of PID controller
+  kp_mod: [1.0] # multiplier for proportional term in the static region
+  ki: [0.17] # integral term of PID controller
   kd: [0] # derivative term of PID controller
-  vel_thresh: [4.0] # velocity threshold for using dynamic friction compensation [deg/s]
+  vel_thresh: [15.0] # velocity threshold for using dynamic friction compensation [deg/s]
   tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
   sensor_cutoff_freq: [15.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
   motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]

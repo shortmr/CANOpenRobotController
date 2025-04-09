@@ -35,7 +35,7 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/interaction_wrench</topic>
+                                    <topic>/m1_caio/interaction_wrench</topic>
                                     <type>geometry_msgs/WrenchStamped</type>
                                 </x_axis>
                                 <y_axis>
@@ -48,7 +48,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/interaction_wrench</topic>
+                                    <topic>/m1_caio/interaction_wrench</topic>
                                     <type>geometry_msgs/WrenchStamped</type>
                                 </y_axis>
                             </axes>
@@ -86,7 +86,7 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_y/interaction_wrench</topic>
+                                    <topic>/m1_tizio/interaction_wrench</topic>
                                     <type>geometry_msgs/WrenchStamped</type>
                                 </x_axis>
                                 <y_axis>
@@ -99,7 +99,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_y/interaction_wrench</topic>
+                                    <topic>/m1_tizio/interaction_wrench</topic>
                                     <type>geometry_msgs/WrenchStamped</type>
                                 </y_axis>
                             </axes>
@@ -262,7 +262,7 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/joint_states</topic>
+                                    <topic>/m1_caio/joint_states</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </x_axis>
                                 <y_axis>
@@ -275,7 +275,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/joint_states</topic>
+                                    <topic>/m1_caio/joint_states</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </y_axis>
                             </axes>
@@ -313,7 +313,7 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_y/joint_states</topic>
+                                    <topic>/m1_tizio/joint_states</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </x_axis>
                                 <y_axis>
@@ -326,7 +326,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_y/joint_states</topic>
+                                    <topic>/m1_tizio/joint_states</topic>
                                     <type>sensor_msgs/JointState</type>
                                 </y_axis>
                             </axes>
@@ -542,7 +542,7 @@
                                         <relative_minimum>-7</relative_minimum>
                                         <type>2</type>
                                     </scale>
-                                    <topic>/m1_x/interaction_effort_commands</topic>
+                                    <topic>/m1_caio/interaction_effort_commands</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </x_axis>
                                 <y_axis>
@@ -555,7 +555,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/m1_x/interaction_effort_commands</topic>
+                                    <topic>/m1_caio/interaction_effort_commands</topic>
                                     <type>std_msgs/Float64MultiArray</type>
                                 </y_axis>
                             </axes>

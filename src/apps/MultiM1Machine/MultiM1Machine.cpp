@@ -9,8 +9,12 @@ MultiM1Machine::MultiM1Machine(int argc, char *argv[]){
     ros::NodeHandle nodeHandle("~");
 
     // Get robot name from the node name
-    robotName_ = ros::this_node::getName();
-    robotName_.erase(0,1); // erase the first character which is '/'
+    // robotName_ = ros::this_node::getName();
+    // robotName_.erase(0,1); // erase the first character which is '/'
+    if(!nodeHandle.getParam("robot_name", robotName_)){
+        ROS_ERROR("Failed to get parameter from launch");
+        ros::shutdown();
+    }
 
     // create robot
     robot_ = new RobotM1(robotName_);

@@ -64,36 +64,36 @@ m1_y:
 #   muscle_count: [4] # number of muscles for EMG recordings
 
 ############### HRCEML AIM2CH5 WRIST ###############
-m1_x:
- id: [ 'wristHRCEML: C' ]
- left: false # flag for left or right limb
- wrist: true # flag for wrist device
- c0: [1.4702] # coulomb friction constant of joint [Nm]
- c1: [1.9361] # viscous friction constant of joint [Nm/s]
- c2: [ 0 ] # friction square root term
- i_sin: [0.21] # inertia for sine term
- i_cos: [0.53] # inertia for cosine term # 0.07
- t_bias: [-1.49] # theta bias term and angle from vertical position to lower joint limit [rad]
- force_sensor_scale_factor: [0.07] # scale factor for force calibration
- force_sensor_offset: [ 1500 ] # calibration offset for force sensor
- friction_ratio: [0.5] # scale factor for feedforward compensation
- weight_ratio: [1.0] # scale factor for feedforward compensation
- kp: [1.5] # proportional term of PID controller (alt: 5.5)
- kp_mod: [0.0] # multiplier for proportional term in the static region
- ki: [0.17] # integral term of PID controller
- kd: [0.0] # derivative term of PID controller (alt: 0.05)
- vel_thresh: [4.0] # velocity threshold for using dynamic friction compensation [deg/s]
- tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
- sensor_cutoff_freq: [15.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz] (alt: 20)
- motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
- tick_max: [60.0] # counter for integral term reset [s]
- tracking_df: [163.692] # max range of motion angle [deg]
- tracking_pf: [24.881] # min range of motion angle [deg]
- passive_df: [166] # max passive range of motion angle [deg]
- passive_pf: [5] # min passive range of motion angle [deg]
- mvc_df: [1] # MVCT in dorsiflexion [Nm]
- mvc_pf: [1] # MVCT in plantarflexion [Nm]
- muscle_count: [2] # number of muscles for EMG recordings
+# m1_x:
+#  id: [ 'wristHRCEML: C' ]
+#  left: false # flag for left or right limb
+#  wrist: true # flag for wrist device
+#  c0: [1.4702] # coulomb friction constant of joint [Nm]
+#  c1: [1.9361] # viscous friction constant of joint [Nm/s]
+#  c2: [ 0 ] # friction square root term
+#  i_sin: [0.21] # inertia for sine term
+#  i_cos: [0.53] # inertia for cosine term # 0.07
+#  t_bias: [-1.49] # theta bias term and angle from vertical position to lower joint limit [rad]
+#  force_sensor_scale_factor: [0.07] # scale factor for force calibration
+#  force_sensor_offset: [ 1500 ] # calibration offset for force sensor
+#  friction_ratio: [0.5] # scale factor for feedforward compensation
+#  weight_ratio: [1.0] # scale factor for feedforward compensation
+#  kp: [1.5] # proportional term of PID controller (alt: 5.5)
+#  kp_mod: [0.0] # multiplier for proportional term in the static region
+#  ki: [0.17] # integral term of PID controller
+#  kd: [0.0] # derivative term of PID controller (alt: 0.05)
+#  vel_thresh: [4.0] # velocity threshold for using dynamic friction compensation [deg/s]
+#  tau_thresh: [0.2] # torque threshold for using static friction compensation (not implemented) [Nm]
+#  sensor_cutoff_freq: [15.0] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz] (alt: 20)
+#  motor_torque_cutoff_freq: [50.0] # cutoff frequency for lowpass motor torque command filter [Hz]
+#  tick_max: [60.0] # counter for integral term reset [s]
+#  tracking_df: [163.692] # max range of motion angle [deg]
+#  tracking_pf: [24.881] # min range of motion angle [deg]
+#  passive_df: [166] # max passive range of motion angle [deg]
+#  passive_pf: [5] # min passive range of motion angle [deg]
+#  mvc_df: [1] # MVCT in dorsiflexion [Nm]
+#  mvc_pf: [1] # MVCT in plantarflexion [Nm]
+#  muscle_count: [2] # number of muscles for EMG recordings
 
 #m1_y:
 #  id: ['wristHRCEML: B']
@@ -320,7 +320,7 @@ m1_z:
   mvc_pf: [30] # MVCT in plantarflexion [Nm]
   muscle_count: [4] # number of muscles for EMG recordings
 #
-m1_w:
+m1_x:
   id: [ 'ankleHRCEML: G' ]
   left: false # flag for left or right limb
   wrist: false # flag for wrist device
@@ -329,13 +329,13 @@ m1_w:
   c2: [ 0 ] # friction square root term
   i_sin: [ 0.87 ] # inertia for sine term
   i_cos: [ 0.05 ] # inertia for cosine term
-  t_bias: [ -0.349 ] # theta bias term and angle from vertical position to lower joint limit [rad]
+  t_bias: [ -1.1 ] # theta bias term and angle from vertical position to lower joint limit [rad]
   force_sensor_scale_factor: [ 0.07 ] # scale factor for force calibration
   force_sensor_offset: [ 1500 ] # calibration offset for force sensor
   friction_ratio: [ 0.5 ] # scale factor for feedforward compensation
-  weight_ratio: [ 1.0 ] # scale factor for feedforward compensation
-  kp: [ 1.68 ] # proportional term of PID controller
-  kp_mod: [ 1.0 ] # multiplier for proportional term in the static region
+  weight_ratio: [ 0.5 ] # scale factor for feedforward compensation
+  kp: [ 3.5 ] # proportional term of PID controller
+  kp_mod: [ 1.25 ] # multiplier for proportional term in the static region
   ki: [ 0.17 ] # integral term of PID controller
   kd: [ 0 ] # derivative term of PID controller
   vel_thresh: [ 15.0 ] # velocity threshold for using dynamic friction compensation [deg/s]
@@ -343,10 +343,10 @@ m1_w:
   sensor_cutoff_freq: [ 15.0 ] # cutoff frequency for lowpass interaction torque, angle and velocity filter [Hz]
   motor_torque_cutoff_freq: [ 50.0 ] # cutoff frequency for lowpass motor torque command filter [Hz]
   tick_max: [ 60.0 ] # counter for integral term reset [s]
-  tracking_df: [ 80 ] # max range of motion angle [deg]
-  tracking_pf: [ 60 ] # min range of motion angle [deg]
-  passive_df: [ 105 ] # max passive range of motion angle [deg]
-  passive_pf: [ 5 ] # min passive range of motion angle [deg]
+  tracking_df: [135.973] # max range of motion angle [deg]
+  tracking_pf: [36.216] # min range of motion angle [deg]
+  passive_df: [ 140 ] # max passive range of motion angle [deg]
+  passive_pf: [ 40 ] # min passive range of motion angle [deg]
   mvc_df: [ 20 ] # MVCT in dorsiflexion [Nm]
   mvc_pf: [ 30 ] # MVCT in plantarflexion [Nm]
   muscle_count: [ 4 ] # number of muscles for EMG recordings

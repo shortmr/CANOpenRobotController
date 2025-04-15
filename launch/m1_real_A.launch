@@ -1,11 +1,15 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="paddle_name" default="caio"/>
+    <arg name="paddle_name" default="BottonRight"/>
     <arg name="robot_name" default="m1_x"/>
 
     <!-- CORC M1_X -->
     <node name="m1_$(arg paddle_name)" pkg="CORC" type="MultiM1Machine_APP" output="screen" args="-can can0">
     <param name="robot_name" value = "$(arg robot_name)"/>
+    </node>
+
+    <!-- rqt -->
+    <node name="rqt" pkg="CORC" type="rqt.sh">
     </node>
 
 </launch>

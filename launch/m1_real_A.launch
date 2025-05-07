@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="paddle_name" default="BottonRight"/>
+    <arg name="paddle_name" default="BottomRight"/>
     <arg name="robot_name" default="m1_x"/>
 
     <!-- CORC M1_X -->
